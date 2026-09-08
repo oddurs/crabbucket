@@ -160,7 +160,7 @@ impl<T: DeserializeOwned> Entry<T> {
 
         Ok(Entry {
             meta,
-            route: route_of(path, root),
+            route: crabbucket_routes::route_of(path, root),
             path: path.to_path_buf(),
             html: rendered.html,
             headings: rendered.headings,
@@ -168,24 +168,10 @@ impl<T: DeserializeOwned> Entry<T> {
     }
 }
 
-/// Derives a route from a content file's path below the collection root.
-fn route_of(path: &Path, root: &Path) -> String {
-    let relative = path.strip_prefix(root).unwrap_or(path).with_extension("");
-    let mut route = relative
-        .components()
-        .map(|part| part.as_os_str().to_string_lossy())
-        .collect::<Vec<_>>()
-        .join("/");
-
-    if route == "index" {
-        route.clear();
-    } else if let Some(parent) = route.strip_suffix("/index") {
-        route = parent.to_string();
-    }
-
-    route
-}
-
+/// Where a route comes from lives in `crabbucket-routes`, because a site's
+/// build script needs the same answer at build time and must not carry this
+/// crate's dependencies to get it.
+///
 /// Splits a content file into its frontmatter and its body, and says which
 /// line of the file the body starts on.
 ///
@@ -223,7 +209,7 @@ fn split<'a>(text: &'a str, path: &Path) -> Result<(&'a str, &'a str, usize)> {
 mod tests {
     use std::path::Path;
 
-    use super::{route_of, split};
+    use super::split;
     use crate::error::Error;
 
     #[test]
@@ -248,18 +234,6 @@ mod tests {
         let err = split("# Heading\n", Path::new("t.md")).unwrap_err();
         assert!(matches!(err, Error::MissingFrontmatter { .. }));
         assert!(err.to_string().starts_with("t.md:"));
-    }
-
-    #[test]
-    fn routes_come_from_the_path_below_the_root() {
-        let root = Path::new("content");
-        assert_eq!(route_of(Path::new("content/index.md"), root), "");
-        assert_eq!(route_of(Path::new("content/about.md"), root), "about");
-        assert_eq!(
-            route_of(Path::new("content/docs/intro.md"), root),
-            "docs/intro"
-        );
-        assert_eq!(route_of(Path::new("content/docs/index.md"), root), "docs");
     }
 
     #[test]

@@ -1,5 +1,21 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Generate a Route enum, and stop deriving routes in two places.
+
+	* crates/crabbucket-routes: New crate.  Route derivation, scanning,
+	the rerun-if-changed lines a build script needs, and the generator.
+	No dependencies: it is compiled during a site's build phase.
+	* crates/crabbucket/src/content.rs (route_of): Removed; call
+	crabbucket_routes::route_of instead, so there is one answer.
+	* examples/site-crate: New; a site crate using the generated enum
+	and crabbucket-theme-plain.
+	* doc/DESIGN: Section 3 no longer describes the enum as unbuilt.
+	* examples/site/content/docs/routing.md: Document it.
+	* examples/site/content/docs/design.md: The "decided but not built"
+	list had gone stale by two releases.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Add a second design system, and fix what writing it found.
 
 	* crates/crabbucket-theme-plain: New crate.  Light, serif, one

@@ -2,6 +2,20 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
 
 * Noteworthy changes in release 0.3.0 (unreleased) [alpha]
 
+** New features
+
+  crabbucket-routes: a site that is a crate generates a `Route' enum from
+  its content directory, so a link written in Rust stops compiling when
+  the page it points at is renamed.  Two routes that would share a variant
+  name fail the build naming both.
+
+  It is also where `crabbucket' itself gets its answer to "what route is
+  this file?", so there is one implementation rather than two that can
+  disagree.  It has no dependencies and compiles in about a quarter of a
+  second, which is what a build dependency should cost.
+
+  examples/site-crate: a working one.
+
 ** Bug fixes
 
   A design system that offered a search client but did not load it shipped
