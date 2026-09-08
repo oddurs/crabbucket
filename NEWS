@@ -95,7 +95,21 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
   crate root, which an audit found untrue of eight types.  `DeadLink'
   gained a Display.
 
+  The declared minimum Rust version is 1.88, and CI tests it.  It said
+  1.85 and was never checked; the code has used let-chains since v0.1,
+  which are 1.88.
+
 ** Bug fixes
+
+  What the build writes has line feeds on every platform.  A design
+  system's stylesheet and clients arrive through `include_str!', so a
+  checkout with CRLF produced a site that differed byte for byte from the
+  same site built anywhere else.
+
+  A content file with CRLF line endings failed to parse at all.  The
+  opening `+++' had always accepted them; the closing one left a carriage
+  return on the frontmatter's last line, and TOML rejects a bare one.
+  Found the first time CI ran on Windows.
 
   A link to a route without a trailing slash -- `/docs/agents' rather than
   `/docs/agents/' -- was reported as a missing file.  It is a route, and

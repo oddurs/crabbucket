@@ -769,11 +769,26 @@ fn page_path(out_dir: &Path, route: &str) -> PathBuf {
     }
 }
 
-/// Writes a file, creating its parent directories.
+/// Writes a text file, creating its parent directories.
+///
+/// Line endings are normalised to line feeds.  A design system's stylesheet
+/// and clients arrive here through `include_str!`, so on a checkout with CRLF
+/// they carry carriage returns and the built site differs byte for byte from
+/// the same site built anywhere else.  A build should produce the same output
+/// on every machine, and this is most of what that costs.
 fn write(path: &Path, contents: &str) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|source| Error::io(parent, source))?;
     }
+
+    let normalised;
+    let contents = if contents.contains('\r') {
+        normalised = contents.replace("\r\n", "\n");
+        normalised.as_str()
+    } else {
+        contents
+    };
+
     fs::write(path, contents).map_err(|source| Error::io(path, source))
 }
 

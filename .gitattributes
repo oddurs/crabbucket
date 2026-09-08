@@ -1,0 +1,4 @@
+# Test fixtures are data, and their line endings are part of what they test.
+# Without this, git normalises the CRLF fixture on checkout and the thing it
+# exists to catch stops being caught.
+crates/crabbucket/tests/sites/crlf/** -text

@@ -33,6 +33,16 @@ when `url` is unset rather than emitted with guessed ones. The sitemap carries
 no `lastmod`: there is no honest source for one, and a fabricated timestamp is
 worse than an absent field.
 
+## The same bytes everywhere
+
+A build produces the same output on every machine. Line endings in what the
+build writes are normalised, because a design system's stylesheet and clients
+reach it through `include_str!` and a checkout on Windows carries carriage
+returns — which would otherwise make the same site, built twice, two
+different sites.
+
+The [social cards](../social-cards/) are deterministic for the same reason.
+
 ## The two things that make it work
 
 **`base`.** A project site is served from `https://you.github.io/repo/`, so

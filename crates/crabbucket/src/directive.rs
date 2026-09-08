@@ -18,7 +18,7 @@
 //!
 //! ```text
 //! :::callout{kind = "warn"}
-//! crabbucket needs Rust 1.85 or newer.
+//! crabbucket needs Rust 1.88 or newer.
 //! :::
 //! ```
 //!

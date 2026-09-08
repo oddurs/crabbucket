@@ -71,7 +71,9 @@ as public; if you own the design system, treat renaming one as breaking.
 4.  Compiler version
 --------------------
 
-`rust-version' in `Cargo.toml' is the minimum, and it is tested.
+`rust-version' in `Cargo.toml' is the minimum, and CI builds and tests
+against exactly it.  It was 1.85 and untested until the matrix was
+written; the code had used let-chains since v0.1, which are 1.88.
 
 Raising it is a minor version, not a major one.  The alternative -- a
 major version for every toolchain bump -- makes the major number about

@@ -83,7 +83,7 @@ turborust.toml and a GitHub Pages workflow.
 Building
 --------
 
-Rust 1.85 or newer is required.
+Rust 1.88 or newer is required.
 
   cargo build --release
 

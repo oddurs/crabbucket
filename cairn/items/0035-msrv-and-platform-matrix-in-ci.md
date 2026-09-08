@@ -2,7 +2,7 @@
 id: 35
 title: MSRV and platform matrix in CI
 type: chore
-status: backlog
+status: done
 milestone: v1.0
 created: 2026-09-08
 updated: 2026-09-08
@@ -34,8 +34,40 @@ release.
 
 ## Acceptance criteria
 
-- [ ] Stable on Linux, macOS and Windows
-- [ ] MSRV verified on Linux
-- [ ] Windows path handling covered by a nested-content fixture
-- [ ] Scheduled beta run
-- [ ] Total CI time under five minutes
+- [x] Stable on Linux, macOS and Windows
+- [x] MSRV verified on Linux
+- [x] Windows path handling covered by a nested-content fixture
+- [x] Scheduled beta run
+- [x] Total CI time under five minutes
+
+## 2026-09-08
+
+Done, and the first thing it found was that the declared minimum was
+fiction. `rust-version = "1.85"` had been there since the first commit and
+was never checked; the code has used let-chains since v0.1, and those are
+1.88. A toolchain is installed for 1.88, so this was settled by building
+rather than by reading a release note.
+
+That is the whole argument for the item: a claim nothing tests is a claim
+that is wrong eventually, and this one was wrong immediately.
+
+The matrix is four jobs rather than twelve. Stable on Linux, macOS and
+Windows; the minimum on Linux only, because checking it three times buys
+nothing. Formatting and clippy run once rather than four times, for the
+same reason.
+
+Windows path bugs, found by reading rather than by CI, because CI cannot
+run until this merges: five assertions compared a rendered path against a
+literal with forward slashes, which passes everywhere except Windows.
+There is a `names()` helper now that builds the literal with the
+platform's separator. The nested fixture went four levels deep with links
+out of the bottom, so there is something for the platform to disagree
+about.
+
+The production code looks right: routes are built from `Path::components`
+joined with `/`, and `tree()` normalises backslashes. But that is a
+reading, not a result, and Windows CI on this PR is what turns it into
+one.
+
+A scheduled beta run on Mondays, so a compiler regression arrives as a
+notification rather than during a release.

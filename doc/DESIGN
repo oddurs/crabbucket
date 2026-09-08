@@ -105,7 +105,7 @@ a page requires no Rust.
   Install it:
 
   :::callout{kind="note"}
-  crabbucket needs Rust 1.85 or newer.
+  crabbucket needs Rust 1.88 or newer.
   :::
 
 A collection is declared with the struct its frontmatter deserializes
