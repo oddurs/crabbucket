@@ -1,5 +1,28 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Add a second design system, and fix what writing it found.
+
+	* crates/crabbucket-theme-plain: New crate.  Light, serif, one
+	column, one layout, no JavaScript.
+	* crates/crabbucket-tokens: New crate.  The token generator and the
+	contrast maths, which both design systems needed.
+	* crates/crabbucket-ui/build.rs: Use it, and delete the copy.
+	* crates/crabbucket/src/theme.rs (Theme::router_js, search_js):
+	Return Option<String>, so a design system can decline.
+	* crates/crabbucket/src/site.rs (declined, unloaded): Warn when a
+	site asks for a client its design system has not got, and when a
+	client is written that no page loads.
+	* crates/crabbucket-ui/src/lib.rs (document): Load search.js.  It
+	was written and never loaded, so the search box never appeared.
+	* crates/crabbucket-ui/src/router.js: Fire crabbucket:render rather
+	than calling components by name.
+	* crates/crabbucket/src/markdown.rs (Info): Read fence flags; a
+	`no-search' fence is kept out of the search index.
+	* crates/crabbucket/src/search.rs (plain): Skip any element marked
+	data-search="off", contents included.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Fix three findings from an external review.
 
 	* crates/crabbucket/src/lib.rs: Re-export build_with and Options

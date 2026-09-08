@@ -1,6 +1,39 @@
 GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
 
-* Noteworthy changes in release 0.2.0 (unreleased) [alpha]
+* Noteworthy changes in release 0.3.0 (unreleased) [alpha]
+
+** Bug fixes
+
+  A design system that offered a search client but did not load it shipped
+  a search box that could never appear.  crabbucket-ui now loads it, and
+  the build warns when any client is written that no page loads -- the
+  opposite of a dead link, and just as broken.
+
+  The search index no longer swallows terminal captures and diagrams.  A
+  fence marked `no-search' is rendered and highlighted as usual and left
+  out of the index; anything carrying `data-search="off"' is skipped along
+  with its contents.
+
+** New features
+
+  crabbucket-theme-plain: a second design system, deliberately unlike the
+  first.  Light, serif, one column, one layout, no JavaScript.  It renders
+  crabbucket's own documentation site unmodified.
+
+  crabbucket-tokens: the token generator, and the contrast maths, as a
+  build-time crate whose only dependency is `toml'.  Both lived inside
+  crabbucket-ui until a second design system needed them.
+
+  `Theme::router_js' and `Theme::search_js' return `Option<String>'.  A
+  design system without a router says so, and a site that asks for one
+  anyway is told once and still builds.
+
+  The router fires `crabbucket:render' on first load and after every
+  client-side navigation, so a design system with anything interactive
+  hooks it rather than forking the router.  The built-in tab memory,
+  contents highlighting and copy buttons go through the same event.
+
+
 
 ** API
 

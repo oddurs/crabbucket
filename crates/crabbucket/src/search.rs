@@ -131,6 +131,15 @@ fn quote(text: &str) -> String {
 /// dropped along with the markup.
 const PERMALINK: &str = "heading-anchor";
 
+/// The attribute that takes a whole element out of the index.
+///
+/// Inline markup is kept, so that `serde::Deserialize` stays one findable
+/// word.  A block is a different case: a terminal capture or a diagram is a
+/// thousand box-drawing characters that will match nothing anybody types and
+/// will wreck every excerpt they land in.  Marking one is the author's call,
+/// and in Markdown it is the `no-search` flag on a fence.
+const EXCLUDED: &str = "data-search=\"off\"";
+
 /// Tags that do not separate words.
 ///
 /// This matters more than it looks.  Syntax highlighting wraps every token in
@@ -167,10 +176,9 @@ pub fn plain(html: &str) -> String {
 
         // Skip the permalink's contents, not just its tags.
         if tag.contains(PERMALINK) {
-            rest = match rest.find("</a>") {
-                Some(close) => &rest[close + 4..],
-                None => "",
-            };
+            rest = skip_to_close(rest, "a");
+        } else if tag.contains(EXCLUDED) {
+            rest = skip_to_close(rest, &name_of(tag));
         }
     }
 
@@ -180,14 +188,30 @@ pub fn plain(html: &str) -> String {
 
 /// Whether a tag is one that does not separate words.
 fn is_inline(tag: &str) -> bool {
-    let name: String = tag
-        .trim_start_matches(['<', '/'])
+    INLINE.contains(&name_of(tag).as_str())
+}
+
+/// The element name in a start or end tag.
+fn name_of(tag: &str) -> String {
+    tag.trim_start_matches(['<', '/'])
         .chars()
         .take_while(|c| c.is_ascii_alphanumeric())
         .flat_map(char::to_lowercase)
-        .collect();
+        .collect()
+}
 
-    INLINE.contains(&name.as_str())
+/// Everything after the closing tag of `name`, or nothing if it never closes.
+///
+/// Elements that carry the exclusion attribute do not nest inside themselves
+/// -- a `pre` inside a `pre` is not a thing -- so the first close is the right
+/// one.
+fn skip_to_close<'a>(rest: &'a str, name: &str) -> &'a str {
+    let close = format!("</{name}>");
+
+    match rest.find(&close) {
+        Some(at) => &rest[at + close.len()..],
+        None => "",
+    }
 }
 
 /// Collapses every run of whitespace to one space, and trims.
@@ -247,6 +271,24 @@ mod tests {
     fn block_markup_does_separate_words() {
         assert_eq!(plain("<p>one</p><p>two</p>"), "one two");
         assert_eq!(plain("<li>a</li><li>b</li>"), "a b");
+    }
+
+    #[test]
+    fn a_block_marked_no_search_is_left_out_of_the_index() {
+        // A terminal capture or a diagram is a thousand box-drawing characters
+        // that match nothing anybody types and wreck every excerpt they land
+        // in.
+        let html = "<p>before</p>\
+                    <pre data-search=\"off\"><code>\u{2500}\u{2500}\u{256e} noise</code></pre>\
+                    <p>after</p>";
+
+        assert_eq!(plain(html), "before after");
+    }
+
+    #[test]
+    fn an_ordinary_code_block_is_still_indexed() {
+        let html = "<pre class=\"code\"><code>cargo install crabbucket</code></pre>";
+        assert_eq!(plain(html), "cargo install crabbucket");
     }
 
     #[test]

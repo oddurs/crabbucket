@@ -1,0 +1,48 @@
+/* Prose, and the classes crabbucket itself emits.
+ *
+ * `heading-anchor`, `code` and the `tok-` scope classes belong to the
+ * framework rather than to any design system, so they are not namespaced.
+ * See crabbucket::style::FRAMEWORK_CLASSES. */
+
+.& h1 { font-size: var(--size-title); line-height: 1.2; margin: 0 0 var(--space-line); font-weight: 400; }
+.& h2 { font-size: var(--size-body); margin: var(--space-line) 0 var(--space-third); font-weight: 700; }
+.& h3 { font-size: var(--size-body); margin: var(--space-line) 0 var(--space-third); font-weight: 400; font-style: italic; }
+.& p, .& ul, .& ol { margin: 0 0 var(--space-line); }
+.& :is(h1, h2, h3, h4) { scroll-margin-top: var(--space-half); }
+
+.& a { color: var(--color-accent); text-underline-offset: 0.15em; }
+
+.& blockquote {
+  margin: 0 0 var(--space-line);
+  padding-left: var(--space-line);
+  border-left: 1px solid var(--color-rule);
+  color: var(--color-faded);
+  font-style: italic;
+}
+
+.& code { font-family: var(--font-mono); font-size: var(--size-small); }
+.& pre {
+  font-size: var(--size-small);
+  line-height: 1.5;
+  padding: var(--space-half);
+  border: 1px solid var(--color-rule);
+  overflow-x: auto;
+  margin: 0 0 var(--space-line);
+}
+
+.& table { border-collapse: collapse; width: 100%; margin: 0 0 var(--space-line); }
+.& th, .& td { text-align: left; padding: var(--space-third) var(--space-half) var(--space-third) 0; border-bottom: 1px solid var(--color-rule); vertical-align: top; }
+.& th { font-weight: 700; font-size: var(--size-small); }
+
+.heading-anchor { margin-left: var(--space-third); color: var(--color-faded); text-decoration: none; opacity: 0; }
+.& :is(h1, h2, h3, h4):hover .heading-anchor, .heading-anchor:focus-visible { opacity: 1; }
+
+.tok-comment { color: var(--syntax-comment); font-style: italic; }
+.tok-keyword, .tok-storage { color: var(--syntax-keyword); }
+.tok-string { color: var(--syntax-string); }
+.tok-constant { color: var(--syntax-constant); }
+.tok-entity { color: var(--syntax-entity); }
+.tok-support { color: var(--syntax-support); }
+.tok-variable { color: var(--syntax-variable); }
+.tok-punctuation { color: var(--syntax-punctuation); }
+.tok-invalid { color: var(--syntax-invalid); }

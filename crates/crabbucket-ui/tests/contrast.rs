@@ -28,50 +28,17 @@ use std::collections::BTreeMap;
 
 use crabbucket_ui::tok;
 
-/// Body text, and everything held to the same standard.
-const AA: f64 = 4.5;
-
-/// Large text, and code, which is set on a raised surface and read in bulk
-/// rather than scanned.
-const AA_LARGE: f64 = 3.0;
+use crabbucket_tokens::contrast::{AA, AA_LARGE, ratio};
 
 /// Every token in a scheme, by custom property name.
 fn scheme(light: bool) -> BTreeMap<&'static str, &'static str> {
-    let mut tokens: BTreeMap<_, _> = tok::DARK.iter().copied().collect();
+    let mut tokens: BTreeMap<_, _> = tok::BASE.iter().copied().collect();
 
     if light {
-        tokens.extend(tok::LIGHT.iter().copied());
+        tokens.extend(tok::OVERRIDES.iter().copied());
     }
 
     tokens
-}
-
-/// The relative luminance of an `#rrggbb` colour, per WCAG.
-fn luminance(hex: &str) -> f64 {
-    let hex = hex.trim_start_matches('#');
-    assert_eq!(hex.len(), 6, "not a six-digit hex colour: {hex}");
-
-    let channel = |at: usize| {
-        let value = u8::from_str_radix(&hex[at..at + 2], 16)
-            .unwrap_or_else(|_| panic!("not hex: {hex}")) as f64
-            / 255.0;
-
-        if value <= 0.03928 {
-            value / 12.92
-        } else {
-            ((value + 0.055) / 1.055).powf(2.4)
-        }
-    };
-
-    0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4)
-}
-
-/// The contrast ratio between two colours, from 1.0 to 21.0.
-fn ratio(a: &str, b: &str) -> f64 {
-    let (a, b) = (luminance(a), luminance(b));
-    let (lighter, darker) = if a > b { (a, b) } else { (b, a) };
-
-    (lighter + 0.05) / (darker + 0.05)
 }
 
 /// Asserts a ratio, naming the scheme and both tokens when it fails.
@@ -158,9 +125,9 @@ fn a_border_is_visible_without_shouting() {
 
 #[test]
 fn every_light_override_replaces_something_that_exists() {
-    let dark: BTreeMap<_, _> = tok::DARK.iter().copied().collect();
+    let dark: BTreeMap<_, _> = tok::BASE.iter().copied().collect();
 
-    for (token, _) in tok::LIGHT {
+    for (token, _) in tok::OVERRIDES {
         assert!(
             dark.contains_key(token),
             "{token} exists only in the light palette"
@@ -170,9 +137,9 @@ fn every_light_override_replaces_something_that_exists() {
 
 #[test]
 fn the_light_palette_actually_covers_the_colours() {
-    let overridden: BTreeMap<_, _> = tok::LIGHT.iter().copied().collect();
+    let overridden: BTreeMap<_, _> = tok::OVERRIDES.iter().copied().collect();
 
-    let missing: Vec<&str> = tok::DARK
+    let missing: Vec<&str> = tok::BASE
         .iter()
         .map(|(token, _)| *token)
         .filter(|token| token.starts_with("--color-") || token.starts_with("--syntax-"))

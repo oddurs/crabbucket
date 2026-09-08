@@ -1,0 +1,63 @@
+# Plain's own tokens, in its own file.
+#
+# A design system owns its palette.  Reaching into crabbucket's
+# design/tokens.toml would make every theme a fork of the default one, which
+# is the opposite of the point.
+#
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Light first, because this design system is a document rather than an
+# application, and documents are light.
+[color]
+paper  = "#fdfdfb"
+ink    = "#1b1b19"
+faded  = "#5c5c56"
+rule   = "#d9d7cf"
+accent = "#7a1f1f"
+
+[color.dark]
+paper  = "#16161a"
+ink    = "#e6e4de"
+faded  = "#9a978d"
+rule   = "#2e2e33"
+accent = "#d98b7a"
+
+[space]
+line  = "1.6rem"
+half  = "0.8rem"
+third = "0.5rem"
+
+[font]
+body = "'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif"
+mono = "ui-monospace, SFMono-Regular, Menlo, monospace"
+
+[size]
+body  = "1.0625rem"
+small = "0.875rem"
+title = "2rem"
+
+[measure]
+column = "34rem"
+
+[syntax]
+comment     = "#7a776e"
+keyword     = "#7a1f1f"
+string      = "#2f5d3f"
+constant    = "#6a4a12"
+entity      = "#28457a"
+support     = "#1f5a5a"
+variable    = "#1b1b19"
+punctuation = "#5c5c56"
+invalid     = "#a12020"
+
+[syntax.dark]
+comment     = "#8a877e"
+keyword     = "#d98b7a"
+string      = "#9ec9a8"
+constant    = "#d3b477"
+entity      = "#9ab6e8"
+support     = "#8fc9c9"
+variable    = "#e6e4de"
+punctuation = "#9a978d"
+invalid     = "#e08b8b"

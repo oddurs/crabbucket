@@ -266,17 +266,25 @@ pub trait Theme {
         Directives::new()
     }
 
-    /// The search client, written to `search.js` when the site asks for
-    /// search.  An empty string means this design system has no search.
-    fn search_js(&self) -> String {
-        String::new()
+    /// The search client, written to `search.js` when the site asks for it.
+    ///
+    /// `None` means this design system has no search.  A site that asks for
+    /// it anyway is told so, and gets no dead `search.js`.
+    fn search_js(&self) -> Option<String> {
+        None
     }
 
-    /// The client router written to `router.js`, when the site asks for one.
+    /// The client router, written to `router.js` when the site asks for it.
+    ///
+    /// `None` means this design system has no router, which is a reasonable
+    /// thing for a design system to be: one that renders a document rather
+    /// than an application has nothing for a router to improve.
     ///
     /// A `String` rather than a `&str` because a theme's own class names go
     /// into it, and those are not known until the theme is written.
-    fn router_js(&self) -> String;
+    fn router_js(&self) -> Option<String> {
+        None
+    }
 }
 
 #[cfg(test)]

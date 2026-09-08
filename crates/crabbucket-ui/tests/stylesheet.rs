@@ -172,7 +172,7 @@ fn the_stylesheet_carries_the_tokens_it_uses() {
 
 #[test]
 fn the_router_carries_the_themes_own_class_names() {
-    let js = Standard.router_js();
+    let js = Standard.router_js().expect("ui has a router");
     assert!(
         js.contains("cb-masthead__nav"),
         "the router does not know the theme's nav class"

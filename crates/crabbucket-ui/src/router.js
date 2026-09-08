@@ -4,6 +4,20 @@
 // least as good as the full page load it replaced, so it also moves focus,
 // announces the new page, honours fragments, and restores scroll on Back.
 (() => {
+  // Everything that has to run again after a swap listens for this instead of
+  // being called from swap() by name. A design system with anything
+  // interactive of its own adds a listener; forking the router to add a line
+  // costs prefetching, scroll-spy, tab memory and copy buttons, which is a
+  // steep price for one function call.
+  //
+  //   addEventListener('crabbucket:render', () => mine());
+  //
+  // It fires on first load too, so a listener has one code path rather than
+  // two.
+  const RENDERED = 'crabbucket:render';
+  const rendered = (reason) =>
+    dispatchEvent(new CustomEvent(RENDERED, { detail: { reason } }));
+
   const main = () => document.querySelector('main');
   const NAV = '@NAV@ a';
   const TOC = '@TOC@';
@@ -48,10 +62,8 @@
       if (a.pathname === location.pathname) a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');
     });
-    tabs();
-    spy();
-    copy();
     crier.textContent = doc.title;
+    rendered('navigate');
     land(hash);
   };
 
@@ -162,11 +174,13 @@
     });
   };
 
+  addEventListener(RENDERED, tabs);
+  addEventListener(RENDERED, spy);
+  addEventListener(RENDERED, copy);
+
   addEventListener('DOMContentLoaded', () => {
     document.body.append(crier);
-    tabs();
-    spy();
-    copy();
+    rendered('load');
   });
 
   addEventListener('change', (e) => {

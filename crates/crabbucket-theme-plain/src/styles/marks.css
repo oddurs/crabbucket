@@ -1,0 +1,24 @@
+/* The components, rendered the way a document would render them.
+ *
+ * A callout is an indented note.  Cards are a list.  Tabs are every panel,
+ * one after another, each under its own label -- this design system does not
+ * do tabs, and saying so plainly is better than doing them badly. */
+
+.&__callout {
+  margin: 0 0 var(--space-line);
+  padding-left: var(--space-line);
+  border-left: 2px solid var(--color-accent);
+}
+
+.&__callout--warn { border-left-style: double; border-left-width: 4px; }
+.&__label { font-variant: small-caps; letter-spacing: 0.04em; color: var(--color-faded); }
+.&__callout > :last-child, .&__panel > :last-child, .&__step > :last-child { margin-bottom: 0; }
+
+.&__cards { list-style: none; margin: 0 0 var(--space-line); padding: 0; }
+.&__card { margin: 0 0 var(--space-half); padding-left: var(--space-line); text-indent: calc(var(--space-line) * -1); }
+.&__card a { font-style: italic; }
+
+.&__panel { margin: 0 0 var(--space-line); }
+.&__steps { counter-reset: step; }
+.&__step { counter-increment: step; margin: 0 0 var(--space-line); }
+.&__step .&__label::before { content: counter(step) ". "; }

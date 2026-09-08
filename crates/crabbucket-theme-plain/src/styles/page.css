@@ -1,0 +1,46 @@
+/* Plain: a document, not an application.
+ *
+ * One column, serif, light by default, and no sidebar.  Every difference from
+ * the default design system is deliberate -- a second theme that is a restyle
+ * of the first proves nothing about the seam between them. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.& {
+  margin: 0;
+  padding: var(--space-line);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--size-body);
+  line-height: 1.7;
+}
+
+.&__masthead {
+  max-width: var(--measure-column);
+  margin: 0 auto var(--space-line);
+  padding-bottom: var(--space-half);
+  border-bottom: 1px solid var(--color-rule);
+  display: flex;
+  gap: var(--space-line);
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.&__home { color: var(--color-ink); text-decoration: none; font-style: italic; }
+.&__nav { display: flex; gap: var(--space-half); font-size: var(--size-small); }
+.&__nav a { color: var(--color-faded); text-decoration: none; }
+.&__nav a:hover { color: var(--color-ink); }
+.&__nav a[aria-current="page"] { color: var(--color-accent); }
+
+.&__main { max-width: var(--measure-column); margin: 0 auto; }
+
+.&__colophon {
+  max-width: var(--measure-column);
+  margin: var(--space-line) auto 0;
+  padding-top: var(--space-half);
+  border-top: 1px solid var(--color-rule);
+  color: var(--color-faded);
+  font-size: var(--size-small);
+}
