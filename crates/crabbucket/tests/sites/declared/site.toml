@@ -1,0 +1,7 @@
+title = "Fixture"
+base = "/"
+
+[[page]]
+route = "made-up"
+title = "Made up"
+nav_order = 1

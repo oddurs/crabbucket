@@ -142,6 +142,9 @@ dependencies = [
 [[package]]
 name = "crabbucket-routes"
 version = "0.1.0"
+dependencies = [
+ "toml",
+]
 
 [[package]]
 name = "crabbucket-theme-plain"

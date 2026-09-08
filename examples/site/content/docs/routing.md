@@ -190,3 +190,52 @@ The two mechanisms stay separate and neither replaces the other. Link checking
 covers content, which cannot be typed; the enum covers components, which can.
 
 See `examples/site-crate` for a working one.
+
+## Pages the site renders itself
+
+Not every page is prose. A landing page is usually a composition, and writing
+it as Markdown means writing it as something it is not.
+
+A site crate declares such a page in `site.toml` and supplies its body:
+
+```toml
+[[page]]
+route = ""
+title = "Typed routes"
+nav_order = 1
+```
+
+```rust
+let options = Options {
+    pages: BTreeMap::from([(String::new(), landing(&config).into_string())]),
+    ..Options::default()
+};
+
+crabbucket::build_with(dir, &Plain, &options)?;
+```
+
+From there it is a page like any other: in the navigation, in the sitemap, in
+the search index, link-checked, drawn a social card, and — because `build.rs`
+reads the same declarations — in the `Route` enum.
+
+The declaration is what makes that possible. A body alone has no title, no
+layout and no place in the navigation, so **declaring without rendering and
+rendering without declaring are both errors**:
+
+```
+crab: site.toml: `promised` is declared but the site rendered nothing for it
+crab: site.toml: the site rendered `surprise`, which is not declared here
+```
+
+And a route claimed by both a declaration and a content file fails rather than
+one of them silently winning.
+
+The metadata is deserialized into the design system's types, so a declared page
+is checked exactly as a written one is — an unknown layout fails, a missing
+required field fails, and both name `site.toml`.
+
+:::callout{kind = "note", title = "One thing it does not get"}
+A rendered body is not Markdown, so nothing collected headings from it. A
+declared page has no table of contents, and a fragment link into one cannot be
+checked.
+:::

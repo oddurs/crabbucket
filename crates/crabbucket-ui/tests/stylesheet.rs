@@ -41,6 +41,7 @@ fn config() -> Config {
         base: "/repo/".into(),
         search: false,
         feeds: Vec::new(),
+        pages: Vec::new(),
         router: false,
     }
 }

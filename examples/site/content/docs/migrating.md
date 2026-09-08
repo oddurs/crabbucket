@@ -90,17 +90,14 @@ missing a required field fails naming itself. `crabbucket-theme-plain` reads a
 One thing still does not hold: a *misspelled* key vanishes rather than
 failing, because serde cannot combine `flatten` with `deny_unknown_fields`.
 
-### Pages that are not Markdown — open
+### Pages that are not Markdown — fixed
 
 Four of cairn's ten pages are `.astro` files: the landing page, and three that
 compose prose with layout in ways a Markdown file cannot express.
 
-crabbucket has nowhere to put them. Every route comes from a file in
-`content/`, so the workaround is to rewrite each as Markdown plus directives —
-which loses exactly the thing that made them components.
-
-This is the largest gap, and it is a gap against Astro specifically: Astro has
-content collections *and* pages, and crabbucket has only the first.
+A site crate now [declares such a page](../routing/#pages-the-site-renders-itself)
+in `site.toml` and supplies its body. It is then a page like any other, the
+generated `Route` enum included. `examples/site-crate`'s landing page is one.
 
 ### Directives cannot read site data — open
 
@@ -111,8 +108,8 @@ else, so there is no way to write that one at all.
 ## The count
 
 Ten pages. Six migrated mechanically. One bug found and fixed. Three gaps
-found and filed; one is now fixed, and one of the remaining two blocks four of
-the ten pages.
+found and filed, of which two are now fixed — including the one that blocked
+the other four pages. One remains.
 
 That is the honest number, and it is the number worth publishing: a migration
 guide that claims everything is easy is a guide nobody trusts twice.
