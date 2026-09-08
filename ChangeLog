@@ -1,5 +1,35 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Run the doctests, measure the suite, and check the dependencies.
+
+	* Makefile (test): Run doctests too.  `--all-targets' excludes them
+	and nothing else ran them, so the `///' examples were unverified.
+	(doc-test, cover, cover-html, audit, api): New.
+	(NEXTEST): Use cargo-nextest when it is installed, and say so when
+	it is not rather than failing.
+	(PUBLISHED): The seven crates that go to crates.io, so `api' and
+	the release workflow do not each keep their own list.
+	* .config/nextest.toml: New.  A per-test timeout, because a process
+	per test makes one possible; a `ci' profile with no retries and
+	JUnit output.
+	* deny.toml: New.  Licences as an allow-list holding only what is
+	in the tree, advisories with `unmaintained = "all"', and three
+	ignores with their reasons.
+	* crates/crabbucket/Cargo.toml: Trim syntect to default-syntaxes,
+	html and regex-fancy.  `default-fancy' also pulls `yaml-load' for
+	reading .sublime-syntax at runtime, which nothing does, and that
+	pulls the unmaintained `yaml-rust'.  Drops plist and serde_json
+	too.  Found by `make audit' on its first run.
+	* .github/workflows/ci.yml: nextest with the `ci' profile, doctests,
+	a JUnit summary, and three new jobs: coverage with a floor,
+	cargo-deny, and cargo-semver-checks against the merge base.
+	* crates/crabbucket/tests/packaging.rs: Assert the published list is
+	the same in the Makefile, the release workflow and here, and that
+	no unpublished crate appears in any of them.
+	* HACKING: Where a new test goes, and what the layers are.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Write the book, and compile everything it shows.
 
 	* examples/site/content/book/: New; nine chapters and a contents

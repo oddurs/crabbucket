@@ -36,7 +36,20 @@ crabbucket-routes.workspace = true
 maud = "0.27"
 pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
 serde = { version = "1", features = ["derive"] }
-syntect = { version = "5.3.0", default-features = false, features = ["default-fancy"] }
+# Only what highlighting needs: the bundled syntax definitions, the HTML
+# generator, and a pure-Rust regex engine so there is no C dependency.
+#
+# Not `default-fancy'.  That also pulls `yaml-load' for reading
+# `.sublime-syntax' files at runtime, which nothing here does, and `yaml-load'
+# pulls `yaml-rust', which is unmaintained and carries an advisory --
+# RUSTSEC-2024-0320.  It also drops `plist-load' and `default-themes': the
+# colours come from a theme's own tokens, so syntect's themes are never
+# loaded.  `make audit' is what found this.
+syntect = { version = "5.3.0", default-features = false, features = [
+    "default-syntaxes",
+    "html",
+    "regex-fancy",
+] }
 thiserror = "2"
 toml = "0.9"
 walkdir = "2"

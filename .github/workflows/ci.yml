@@ -52,17 +52,110 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
         run: cargo clippy --workspace --all-targets --all-features
 
-      - run: cargo test --workspace --all-targets
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
+      - name: cargo nextest
+        run: cargo nextest run --workspace --all-targets --profile ci
         env:
           # Compiles the scaffolded crate against the working copy, which is
           # the only check that `crab new --theme` emits code that builds.
           CRABBUCKET_SLOW_TESTS: "1"
+
+      # Separately, because nothing runs both: `--all-targets` excludes
+      # doctests, quietly, and it is the obvious thing to write.
+      - name: doctests
+        run: cargo test --workspace --doc
+
+      # So a failure is readable in the run summary rather than only in the log.
+      - uses: mikepenz/action-junit-report@v5
+        if: always()
+        with:
+          report_paths: target/nextest/ci/junit.xml
+          annotate_only: true
+          detailed_summary: true
 
       - name: the example site builds
         run: cargo run -q -p crabbucket-cli -- build examples/site
 
       - name: the example site crate builds itself
         run: cargo run -q -p crabbucket-example-site
+
+  # A number for how much of this is tested, and a floor it may not fall
+  # below.  The floor ratchets: raise it when the number rises, never lower it
+  # to make a branch pass.
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: coverage
+
+      - name: cargo llvm-cov
+        run: |
+          make cover | tee coverage.txt
+        env:
+          CRABBUCKET_SLOW_TESTS: "1"
+
+      - name: the number, where a person will see it
+        if: always()
+        run: |
+          {
+            echo '### Coverage'
+            echo
+            echo '```'
+            tail -3 coverage.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # Licences, advisories, duplicate crates and where they came from.  This is
+  # a GPL-3.0-or-later project: a licence the GPL cannot absorb is a licensing
+  # bug rather than a preference.
+  supply-chain:
+    name: dependencies are allowed here
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+      - run: cargo deny --all-features check
+
+  # What doc/STABILITY promises, held against the branch this one came from.
+  # There is no published version to compare with yet, so the baseline is the
+  # merge base -- which answers the question a reviewer actually has: does
+  # this pull request break the public API?
+  public-api:
+    name: the public API did not break
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-semver-checks
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: semver
+
+      - run: |
+          cargo semver-checks \
+            -p crabbucket-routes -p crabbucket-tokens -p crabbucket-og \
+            -p crabbucket -p crabbucket-ui -p crabbucket-theme-plain \
+            -p crabbucket-cli \
+            --baseline-rev "${{ github.event.pull_request.base.sha }}"
 
   # The build has a ceiling.  Not a tight one: a shared runner's timings vary
   # by more than any change worth making, and a budget that fails on noise is
@@ -94,3 +187,4 @@ jobs:
       - uses: dtolnay/rust-toolchain@beta
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace --all-targets
+      - run: cargo test --workspace --doc

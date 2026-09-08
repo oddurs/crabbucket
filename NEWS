@@ -114,6 +114,42 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
   `build_with' now takes its `Options' by value, because they carry
   directives, which cannot be borrowed out of a shared reference.
 
+** Testing
+
+  Doctests now run.  `cargo test --workspace --all-targets' excludes them,
+  quietly, and it is what both `make test' and CI used -- so every `///'
+  example in the public API had been going unverified.
+
+  The runner is cargo-nextest, with `.config/nextest.toml': a process per
+  test, and therefore a per-test timeout, so a hung test is killed and
+  named rather than sitting there until the job's own limit expires.  It
+  is not required; without it the Makefile falls back to `cargo test'.
+
+  Coverage is a number, reported in CI with a floor that fails the build.
+  93.3% of regions, 94.3% of lines, with `bench/' -- a measuring tool
+  rather than the product -- not counted.
+
+  cargo-deny checks licences, advisories, duplicate crates and where they
+  came from.  This is a GPL-3.0-or-later project, so a transitive licence
+  the GPL cannot absorb is a licensing bug rather than a preference.  The
+  allow-list holds only what is actually in the tree.
+
+  It found something on its first run, which is the point of it: syntect
+  was pulling `yaml-rust', unmaintained and carrying an advisory, through
+  a `yaml-load' feature used to read `.sublime-syntax' files at runtime --
+  which nothing here does.  Trimming syntect to the three features
+  highlighting actually needs removes yaml-rust, plist and serde_json from
+  the dependency tree.  Three advisories remain, all unmaintained rather
+  than vulnerable and none with a safe upgrade; each is ignored by id with
+  the reason written next to it.
+
+  cargo-semver-checks runs on every pull request, against the merge base
+  rather than a release, because there is not one yet.  It answers the
+  question a reviewer has: does this break the public API doc/STABILITY
+  makes promises about?
+
+  HACKING says where a new test goes, and why the gates are the product.
+
 ** Packaging
 
   The crates are ready to publish.  Every one carries an `include' list --

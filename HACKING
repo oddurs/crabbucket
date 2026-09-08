@@ -127,12 +127,65 @@ removed and the number is never reusable.  That is why step 4 is reading
 rather than skimming.
 
 
+Testing
+-------
+
+  make test        the suite, and the doctests
+  make cover       how much of it is covered, with a floor
+  make audit       licences and advisories
+  make api         whether this branch breaks the public API
+
+`make test' runs two commands, because nothing runs both.  `cargo test
+--all-targets' silently excludes doctests, and it is the obvious thing to
+write -- so every `///' example in the public API went unverified until
+that was noticed.
+
+The runner is cargo-nextest, which gives a process per test and therefore
+a per-test timeout; `.config/nextest.toml' has the profiles.  It is not
+required: without it the Makefile falls back to `cargo test'.
+
+Where a new test goes, in the order to prefer:
+
+  next to the code       a `mod tests' at the foot of the file, for
+                         anything that is a property of one function
+  crates/*/tests/        an end-to-end test through the public API.
+                         crabbucket/tests/build.rs is the important one:
+                         a fixture site per gate, asserting that a bad
+                         site *fails* and that the message names the file
+  crates/crabbucket/tests/sites/
+                         those fixtures, one directory each, named after
+                         the thing that is wrong with them
+  examples/*/tests/      whether the documented thing is still true --
+                         that the book's snippets are the sample crate's
+                         source, that the second design system still
+                         renders somebody else's content
+
+The gates are the product.  "The build either fails, or the site is
+correct" is a claim about failure, and a claim about failure that is not
+tested is a claim that will quietly stop being true.  A new gate needs a
+fixture that fails it, not only a site that passes.
+
+Two things the suite has learned the hard way, both worth not repeating:
+
+  A test that needs a scratch directory needs its *own* scratch
+  directory.  Three tests once shared one and each began by deleting it,
+  which was green on two platforms and red on the third.
+
+  Reading code on one platform is not a substitute for running it on
+  three.  The Windows job has found bugs that careful review did not,
+  twice.
+
+
 Before sending a patch
 ----------------------
 
   make check
 
 which is fmt, clippy, the test suite, and a build of the example site.
+
+`make cover', `make audit' and `make api' are not in `make check'.  Each
+needs a tool that is a separate installation, and each runs as its own
+job in CI, which is where they are enforced.
 
 
 Style

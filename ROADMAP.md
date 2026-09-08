@@ -76,7 +76,7 @@ Prove the theme seam by implementing it twice, and give components the guarantee
 
 ## v1.0 — Stable enough to depend on
 
-`#########·` 90% · 9 of 10 done
+`##########` 91% · 10 of 11 done
 
 The point at which a breaking change starts costing someone other than the author something real.
 
@@ -95,6 +95,7 @@ The point at which a breaking change starts costing someone other than the autho
 - [x] [`0051`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0051-frontmatter-a-site-adds-is-silently-dropped.md) Frontmatter a site adds is silently dropped <sup>bug · p1 · migration</sup>
 - [x] [`0052`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0052-a-site-cannot-add-a-page-that-is-not-a-markdown-file.md) A site cannot add a page that is not a Markdown file <sup>feature · p1 · migration</sup>
 - [x] [`0053`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0053-a-directive-cannot-read-anything-but-its-own-attributes.md) A directive cannot read anything but its own attributes <sup>feature · p2 · migration</sup>
+- [x] [`0054`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0054-a-test-runner-coverage-floor-and-supply-chain-gates.md) A test runner, coverage floor and supply-chain gates <sup>chore · p1</sup>
 
 ## Unscheduled
 
