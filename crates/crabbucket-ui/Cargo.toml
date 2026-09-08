@@ -44,3 +44,16 @@ crabbucket-tokens.workspace = true
 
 [dev-dependencies]
 crabbucket-tokens.workspace = true
+# Snapshots of a rendered page and of the stylesheet, so a change to this
+# design system arrives as a reviewable diff rather than as a `contains()'
+# that still passes.
+insta = "1"
+# To hold two claims: that the feeds and the sitemap are well-formed XML, and
+# that a build produces the same bytes twice.  A parser, because "it looks like
+# XML" is what every generator that emits broken XML also believes.
+#
+# 0.42 rather than 0.38, which `make audit' rejected: RUSTSEC-2026-0194 and
+# -0195, two denial-of-service bugs in the reader.  Caught before this was
+# merged, by the gate added one pull request earlier, which is the whole
+# argument for having one.
+quick-xml = "0.42"

@@ -1,0 +1,94 @@
+---
+source: crates/crabbucket-theme-plain/tests/snapshot.rs
+expression: readable(&html)
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One — Fixture
+</title>
+<meta name="description" content="A document.">
+<link rel="stylesheet" href="/fixture/site.css">
+</head>
+<body class="pl-page">
+<header class="pl-page__masthead">
+<a class="pl-page__home" href="/fixture/">Fixture
+</a>
+<nav class="pl-page__nav">
+<a href="/fixture/">Home
+</a>
+<a href="/fixture/one/" aria-current="page">One
+</a>
+</nav>
+</header>
+<main class="pl-page__main">
+<div class="pl-prose">
+<h1 id="one">One
+<a class="heading-anchor" href="#one" aria-label="Link to this section">#
+</a>
+</h1>
+
+<aside class="pl-marks__callout pl-marks__callout--warn">
+<p class="pl-marks__label">Careful
+</p>
+<p>An indented note rather than a coloured box.
+</p>
+
+</aside>
+<pre class="code" data-language="rust">
+<code>
+<span class="tok-source tok-rust">
+<span class="tok-meta tok-function tok-rust">
+<span class="tok-meta tok-function tok-rust">
+<span class="tok-storage tok-type tok-function tok-rust">fn
+</span> 
+</span>
+<span class="tok-entity tok-name tok-function tok-rust">main
+</span>
+</span>
+<span class="tok-meta tok-function tok-rust">
+<span class="tok-meta tok-function tok-parameters tok-rust">
+<span class="tok-punctuation tok-section tok-parameters tok-begin tok-rust">(
+</span>
+</span>
+<span class="tok-meta tok-function tok-rust">
+<span class="tok-meta tok-function tok-parameters tok-rust">
+<span class="tok-punctuation tok-section tok-parameters tok-end tok-rust">)
+</span>
+</span>
+</span>
+</span>
+<span class="tok-meta tok-function tok-rust"> 
+</span>
+<span class="tok-meta tok-function tok-rust">
+<span class="tok-meta tok-block tok-rust">
+<span class="tok-punctuation tok-section tok-block tok-begin tok-rust">{
+</span>
+</span>
+<span class="tok-meta tok-block tok-rust">
+<span class="tok-punctuation tok-section tok-block tok-end tok-rust">}
+</span>
+</span>
+</span>
+
+</span>
+</code>
+</pre>
+
+<p>Back 
+<a href="/fixture/">home
+</a>.
+</p>
+
+</div>
+</main>
+<footer class="pl-page__colophon">
+<p>Built with 
+<a href="https://github.com/oddurs/crabbucket">crabbucket
+</a>.
+</p>
+</footer>
+</body>
+</html>

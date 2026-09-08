@@ -1,0 +1,10 @@
++++
+title = "Home"
++++
+
+# Home
+
+A [site-root link](~/docs/) and a [relative one](docs/), which are the same
+place said two ways.
+
+A shell path in prose is not a link: `~/Code/crabbucket`.

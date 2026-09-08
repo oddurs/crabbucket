@@ -1,0 +1,110 @@
++++
+title = "Your own design system"
+description = "A whole one, from an empty crate to a stylesheet, in about a hundred lines."
+layout = "docs"
+order = 5
++++
+
+# 5. Your own design system
+
+A design system is a crate you depend on. Not a theme directory, not a folder
+of templates you copied in — a crate, with a version number.
+
+That is the whole point, and [chapter 6](../a-fleet-of-sites/) is what it
+buys. This chapter is building one.
+
+We are going to build **Ferrite**: light, serif, two layouts, one component,
+no JavaScript. It is about a hundred and fifty lines and it renders a whole
+site. Everything below is a real crate in crabbucket's repository, and a test
+asserts that what you are reading is what that crate contains.
+
+## 1. The crate
+
+```toml
+[package]
+name = "ferrite"
+edition = "2024"
+
+[dependencies]
+crabbucket = "0.1"
+maud = "0.27"
+serde = { version = "1", features = ["derive"] }
+
+[build-dependencies]
+crabbucket-tokens = "0.1"
+```
+
+Four dependencies. `crabbucket` for the `Theme` trait, `maud` for markup that
+the compiler checks, `serde` because layouts and props are deserialized, and
+`crabbucket-tokens` at build time only.
+
+## 2. The tokens
+
+A design system owns its palette. Reaching into somebody else's would make
+every theme a fork of that one.
+
+```toml
+# design/tokens.toml
+[color]
+paper  = "#fbf9f6"
+ink    = "#22201d"
+faded  = "#6b665e"
+rule   = "#e0dbd2"
+accent = "#a8431f"
+
+[color.dark]
+paper  = "#1a1815"
+ink    = "#ece8e1"
+
+[space]
+line = "1.5rem"
+half = "0.75rem"
+
+[font]
+body = "Charter, 'Bitstream Charter', Georgia, serif"
+
+[measure]
+column = "36rem"
+```
+
+The base table is whichever scheme you design in; the sub-table is the other
+one. Ferrite is light-first because it is a document, and documents are
+light.
+
+One file, two outputs. The build script generates a Rust module:
+
+```rust
+fn main() {
+    let tokens = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("design/tokens.toml");
+
+    println!("cargo::rerun-if-changed={}", tokens.display());
+    println!("cargo::rerun-if-changed=build.rs");
+
+    let source =
+        fs::read_to_string(&tokens).unwrap_or_else(|err| panic!("{}: {err}", tokens.display()));
+
+    let module = generate(&source, Scheme::Light)
+        .unwrap_or_else(|err| panic!("{}: {err}", tokens.display()));
+
+    let out = PathBuf::from(env::var_os("OUT_DIR").expect("no out dir")).join("tokens.rs");
+    fs::write(&out, module).unwrap_or_else(|err| panic!("{}: {err}", out.display()));
+}
+```
+
+```rust
+/// Design tokens, generated from this crate's own `design/tokens.toml`.
+pub mod tok {
+    include!(concat!(env!("OUT_DIR"), "/tokens.rs"));
+}
+```
+
+That is the whole build script. It was forty lines in crabbucket's first
+design system and became a crate the moment a second one needed the same
+forty.
+
+What you get is `tok::color::ACCENT` in Rust and `--color-accent` in CSS,
+from one source, so the two cannot drift apart. A renamed token is a compile
+error in your own components, immediately.
+
+The generator also checks contrast: a foreground and a background that fail
+WCAG AA fail the build, in

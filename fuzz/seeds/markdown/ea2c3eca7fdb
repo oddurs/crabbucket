@@ -1,0 +1,14 @@
+
+
+# Not found
+
+There is nothing at that address.
+
+The [documentation](~/docs/) is probably where you were going.
+
+Every link on this page starts at the site root on purpose. The error page is
+served in place of *any* missing path, so a relative link here would resolve
+against wherever the reader happened to be — the build refuses to write one.
+
+`~/docs/` is how content says "the site root" without naming the base path,
+so this page keeps working if the site moves.

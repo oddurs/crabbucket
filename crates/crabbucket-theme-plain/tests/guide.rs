@@ -115,6 +115,12 @@ fn the_guide_shows_what_the_crate_actually_depends_on() {
     // The guide says four dependencies and names them.  A fifth appearing here
     // without the guide mentioning it is the kind of drift nobody notices
     // until they follow the walkthrough and it does not build.
+    //
+    // `[dev-dependencies]' is not among them, deliberately.  What a design
+    // system needs to *be* one is the claim the guide makes; what this crate
+    // happens to test itself with is nobody else's business, and counting it
+    // would mean the walkthrough grew a dependency every time the test suite
+    // did.
     let mut declared: Vec<&str> = Vec::new();
     let mut inside = false;
 
@@ -122,7 +128,7 @@ fn the_guide_shows_what_the_crate_actually_depends_on() {
         let line = line.trim();
 
         if line.starts_with('[') {
-            inside = line.contains("dependencies]");
+            inside = line.contains("dependencies]") && !line.contains("dev-dependencies]");
             continue;
         }
 

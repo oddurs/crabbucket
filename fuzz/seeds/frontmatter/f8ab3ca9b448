@@ -1,0 +1,85 @@
++++
+title = "Social cards"
+layout = "docs"
+order = 11
++++
+
+# Social cards
+
+A link to a page shared anywhere renders as a grey rectangle without one,
+which for a project whose pitch is that things should look considered is the
+most visible unconsidered surface it has.
+
+The default design system draws one per page, from its own tokens:
+
+![A card: the site name in small capitals above a bold page title, with an
+accent rule down the left edge](~/example-card.png)
+
+That image is a *copy*, committed to `static/`, not the card this page
+generates. Embedding the real one would tie this page to a design system that
+draws cards — and the [link checker](../routing/) says so, which is how the
+first draft of this page was caught.
+
+Nothing is configured. A site with a `url` gets cards; a site without one does
+not, because a card is only ever fetched from an absolute URL and drawing one
+nothing will request is work for nobody.
+
+## It is a separate crate, on purpose
+
+`crabbucket-og` costs **76 transitive crates** and a few seconds of
+compilation — a rasteriser, a text shaper and a font database. A docs site
+with no interest in social previews should pay neither, so `crabbucket` does
+not depend on it. A design system that wants cards does:
+
+```rust
+fn og_image(&self, page: &Page<'_, Layout>) -> Option<Vec<u8>> {
+    let card = crabbucket_og::Card {
+        title: &page.meta.title,
+        site: &page.config.title,
+        palette: crabbucket_og::Palette {
+            background: hex(tok::color::SURFACE),
+            foreground: hex(tok::color::TEXT),
+            muted: hex(tok::color::TEXT_MUTED),
+            accent: hex(tok::color::ACCENT),
+        },
+    };
+
+    crabbucket_og::cached(&page.cache.join("og"), &card).ok()
+}
+```
+
+The colours come from the same token file as the site itself, so a card looks
+like the thing it links to without anybody restating the palette.
+
+:::callout{kind = "note", title = "Why `hex()`"}
+A token is a `var(--color-text, #e7eaf0)` reference, so a runtime theme
+override reaches it. An image is drawn before any browser exists, so it needs
+the value the reference falls back to.
+:::
+
+## The cache is not optional
+
+A card costs about 65ms. Thirteen pages is most of a second, on a build that
+otherwise takes a tenth of one:
+
+```
+cold   0.37s
+warm   0.12s
+```
+
+So cards are cached in `.crabbucket/`, beside the site rather than inside
+`dist/`, which is deleted every build. The key covers everything that changes
+the picture — the words, the colours, the size, and a layout version bumped by
+hand — so a hit is only ever the same image. Deleting the directory costs time
+and nothing else.
+
+## The font is bundled
+
+Public Sans, under the SIL Open Font License, as two static instances.
+
+Bundled rather than found on the machine, because an image generated during a
+build has to look the same everywhere the build runs, and a font the build
+merely hopes to find does not give that.
+
+Static rather than variable because resvg does not apply a variable font's
+weight axis — the variable file rendered every title at Thin re

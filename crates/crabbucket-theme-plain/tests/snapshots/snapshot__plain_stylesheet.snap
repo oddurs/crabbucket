@@ -1,0 +1,131 @@
+---
+source: crates/crabbucket-theme-plain/tests/snapshot.rs
+expression: css
+---
+:root{color-scheme:light;--color-accent:#7a1f1f;--color-faded:#5c5c56;--color-ink:#1b1b19;--color-paper:#fdfdfb;--color-rule:#d9d7cf;--font-body:'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;--font-mono:ui-monospace, SFMono-Regular, Menlo, monospace;--measure-column:34rem;--size-body:1.0625rem;--size-small:0.875rem;--size-title:2rem;--space-half:0.8rem;--space-line:1.6rem;--space-third:0.5rem;--syntax-comment:#7a776e;--syntax-constant:#6a4a12;--syntax-entity:#28457a;--syntax-invalid:#a12020;--syntax-keyword:#7a1f1f;--syntax-punctuation:#5c5c56;--syntax-string:#2f5d3f;--syntax-support:#1f5a5a;--syntax-variable:#1b1b19;}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;--color-accent:#d98b7a;--color-faded:#9a978d;--color-ink:#e6e4de;--color-paper:#16161a;--color-rule:#2e2e33;--syntax-comment:#8a877e;--syntax-constant:#d3b477;--syntax-entity:#9ab6e8;--syntax-invalid:#e08b8b;--syntax-keyword:#d98b7a;--syntax-punctuation:#9a978d;--syntax-string:#9ec9a8;--syntax-support:#8fc9c9;--syntax-variable:#e6e4de;}}:root[data-theme="dark"]{color-scheme:dark;--color-accent:#d98b7a;--color-faded:#9a978d;--color-ink:#e6e4de;--color-paper:#16161a;--color-rule:#2e2e33;--syntax-comment:#8a877e;--syntax-constant:#d3b477;--syntax-entity:#9ab6e8;--syntax-invalid:#e08b8b;--syntax-keyword:#d98b7a;--syntax-punctuation:#9a978d;--syntax-string:#9ec9a8;--syntax-support:#8fc9c9;--syntax-variable:#e6e4de;}
+
+/* pl/page */
+/* Plain: a document, not an application.
+ *
+ * One column, serif, light by default, and no sidebar.  Every difference from
+ * the default design system is deliberate -- a second theme that is a restyle
+ * of the first proves nothing about the seam between them. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.pl-page {
+  margin: 0;
+  padding: var(--space-line);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--size-body);
+  line-height: 1.7;
+}
+
+.pl-page__masthead {
+  max-width: var(--measure-column);
+  margin: 0 auto var(--space-line);
+  padding-bottom: var(--space-half);
+  border-bottom: 1px solid var(--color-rule);
+  display: flex;
+  gap: var(--space-line);
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.pl-page__home { color: var(--color-ink); text-decoration: none; font-style: italic; }
+.pl-page__nav { display: flex; gap: var(--space-half); font-size: var(--size-small); }
+.pl-page__nav a { color: var(--color-faded); text-decoration: none; }
+.pl-page__nav a:hover { color: var(--color-ink); }
+.pl-page__nav a[aria-current="page"] { color: var(--color-accent); }
+
+.pl-page__main { max-width: var(--measure-column); margin: 0 auto; }
+
+.pl-page__colophon {
+  max-width: var(--measure-column);
+  margin: var(--space-line) auto 0;
+  padding-top: var(--space-half);
+  border-top: 1px solid var(--color-rule);
+  color: var(--color-faded);
+  font-size: var(--size-small);
+}
+
+/* pl/prose */
+/* Prose, and the classes crabbucket itself emits.
+ *
+ * `heading-anchor`, `code` and the `tok-` scope classes belong to the
+ * framework rather than to any design system, so they are not namespaced.
+ * See crabbucket::style::FRAMEWORK_CLASSES. */
+
+.pl-prose__summary { font-style: italic; color: var(--color-faded); margin: 0 0 var(--space-line); }
+
+.pl-prose h1 { font-size: var(--size-title); line-height: 1.2; margin: 0 0 var(--space-line); font-weight: 400; }
+.pl-prose h2 { font-size: var(--size-body); margin: var(--space-line) 0 var(--space-third); font-weight: 700; }
+.pl-prose h3 { font-size: var(--size-body); margin: var(--space-line) 0 var(--space-third); font-weight: 400; font-style: italic; }
+.pl-prose p, .pl-prose ul, .pl-prose ol { margin: 0 0 var(--space-line); }
+.pl-prose :is(h1, h2, h3, h4) { scroll-margin-top: var(--space-half); }
+
+.pl-prose a { color: var(--color-accent); text-underline-offset: 0.15em; }
+
+.pl-prose blockquote {
+  margin: 0 0 var(--space-line);
+  padding-left: var(--space-line);
+  border-left: 1px solid var(--color-rule);
+  color: var(--color-faded);
+  font-style: italic;
+}
+
+.pl-prose code { font-family: var(--font-mono); font-size: var(--size-small); }
+.pl-prose pre {
+  font-size: var(--size-small);
+  line-height: 1.5;
+  padding: var(--space-half);
+  border: 1px solid var(--color-rule);
+  overflow-x: auto;
+  margin: 0 0 var(--space-line);
+}
+
+.pl-prose table { border-collapse: collapse; width: 100%; margin: 0 0 var(--space-line); }
+.pl-prose th, .pl-prose td { text-align: left; padding: var(--space-third) var(--space-half) var(--space-third) 0; border-bottom: 1px solid var(--color-rule); vertical-align: top; }
+.pl-prose th { font-weight: 700; font-size: var(--size-small); }
+
+.heading-anchor { margin-left: var(--space-third); color: var(--color-faded); text-decoration: none; opacity: 0; }
+.pl-prose :is(h1, h2, h3, h4):hover .heading-anchor, .heading-anchor:focus-visible { opacity: 1; }
+
+.tok-comment { color: var(--syntax-comment); font-style: italic; }
+.tok-keyword, .tok-storage { color: var(--syntax-keyword); }
+.tok-string { color: var(--syntax-string); }
+.tok-constant { color: var(--syntax-constant); }
+.tok-entity { color: var(--syntax-entity); }
+.tok-support { color: var(--syntax-support); }
+.tok-variable { color: var(--syntax-variable); }
+.tok-punctuation { color: var(--syntax-punctuation); }
+.tok-invalid { color: var(--syntax-invalid); }
+
+/* pl/marks */
+/* The components, rendered the way a document would render them.
+ *
+ * A callout is an indented note.  Cards are a list.  Tabs are every panel,
+ * one after another, each under its own label -- this design system does not
+ * do tabs, and saying so plainly is better than doing them badly. */
+
+.pl-marks__callout {
+  margin: 0 0 var(--space-line);
+  padding-left: var(--space-line);
+  border-left: 2px solid var(--color-accent);
+}
+
+.pl-marks__callout--warn { border-left-style: double; border-left-width: 4px; }
+.pl-marks__label { font-variant: small-caps; letter-spacing: 0.04em; color: var(--color-faded); }
+.pl-marks__callout > :last-child, .pl-marks__panel > :last-child, .pl-marks__step > :last-child { margin-bottom: 0; }
+
+.pl-marks__cards { list-style: none; margin: 0 0 var(--space-line); padding: 0; }
+.pl-marks__card { margin: 0 0 var(--space-half); padding-left: var(--space-line); text-indent: calc(var(--space-line) * -1); }
+.pl-marks__card a { font-style: italic; }
+
+.pl-marks__panel { margin: 0 0 var(--space-line); }
+.pl-marks__steps { counter-reset: step; }
+.pl-marks__step { counter-increment: step; margin: 0 0 var(--space-line); }
+.pl-marks__step .pl-marks__label::before { content: counter(step) ". "; }

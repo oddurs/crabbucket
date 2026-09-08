@@ -1,0 +1,100 @@
+
+
+# 8. Deploying
+
+`dist/` is a directory of static files with no server requirements. Any host
+will serve it. This chapter is about GitHub Pages, because that is the one
+crabbucket is shaped around.
+
+## Set the base path
+
+A project site is served from `https://you.github.io/ferrite-docs/`. A user
+site or a custom domain is served from the root.
+
+```toml
+# site.toml
+base = "/ferrite-docs/"
+url  = "https://you.github.io/ferrite-docs/"
+```
+
+`base` is what every link and asset is built from. `url` is optional and
+turns on the things that need an absolute address: `sitemap.xml`,
+`robots.txt`, feeds, and social cards. Without it those are skipped entirely
+rather than emitted with guessed URLs.
+
+This is the whole of what you have to get right, and [chapter
+3](../routes-and-links/) is why it is only one line.
+
+## The workflow
+
+`crab new` writes it. Two jobs: build, then deploy.
+
+```yaml
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+```
+
+Then a build job that runs `crab build .` and uploads `dist/`, and a deploy
+job that publishes it. Turn on Pages in the repository settings with "GitHub
+Actions" as the source, once.
+
+## What the build writes
+
+```
+dist/
+  index.html
+  docs/index.html      every route is a directory
+  404.html             a file, because that is what hosts look for
+  site.css
+  router.js            only if the site asked for it
+  search.json          only if site.toml asks for search
+  search.js            "
+  og/index.png         one card per page, if the design system draws them
+  sitemap.xml          only with a url
+  robots.txt           only with a url
+  .nojekyll
+```
+
+## `.nojekyll`, which is the one that gets people
+
+GitHub Pages runs uploaded output through Jekyll unless that file is present,
+and Jekyll silently drops every file and directory whose name begins with an
+underscore. Nothing errors. Some assets are just missing.
+
+The build writes the file for you. It is a famously annoying thirty minutes
+and you should not have to spend it.
+
+## The same bytes every time
+
+A build produces identical output on every machine. Line endings in what the
+build writes are normalised, because a design system's CSS and clients arrive
+through `include_str!` and a checkout on Windows carries carriage returns —
+which would otherwise make the same site, built twice, two different sites.
+Social cards are deterministic for the same reason.
+
+That matters for a deploy that diffs its output, and it is the sort of thing
+that is very cheap to do on day one and very annoying to retrofit.
+
+## Somewhere that is not GitHub Pages
+
+Set `base = "/"`, point the host at `dist/`, and there is nothing else. No
+runtime, no server, no rewrite rules — every route is a directory containing
+an `index.html`, which every static host in existence serves correctly
+without configuration.
+
+## Next
+
+[Chapter 9](../reference/) is the page to keep open in another tab.

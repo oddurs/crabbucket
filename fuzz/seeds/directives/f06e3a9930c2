@@ -1,0 +1,94 @@
+
+
+# 2. Content
+
+Ferrite's docs site has three pages so far. This chapter is about filling it
+up, and about the one idea that makes the rest of the book work.
+
+## A page
+
+```md
++++
+title = "Installing"
+description = "Two ways, and which one you want."
+nav_order = 2
++++
+
+# Installing
+
+The short version is `cargo add ferrite`.
+```
+
+TOML between `+++` fences, then Markdown. One file, one page.
+
+## Frontmatter is a struct
+
+This is the idea. In most generators, frontmatter is a map: you write a key,
+the template asks for a key, and if the two ever disagree you find out from a
+reader.
+
+Here it is deserialized into a Rust type before the page is rendered, so the
+disagreement is a build failure with a file and a line:
+
+```
+crab: content/docs/installing.md: TOML parse error at line 2, column 1
+  |
+2 | ttile = "Installing"
+  | ^^^^^
+missing field `title`
+```
+
+Every page has `title`, and optionally `description`, `layout`, `nav_order`,
+`nav_label`, `order`, `date` and `draft`. The [reference](../reference/) has
+the table.
+
+Two of those are worth a sentence each. `nav_order` puts a page in the
+site-wide navigation at that position; a page without one is not in it.
+`order` sorts a page within its own section, which is what the sidebar and
+the previous/next links follow — one ordering, so the sidebar and the "next"
+button cannot disagree.
+
+## Fields your design system adds
+
+The list above is what the build needs to render *any* page. A design system
+can ask for more, and the asking is a type:
+
+```rust
+/// The frontmatter Ferrite reads beyond what every page has.
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct Extra {
+    /// A sentence that stands above the prose.
+    #[serde(default)]
+    pub summary: Option<String>,
+}
+```
+
+Now a page may carry `summary = "..."`, the design system reads
+`page.meta.extra.summary`, and it is an `Option<String>` rather than a lookup
+that might miss. Take the `Option` off and a page without one fails to load.
+
+A site cannot invent a field its design system does not read. That is the
+same bargain as layouts, and [chapter 6](../a-fleet-of-sites/) is about why
+it is a good one.
+
+:::callout{kind = "warn", title = "One hole, stated plainly"}
+serde cannot combine `flatten` with `deny_unknown_fields`, so a *misspelled*
+key that nothing declares is still ignored silently rather than failing.
+`sumary = "..."` disappears. It is the one place this design does not hold,
+and a test asserts it so the day it changes is a deliberate one.
+:::
+
+## Markdown, and what the build does to it
+
+CommonMark, plus tables, footnotes, strikethrough, smart punctuation and
+heading attributes.
+
+Two things happen that are worth knowing about.
+
+**Headings become linkable.** `## Getting started` gets the id
+`getting-started` and a permalink anchor. Write `{#custom-id}` to choose it
+yourself. These ids are what [chapter 3](../routes-and-links/) checks
+fragment links against, and they are the reason a reworded heading does not
+quietly break six links.
+
+**Code is highlighted while the site builds.** A fenced block with a languag

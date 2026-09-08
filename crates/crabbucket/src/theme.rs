@@ -517,4 +517,39 @@ mod tests {
 
         assert!(previous.is_none() && next.is_none());
     }
+
+    // ------------------------------------------------ the site index
+
+    #[test]
+    fn contains_answers_about_routes_however_they_are_spelt() {
+        // This is what link checking is built on, and three mutants survived
+        // in it: `contains' could return a constant and nothing failed.
+        let index = index();
+
+        assert!(index.contains("docs"));
+        assert!(index.contains("/docs/"), "slashes should not matter");
+        assert!(index.contains(""), "the root is a route");
+
+        assert!(!index.contains("gone"));
+        assert!(!index.contains("docs/gone"));
+    }
+
+    #[test]
+    fn the_index_keeps_every_page_it_was_given() {
+        let index = index();
+
+        assert_eq!(index.pages().len(), 6);
+        assert!(index.pages().iter().any(|page| page.route == "about"));
+    }
+
+    // ------------------------------------------------------- the label
+
+    #[test]
+    fn a_page_is_labelled_by_its_nav_label_and_otherwise_by_its_title() {
+        let mut meta = meta();
+        assert_eq!(meta.label(), "T", "a page with no nav_label uses its title");
+
+        meta.nav_label = Some("Shorter".into());
+        assert_eq!(meta.label(), "Shorter");
+    }
 }

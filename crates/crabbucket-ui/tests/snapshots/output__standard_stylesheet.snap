@@ -1,0 +1,453 @@
+---
+source: crates/crabbucket-ui/tests/output.rs
+expression: css
+---
+:root{color-scheme:dark;--color-accent:#e8623c;--color-accent-quiet:#f0a58c;--color-border:#212832;--color-link:#7db3ff;--color-surface:#0b0d10;--color-surface-raised:#11151b;--color-text:#e7eaf0;--color-text-muted:#98a2b3;--font-mono:ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;--font-sans:ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;--measure-page:1080px;--measure-prose:68ch;--radius-lg:16px;--radius-md:8px;--radius-sm:4px;--size-step--1:0.875rem;--size-step-0:1rem;--size-step-1:1.25rem;--size-step-2:1.625rem;--size-step-3:2.25rem;--size-step-4:3rem;--space-lg:24px;--space-md:16px;--space-sm:8px;--space-xl:40px;--space-xs:4px;--space-xxl:72px;--syntax-comment:#6b7684;--syntax-constant:#d8a657;--syntax-entity:#7db3ff;--syntax-invalid:#ff6b6b;--syntax-keyword:#f0855f;--syntax-punctuation:#98a2b3;--syntax-string:#8ecf9a;--syntax-support:#74c7c7;--syntax-variable:#e7eaf0;}@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){color-scheme:light;--color-accent:#c2451f;--color-accent-quiet:#a33a1a;--color-border:#dfe3e8;--color-link:#1b58c4;--color-surface:#ffffff;--color-surface-raised:#f6f7f9;--color-text:#1a1f26;--color-text-muted:#5b6572;--syntax-comment:#66707d;--syntax-constant:#8a5a00;--syntax-entity:#1b58c4;--syntax-invalid:#c0392b;--syntax-keyword:#b4501c;--syntax-punctuation:#5b6572;--syntax-string:#2c7a45;--syntax-support:#0f6e6e;--syntax-variable:#1a1f26;}}:root[data-theme="light"]{color-scheme:light;--color-accent:#c2451f;--color-accent-quiet:#a33a1a;--color-border:#dfe3e8;--color-link:#1b58c4;--color-surface:#ffffff;--color-surface-raised:#f6f7f9;--color-text:#1a1f26;--color-text-muted:#5b6572;--syntax-comment:#66707d;--syntax-constant:#8a5a00;--syntax-entity:#1b58c4;--syntax-invalid:#c0392b;--syntax-keyword:#b4501c;--syntax-punctuation:#5b6572;--syntax-string:#2c7a45;--syntax-support:#0f6e6e;--syntax-variable:#1a1f26;}
+
+/* cb/site */
+/* The page shell: reset, document defaults, and the main column. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.cb-site {
+  margin: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--size-step-0);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.cb-site a { color: var(--color-link); text-underline-offset: 0.2em; }
+
+.cb-site__main {
+  max-width: var(--measure-page);
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-lg);
+}
+
+/* The landing layout widens the measure and enlarges the opening.  These
+ * rules name `cb-prose` literally: it belongs to the same design system and
+ * ships in the same crate, so there is no other component it could collide
+ * with, and the alternative -- a component that cannot style what it
+ * contains -- would be worse. */
+
+.cb-site--landing .cb-prose { max-width: none; }
+.cb-site--landing .cb-prose h1 { font-size: clamp(var(--size-step-3), 7vw, var(--size-step-4)); max-width: 18ch; }
+.cb-site--landing .cb-prose > p:first-of-type { font-size: var(--size-step-1); color: var(--color-text-muted); max-width: 52ch; }
+.cb-site--landing .cb-prose table { width: 100%; max-width: var(--measure-prose); }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* cb/masthead */
+/* The masthead across the top of every page. */
+
+.cb-masthead {
+  display: flex;
+  gap: var(--space-lg);
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  max-width: var(--measure-page);
+  margin: 0 auto;
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cb-masthead__home { font-weight: 600; color: var(--color-text); text-decoration: none; }
+.cb-masthead__nav { display: flex; gap: var(--space-md); }
+.cb-masthead__nav a { color: var(--color-text-muted); text-decoration: none; }
+.cb-masthead__nav a[aria-current="page"] { color: var(--color-accent); }
+
+/* cb/prose */
+/* Everything Markdown produces.
+ *
+ * `heading-anchor`, `code` and the `tok-` scope classes are emitted by the
+ * framework rather than by this design system, so they are not namespaced.
+ * See crabbucket::style::FRAMEWORK_CLASSES.
+ */
+
+.cb-prose { max-width: var(--measure-prose); }
+
+.cb-prose h1 { font-size: var(--size-step-4); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 var(--space-md); }
+.cb-prose h2 { font-size: var(--size-step-2); line-height: 1.2; margin: var(--space-xl) 0 var(--space-sm); }
+.cb-prose h3 { font-size: var(--size-step-1); margin: var(--space-lg) 0 var(--space-xs); }
+.cb-prose p, .cb-prose ul, .cb-prose ol { margin: 0 0 var(--space-md); }
+.cb-prose :is(h1, h2, h3, h4) { scroll-margin-top: var(--space-lg); }
+
+.cb-prose code { font-family: var(--font-mono); font-size: var(--size-step--1); background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0.1em 0.35em; }
+.cb-prose pre { background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-md); overflow-x: auto; }
+.cb-prose pre code { background: none; border: 0; padding: 0; }
+
+.cb-prose table { border-collapse: collapse; }
+.cb-prose th, .cb-prose td { text-align: left; padding: var(--space-sm) var(--space-md) var(--space-sm) 0; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+.cb-prose th { color: var(--color-text-muted); font-weight: 600; font-size: var(--size-step--1); }
+
+.heading-anchor { margin-left: var(--space-sm); color: var(--color-text-muted); text-decoration: none; opacity: 0; transition: opacity 120ms ease; font-weight: 400; }
+.cb-prose :is(h1, h2, h3, h4):hover .heading-anchor, .heading-anchor:focus-visible { opacity: 1; }
+@media (hover: none) { .heading-anchor { opacity: 0.4; } }
+
+.code { position: relative; }
+
+.code[data-language]::after { content: attr(data-language); position: absolute; top: var(--space-xs); right: var(--space-sm); font-size: 0.7rem; color: var(--color-text-muted); letter-spacing: 0.04em; text-transform: uppercase; pointer-events: none; }
+
+.tok-comment { color: var(--syntax-comment); font-style: italic; }
+.tok-keyword, .tok-storage { color: var(--syntax-keyword); }
+.tok-string { color: var(--syntax-string); }
+.tok-constant { color: var(--syntax-constant); }
+.tok-entity { color: var(--syntax-entity); }
+.tok-support { color: var(--syntax-support); }
+.tok-variable { color: var(--syntax-variable); }
+.tok-punctuation { color: var(--syntax-punctuation); }
+.tok-invalid { color: var(--syntax-invalid); }
+
+/* cb/docs */
+/* The documentation layout: a sticky sidebar beside the content. */
+
+.cb-docs { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: var(--space-xl); align-items: start; }
+
+/* Wide enough for a table of contents to be worth a column of its own. */
+@media (min-width: 76rem) {
+  .cb-docs { grid-template-columns: 13rem minmax(0, 1fr) 12rem; }
+}
+
+.cb-docs__aside { display: none; }
+@media (min-width: 76rem) { .cb-docs__aside { display: block; } }
+
+.cb-docs__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  position: sticky;
+  top: var(--space-lg);
+  font-size: var(--size-step--1);
+}
+
+/* A grid child will not shrink below its content unless told to, which is
+ * how a wide code block pushes a docs page sideways. */
+.cb-docs__main { min-width: 0; }
+
+.cb-docs__side a { color: var(--color-text-muted); text-decoration: none; padding: var(--space-xs) var(--space-sm); border-left: 2px solid var(--color-border); }
+.cb-docs__side a:hover { color: var(--color-text); }
+.cb-docs__side a[aria-current="page"] { color: var(--color-accent); border-left-color: var(--color-accent); }
+
+@media (max-width: 46rem) {
+  .cb-docs { grid-template-columns: 1fr; }
+  .cb-docs__side { position: static; flex-direction: row; flex-wrap: wrap; }
+}
+
+/* cb/toc */
+/* A table of contents beside the prose, or above it on a narrow screen.
+ *
+ * It is a list of ordinary anchors, so it works with scripting disabled.
+ * Highlighting the section in view is added by the router when a site has
+ * opted into one, and its absence costs nothing. */
+
+.cb-toc {
+  position: sticky;
+  top: var(--space-lg);
+  font-size: var(--size-step--1);
+  line-height: 1.4;
+  border-left: 1px solid var(--color-border);
+  padding-left: var(--space-md);
+}
+
+.cb-toc__label {
+  display: block;
+  margin: 0 0 var(--space-sm);
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cb-toc__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-xs); }
+.cb-toc__list .cb-toc__list { margin-top: var(--space-xs); padding-left: var(--space-md); }
+
+.cb-toc__link { color: var(--color-text-muted); text-decoration: none; display: block; }
+.cb-toc__link:hover { color: var(--color-text); }
+.cb-toc__link[aria-current="true"] { color: var(--color-accent); }
+
+/* The sidebar rendering is hidden until there is a column for it; see
+ * docs.css. The folded one takes over below that width. */
+.cb-toc--folded {
+  position: static;
+  border-left: 0;
+  padding: var(--space-sm) 0;
+  margin: 0 0 var(--space-lg);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cb-toc--folded summary { cursor: pointer; color: var(--color-text-muted); }
+.cb-toc--folded summary:hover { color: var(--color-text); }
+.cb-toc--folded .cb-toc__list { margin-top: var(--space-sm); }
+.cb-toc--folded .cb-toc__label { display: none; }
+
+@media (min-width: 76rem) { .cb-toc--folded { display: none; } }
+
+/* cb/neighbours */
+/* The pages either side of this one, at the foot of a section.
+ *
+ * Labelled with page titles rather than with "Previous" and "Next" alone: the
+ * title is the useful half, and the direction is already obvious from which
+ * side of the page it is on. */
+
+.cb-neighbours {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: space-between;
+  margin-top: var(--space-xxl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.cb-neighbours__link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  max-width: 48%;
+}
+
+.cb-neighbours__link:hover, .cb-neighbours__link:focus-visible { border-color: var(--color-accent); }
+.cb-neighbours__link--next { margin-left: auto; text-align: right; }
+
+.cb-neighbours__direction { color: var(--color-text-muted); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.cb-neighbours__title { color: var(--color-text); }
+
+/* cb/copy */
+/* The copy button on a code block.
+ *
+ * Created by the router, so it exists only where scripting does: a button
+ * that cannot copy is worse than no button. */
+
+.cb-copy {
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  padding: 0.15rem 0.5rem;
+  font: inherit;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+pre:hover > .cb-copy, .cb-copy:focus-visible { opacity: 1; }
+.cb-copy:hover { color: var(--color-text); border-color: var(--color-accent); }
+@media (hover: none) { .cb-copy { opacity: 1; } }
+
+/* The language badge and the button share a corner; move the badge aside.
+ * Naming `code` from here is the same within-one-design-system exception
+ * site.css takes, and for the same reason. */
+.code[data-language]:has(> .cb-copy)::after { right: 4.2rem; }
+
+/* cb/search */
+/* The search box in the masthead.
+ *
+ * It ships hidden and the client unhides it, so a reader without script sees
+ * no search box rather than one that does nothing. */
+
+.cb-search { position: relative; }
+
+.cb-search__input {
+  font: inherit;
+  font-size: var(--size-step--1);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem var(--space-sm);
+  width: 12rem;
+  max-width: 40vw;
+}
+
+.cb-search__input:focus-visible { outline: 2px solid var(--color-link); outline-offset: 1px; }
+.cb-search__input::placeholder { color: var(--color-text-muted); }
+
+.cb-search__results {
+  position: absolute;
+  top: calc(100% + var(--space-xs));
+  right: 0;
+  z-index: 10;
+  min-width: 18rem;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.cb-search__result {
+  padding: var(--space-xs) var(--space-md);
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: var(--size-step--1);
+}
+
+.cb-search__result:hover, .cb-search__result[aria-selected="true"] {
+  background: var(--color-surface);
+  color: var(--color-accent);
+  outline: none;
+}
+
+/* cb/colophon */
+/* The footer. */
+
+.cb-colophon {
+  max-width: var(--measure-page);
+  margin: 0 auto;
+  padding: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--size-step--1);
+}
+
+/* cb/callout */
+/* An aside that stands apart from the prose around it. */
+
+.cb-callout {
+  border-left: 3px solid var(--color-accent);
+  background: var(--color-surface-raised);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: var(--space-md);
+  margin: 0 0 var(--space-md);
+}
+
+.cb-callout--note { border-left-color: var(--color-link); }
+.cb-callout--warn { border-left-color: var(--color-accent); }
+
+.cb-callout__title {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--size-step-0);
+  font-weight: 600;
+}
+
+.cb-callout--note .cb-callout__title { color: var(--color-link); }
+.cb-callout--warn .cb-callout__title { color: var(--color-accent); }
+
+.cb-callout__body > :last-child { margin-bottom: 0; }
+
+/* cb/cards */
+/* A grid of links, for index pages. */
+
+.cb-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-md);
+  margin: 0 0 var(--space-lg);
+}
+
+.cb-cards__card {
+  display: block;
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 120ms ease;
+}
+
+.cb-cards__card:hover, .cb-cards__card:focus-visible { border-color: var(--color-accent); }
+
+.cb-cards__title {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--size-step-0);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.cb-cards__body { color: var(--color-text-muted); font-size: var(--size-step--1); }
+.cb-cards__body > :last-child { margin-bottom: 0; }
+
+/* cb/tabs */
+/* Tabs with no JavaScript at all.
+ *
+ * Each tab is a self-contained radio, label and panel, so the component needs
+ * to know nothing about its siblings.  `order` puts every label on the first
+ * row and every panel below, which is what lets the three stay together in the
+ * markup.  With scripting off this is fully working tabs, not a fallback. */
+
+.cb-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-xs);
+  margin: 0 0 var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cb-tabs__radio { position: absolute; opacity: 0; pointer-events: none; }
+
+.cb-tabs__label {
+  order: 1;
+  padding: var(--space-xs) var(--space-md);
+  color: var(--color-text-muted);
+  font-size: var(--size-step--1);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.cb-tabs__label:hover { color: var(--color-text); }
+
+.cb-tabs__panel {
+  order: 2;
+  flex-basis: 100%;
+  display: none;
+  padding-top: var(--space-md);
+}
+
+.cb-tabs__radio:checked + .cb-tabs__label { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+.cb-tabs__radio:focus-visible + .cb-tabs__label { outline: 2px solid var(--color-link); outline-offset: -2px; }
+.cb-tabs__radio:checked + .cb-tabs__label + .cb-tabs__panel { display: block; }
+.cb-tabs__panel > :last-child { margin-bottom: 0; }
+
+/* cb/steps */
+/* An ordered walkthrough, numbered by CSS rather than by the author. */
+
+.cb-steps { counter-reset: step; margin: 0 0 var(--space-lg); }
+
+.cb-steps__step {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 var(--space-md) var(--space-xl);
+  border-left: 1px solid var(--color-border);
+}
+
+.cb-steps__step:last-child { border-left-color: transparent; padding-bottom: 0; }
+
+.cb-steps__step::before {
+  content: counter(step);
+  position: absolute;
+  left: calc(var(--space-lg) * -0.5 - 0.9rem);
+  top: 0;
+  width: 1.8rem;
+  height: 1.8rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--size-step--1);
+  font-variant-numeric: tabular-nums;
+}
+
+.cb-steps__title { margin: 0 0 var(--space-xs); font-size: var(--size-step-0); font-weight: 600; }
+.cb-steps__body > :last-child { margin-bottom: 0; }

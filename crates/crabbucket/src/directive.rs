@@ -531,7 +531,7 @@ mod tests {
     use maud::html;
     use serde::Deserialize;
 
-    use super::{Attributes, Block, Context, Data, Directives, scan};
+    use super::{Attributes, Block, Context, Data, Directives, closes_fence, opens_fence, scan};
 
     #[derive(Deserialize)]
     struct Props {
@@ -742,5 +742,57 @@ mod tests {
         let mut attrs = Attributes::new();
         attrs.insert("kind".into(), toml::Value::String(kind.into()));
         attrs
+    }
+
+    // ------------------------------------------------------------- fences
+
+    // Five mutants survived in `closes_fence' -- the whole of the rule was
+    // untested, and it is the stateful part of the scanner: it decides
+    // whether a `:::' inside a code block is a directive or text.
+
+    #[test]
+    fn a_fence_is_closed_by_its_own_marker_and_not_another() {
+        let open = opens_fence("~~~").expect("a fence");
+
+        assert!(closes_fence("~~~", open));
+        assert!(
+            !closes_fence("```", open),
+            "a backtick closed a tilde fence"
+        );
+    }
+
+    #[test]
+    fn a_fence_is_closed_by_at_least_as_many_marks_never_fewer() {
+        let open = opens_fence("````").expect("a fence");
+
+        assert!(closes_fence("````", open));
+        assert!(closes_fence("`````", open), "more marks should still close");
+        assert!(!closes_fence("```", open), "fewer marks should not close");
+    }
+
+    #[test]
+    fn a_closing_fence_carries_nothing_after_it() {
+        let open = opens_fence("```").expect("a fence");
+
+        assert!(closes_fence("```", open));
+        assert!(
+            closes_fence("```   ", open),
+            "trailing space is still closing"
+        );
+        assert!(
+            !closes_fence("```rust", open),
+            "an info string opens a fence rather than closing one"
+        );
+    }
+
+    #[test]
+    fn three_marks_open_a_fence_and_two_do_not() {
+        assert_eq!(opens_fence("```"), Some(('`', 3)));
+        assert_eq!(opens_fence("~~~~"), Some(('~', 4)));
+        assert_eq!(opens_fence("  ```rust"), Some(('`', 3)));
+
+        assert_eq!(opens_fence("``"), None);
+        assert_eq!(opens_fence("prose"), None);
+        assert_eq!(opens_fence(""), None);
     }
 }

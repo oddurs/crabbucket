@@ -36,7 +36,7 @@ impl Url {
     /// always begins with the configured base and, for a non-empty path, ends
     /// in a slash.
     pub fn new(config: &Config, path: &str) -> Self {
-        let path = path.trim_matches('/');
+        let path = squeeze(path.trim_matches('/'));
         if path.is_empty() {
             Url(config.base.clone())
         } else {
@@ -47,13 +47,43 @@ impl Url {
     /// Builds a URL for an asset, which -- unlike a page -- keeps its file
     /// extension and gets no trailing slash.
     pub fn asset(config: &Config, path: &str) -> Self {
-        Url(format!("{}{}", config.base, path.trim_start_matches('/')))
+        Url(format!(
+            "{}{}",
+            config.base,
+            squeeze(path.trim_start_matches('/'))
+        ))
     }
 
     /// The URL as a string slice.
     pub fn as_str(&self) -> &str {
         &self.0
     }
+}
+
+/// Collapses runs of slashes, so no URL this type builds contains `//`.
+///
+/// A doubled slash is a different URL to a browser and the same one to a
+/// person, which is the worst combination available -- and it is reachable
+/// from a configuration file: a feed declared over the collection
+/// `notes//archive' would otherwise put one in every feed URL on the site.
+///
+/// This lives here because this is the only place a URL is assembled.  A
+/// caller that has to remember to tidy its own path is a caller that will
+/// forget, which is the argument for the whole type.
+pub(crate) fn squeeze(path: &str) -> String {
+    let mut out = String::with_capacity(path.len());
+    let mut last_was_slash = false;
+
+    for character in path.chars() {
+        if character == '/' && last_was_slash {
+            continue;
+        }
+
+        last_was_slash = character == '/';
+        out.push(character);
+    }
+
+    out
 }
 
 impl fmt::Display for Url {
@@ -82,6 +112,40 @@ mod tests {
             config.base = base.into();
             config
         }
+    }
+
+    #[test]
+    fn interpolating_a_url_into_markup_emits_the_url() {
+        // The whole mechanism by which a link gets the base path: a component
+        // writes `href=(Url::new(config, "docs"))' and `Render' puts the
+        // string in.  cargo-mutants found that emptying `render_to' broke
+        // nothing, which meant nothing tested the one thing this type is for.
+        let config = config("/crabbucket/");
+        let url = Url::new(&config, "docs/routing");
+
+        let markup = maud::html! { a href=(url) { "Routing" } };
+
+        assert_eq!(
+            markup.into_string(),
+            "<a href=\"/crabbucket/docs/routing/\">Routing</a>"
+        );
+    }
+
+    #[test]
+    fn a_doubled_slash_never_reaches_a_url() {
+        // A feed declared over the collection `notes//archive' would
+        // otherwise put one into every feed URL on the site.  Found by the
+        // property test in tests/properties.rs.
+        let config = config("/crabbucket/");
+
+        assert_eq!(
+            Url::asset(&config, "notes//archive/feed.xml").as_str(),
+            "/crabbucket/notes/archive/feed.xml"
+        );
+        assert_eq!(
+            Url::new(&config, "docs//routing").as_str(),
+            "/crabbucket/docs/routing/"
+        );
     }
 
     #[test]

@@ -1,0 +1,19 @@
+Seed corpora, one directory per fuzz target.
+
+These are committed; `fuzz/corpus/', which is what the fuzzer grows from
+them, is not -- it reached 34MB and five thousand files in three minutes of
+running, and none of it is worth reviewing.
+
+Each seed is a real input, truncated to three kilobytes: a page from the
+fixture sites for `frontmatter' and `markdown', a page that uses a directive
+for `directives', and a rendered page for `links'.  A seed is a starting
+point for mutation rather than a document, so the truncation costs nothing
+and the size of the repository is a real thing.
+
+To add one, put the input in the right directory under any name.  When a
+fuzz run finds a crash, cargo-fuzz writes the input to `fuzz/artifacts/';
+turn it into a named unit test first, then add it here so the fuzzer starts
+from it in future.
+
+Copyright (C) 2026 Oddur Sigurdsson
+SPDX-License-Identifier: GPL-3.0-or-later

@@ -177,6 +177,85 @@ jobs:
       - run: ./target/release/crabbucket-bench generate 500 bench-site
       - run: ./target/release/crabbucket-bench budget bench-site 2000
 
+  # The four parsers that run on whatever is in a content file, on arbitrary
+  # bytes.  On a schedule: a fuzz run that is short enough for a pull request
+  # is a fuzz run that finds nothing, and one that is long enough to find
+  # something is one nobody would wait for.
+  fuzz:
+    name: fuzz the parsers
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [markdown, frontmatter, directives, links]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-fuzz
+
+      - name: cargo fuzz ${{ matrix.target }}
+        run: |
+          mkdir -p fuzz/corpus/${{ matrix.target }}
+          cd fuzz
+          cargo fuzz run ${{ matrix.target }} \
+            corpus/${{ matrix.target }} seeds/${{ matrix.target }} \
+            -- -max_total_time=600
+
+      # A crash is a file of bytes.  Keep it: the first thing to do with one
+      # is turn it into a named unit test.
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: fuzz-crash-${{ matrix.target }}
+          path: fuzz/artifacts/
+
+  # Whether the tests would notice.  cargo-mutants changes the code and runs
+  # the suite; a mutant that survives is a change nothing objected to, which
+  # is either a missing assertion or a line that does not matter.
+  #
+  # It rebuilds once per mutation, so this is a Monday job and not a gate.
+  mutants:
+    name: would the tests notice
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-mutants,cargo-nextest
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: mutants
+
+      # Not `--check`-clean yet, so this reports rather than fails.  Making it
+      # fail is worth doing once the surviving mutants have been triaged to
+      # nothing; failing on a list nobody has read is how a check gets
+      # switched off.
+      - run: cargo mutants --workspace --no-shuffle -j 4 || true
+
+      - name: what survived
+        if: always()
+        run: |
+          {
+            echo '### Surviving mutants'
+            echo
+            echo 'Each is a change the suite did not object to.'
+            echo
+            echo '```'
+            cat mutants.out/missed.txt 2>/dev/null | head -60 || echo 'none'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutants
+          path: mutants.out/
+
   # A regression in a future compiler should arrive as a notification rather
   # than as a surprise during a release.
   beta:

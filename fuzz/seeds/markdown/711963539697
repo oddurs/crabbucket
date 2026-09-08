@@ -1,0 +1,96 @@
+
+
+# 6. A fleet of sites
+
+This chapter is the reason the rest of the book is shaped the way it is.
+
+You have a dozen repositories. Each has a small site: a landing page, a page
+of documentation, maybe a changelog. Each was made at a different time, and
+they look it. You want them to look like one thing, and you want to keep
+wanting that in a year without a dozen pull requests every time you change
+your mind about a heading.
+
+[Chapter 5](../your-own-design-system/) built the design system. This chapter
+is about depending on it from twelve places at once.
+
+:::callout{kind = "note", title = "Written first"}
+This chapter was drafted before the other eight, on the theory that the place
+a design is weakest is the place its largest promise is made. It was: two of
+the things below are annoying, and they are here because nobody else writes
+them down.
+:::
+
+## What a site in a fleet looks like
+
+A site that depends on a design system is a crate. It has to be: `crab build`
+renders with the design system it was compiled with, and yours was not.
+
+That is a smaller change than it sounds. The site is still a `content/`
+directory of Markdown and a `site.toml`; it just gains three files.
+
+```toml
+# Cargo.toml
+[package]
+name = "ferrite-docs"
+edition = "2024"
+
+[dependencies]
+crabbucket = "0.1"
+house-style = { git = "https://github.com/me/house-style", tag = "v2.1.0" }
+```
+
+```rust
+pub fn main() -> ExitCode {
+    match crabbucket::build(Path::new("."), &Ferrite) {
+        Ok(report) => {
+            println!("{report}");
+            ExitCode::SUCCESS
+        }
+        Err(err) => {
+            eprintln!("{err}");
+            ExitCode::FAILURE
+        }
+    }
+}
+```
+
+That is the whole of `src/main.rs`. Twelve repositories contain that file and
+differ only in what is in `content/`.
+
+`cargo run` builds the site. `crab new --theme <url>` scaffolds all three
+files for you, so in practice you write none of it.
+
+## The version bump
+
+Here is the claim, stated plainly so it can be checked:
+
+> Restyling twelve sites is a version bump in twelve `Cargo.toml` files.
+
+It is true, and it is worth being precise about why. The sites do not contain
+colours, spacing, fonts, class names, or HTML. They contain Markdown and
+frontmatter. Everything visual crossed the boundary as a *dependency*, so
+moving it moves everything downstream of it.
+
+What the sites do contain is two kinds of name:
+
+- **layout names** — `layout = "docs"` in a page's frontmatter
+- **component names** — `:::callout` in a page's body
+
+Those two are your design system's public surface. Tokens, class names,
+element structure and CSS are not: no site ever writes them down. That
+asymmetry is the whole of what follows.
+
+## What is free
+
+**Adding a layout.** The enum grows a variant nothing names yet.
+
+**Adding a component.** Same.
+
+**Adding, removing or renaming a token.** Sites never name tokens. Renaming
+one breaks *your* components, at compile time, in your own crate:
+
+```
+error[E0425]: cannot find value `ACCENT` in module `tok::color`
+```
+
+which is a build failure in the design system, be
