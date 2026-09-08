@@ -1,0 +1,26 @@
+GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
+
+* Noteworthy changes in release 0.1.0 (unreleased) [alpha]
+
+** New features
+
+  Initial import.  A site is Markdown content with `+++' TOML frontmatter
+  and a `site.toml'; `crab build' renders it to a directory of static
+  pages.
+
+  Design tokens are generated from design/tokens.toml into both Rust
+  constants and CSS custom properties, so the two cannot drift apart.
+
+  The base path is recorded once and applied in one place, so a project
+  site served from /repo/ works without any page knowing about it.
+
+  An optional client-side router of about a kilobyte swaps <main> and
+  drives the View Transitions API, and degrades to ordinary navigation.
+
+** Notes
+
+  The design is described in doc/DESIGN and is settled.  The
+  implementation is not: typed routes, Markdown directives and scoped
+  component CSS are described there but not yet built.
+
+  There is no dev server, and there will not be one.  Run `turborust up'.

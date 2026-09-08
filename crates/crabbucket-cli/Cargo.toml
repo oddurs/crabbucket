@@ -1,0 +1,21 @@
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+name = "crabbucket-cli"
+description = "The crab executable: build and check crabbucket sites."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[[bin]]
+name = "crab"
+path = "src/main.rs"
+
+[dependencies]
+crabbucket.workspace = true
+crabbucket-ui.workspace = true

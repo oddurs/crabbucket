@@ -1,0 +1,14 @@
+# crabbucket's own site.  Built by crabbucket, developed under turborust,
+# deployed to GitHub Pages.
+#
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+title = "crabbucket"
+description = "A static site framework in Rust, where the site is a typed value."
+
+# A GitHub Pages project site is served from /crabbucket/.  This is the only
+# place that fact is recorded; no page knows about it.
+base = "/crabbucket/"
+
+router = true

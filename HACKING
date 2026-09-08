@@ -1,0 +1,60 @@
+Notes for people hacking on crabbucket
+======================================
+
+Read doc/DESIGN first.  It is the concept and the reasoning behind every
+decision below, and it is short.
+
+
+Layout
+------
+
+  crates/crabbucket      the framework: config, content, markdown, url,
+                         theme, site
+  crates/crabbucket-cli  the `crab' executable, a thin front end
+  crates/crabbucket-ui   the default design system; its build.rs
+                         generates the token module
+  design/tokens.toml     the token source of truth
+  examples/site          crabbucket's own site
+
+
+The dev loop
+------------
+
+  turborust up
+
+turborust rebuilds the example site when anything it depends on changes,
+serves dist/ with live reload, and puts build errors in a browser
+overlay.  crabbucket deliberately has no dev server of its own; writing a
+second, worse one here would be the least defensible thing in the tree.
+
+
+Before sending a patch
+----------------------
+
+  make check
+
+which is fmt, clippy, the test suite, and a build of the example site.
+
+
+Style
+-----
+
+Rust code is formatted by rustfmt; see rustfmt.toml.  Beyond that:
+
+  - No string where a type will do.  That is the whole project.  A URL is
+    a Url, not a String; frontmatter is a struct, not a map; a colour is
+    a token constant, not a hex literal.
+  - Every build error names the file it came from.  crate::Error makes
+    that structural: no variant can be constructed without a path.
+  - Diagnostics go to standard error, prefixed with the program name.  A
+    usage error exits 2; a build failure exits 1.  --help and --version
+    always exit 0.
+  - Nothing outside crabbucket-ui's generated token module may contain a
+    colour or a length.
+  - Every user-visible change gets a NEWS entry, and every change gets a
+    ChangeLog entry.
+
+ChangeLog entries use the customary GNU format: a header line with the
+date, author name and address, then a blank line, then a one-line
+summary, then the affected files each introduced with a tab and an
+asterisk.

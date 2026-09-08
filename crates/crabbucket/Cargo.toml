@@ -1,0 +1,23 @@
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+name = "crabbucket"
+description = "A static site framework in Rust, where the site is a typed value."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+keywords = ["static-site", "ssg", "website", "documentation"]
+categories = ["web-programming", "template-engine"]
+
+[dependencies]
+maud = "0.27"
+pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+toml = "0.9"
+walkdir = "2"

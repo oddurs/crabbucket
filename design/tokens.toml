@@ -1,0 +1,48 @@
+# The single source of truth for crabbucket's default design system.
+#
+# crates/crabbucket-ui/build.rs generates two things from this file: Rust
+# constants, so a renamed token is a compile error, and CSS custom
+# properties, so the stylesheet cannot drift from the constants.  Nothing
+# else in the tree is allowed to hard-code a colour or a length.
+#
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[color]
+surface        = "#0b0d10"
+surface-raised = "#11151b"
+border         = "#212832"
+text           = "#e7eaf0"
+text-muted     = "#98a2b3"
+accent         = "#e8623c"
+accent-quiet   = "#f0a58c"
+link           = "#7db3ff"
+
+[space]
+xs = "4px"
+sm = "8px"
+md = "16px"
+lg = "24px"
+xl = "40px"
+xxl = "72px"
+
+[radius]
+sm = "4px"
+md = "8px"
+lg = "16px"
+
+[font]
+sans = "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif"
+mono = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace"
+
+[size]
+step--1 = "0.875rem"
+step-0  = "1rem"
+step-1  = "1.25rem"
+step-2  = "1.625rem"
+step-3  = "2.25rem"
+step-4  = "3rem"
+
+[measure]
+prose = "68ch"
+page  = "1080px"

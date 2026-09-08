@@ -1,0 +1,215 @@
+crabbucket -- design notes
+==========================
+
+This file is the opinionated concept.  It is meant to be argued with.
+
+
+1.  The thesis
+--------------
+
+A site is a typed value.
+
+Every static site generator in wide use is a string pipeline.  Templates
+render strings.  Frontmatter is a loose map.  Links are strings.  Design
+tokens are strings.  The base path is a string.  Every one of those is a
+place where a small site breaks in a way you only find in production: a
+dead link, a page missing a title, a colour that was renamed six months
+ago, a stylesheet 404ing because the site is served from /repo/ and not
+from /.
+
+Rust's advantage here is not speed.  Any generator is fast enough for a
+forty-page docs site; Hugo builds it in 30ms and nobody is unhappy.  The
+advantage is that Rust can make the whole site a *typed value*, so that
+entire class of bug stops being a runtime surprise and becomes a compile
+error.
+
+  The build either fails, or the site is correct.
+
+That is the whole product.  Everything below is in service of it.
+
+
+2.  What is borrowed, and from where
+------------------------------------
+
+  Astro       content collections; zero JS by default; layouts; islands.
+              Keep the model.  Drop the file format -- see section 4.
+  Next.js     file-based routing; client navigation with no full reload.
+  Zola/Hugo   one binary; `+++' TOML frontmatter; builds that feel instant.
+  SvelteKit   prerender by default; a real answer for `base' paths.
+  Style
+  Dictionary  design tokens as the single source of truth, compiled out
+              to every consumer rather than copied by hand.
+  maud        HTML as a typed expression, not a string.
+  htmx        the ~1KB "just swap the body" router, and nothing more.
+  turborust   the dev loop.  Do not rebuild it; see section 8.
+
+
+3.  Typed routes
+----------------
+
+Routing is file-based, over `content/' and `src/routes/'.  A build step
+walks those trees and generates a `Route' enum.
+
+  a href=(url(Route::Docs("getting-started"))) { "Getting started" }
+
+A link to a page that does not exist does not compile.  `crab check'
+reports orphans -- pages nothing links to -- as warnings.
+
+`url()' is also the only place the base path is applied.  A GitHub Pages
+project site lives at `/crabbucket/', a user site at `/', and a custom
+domain at `/' again; the difference is one line of config and no page
+ever knows about it.  The single most common way these sites break is
+gone by construction rather than by discipline.
+
+
+4.  Typed content
+-----------------
+
+Content is Markdown with `+++' TOML frontmatter, in `content/'.  Writing
+a page requires no Rust.
+
+  +++
+  title = "Getting started"
+  order = 1
+  +++
+
+  Install it:
+
+  :::callout{kind="note"}
+  crabbucket needs Rust 1.85 or newer.
+  :::
+
+A collection is declared with the struct its frontmatter deserializes
+into:
+
+  #[derive(Deserialize)]
+  struct DocMeta { title: String, order: u32 }
+
+  let docs: Collection<DocMeta> = site.collection("docs")?;
+
+A missing `title' is a build error naming the file and line.  A
+collection is a `Vec' of typed entries, so sorting, grouping and
+filtering are ordinary Rust rather than template-language contortions.
+This is Astro's content collections, moved from runtime validation to
+build-time typing.
+
+Why not `.astro' files?  Because the appealing part of Astro is the
+model, and the expensive part is the compiler.  A single-file component
+format needs a parser, scoped-style extraction, and -- the killer -- an
+evaluator for expressions inside the template.  In Rust that means
+either shipping an interpreter or generating code from a bespoke syntax,
+and both are strictly worse than writing Rust.  So: Astro's ergonomics
+for content, Rust for components, and directives as the bridge.
+
+
+5.  Components are functions
+----------------------------
+
+Components are `maud' functions.  HTML is an expression:
+
+  pub fn callout(kind: Kind, body: Markup) -> Markup {
+      html! {
+          aside class={ "callout callout--" (kind.slug()) } {
+              div.callout__body { (body) }
+          }
+      }
+  }
+
+Typed props.  Compile-checked structure.  No new language, no parser, no
+runtime -- it compiles down to a `write!' chain, so rendering costs
+approximately nothing.
+
+Markdown reaches these functions through directives.  `:::callout{...}'
+in a `.md' file resolves to that exact function, with its attributes
+deserialized into the function's props.  An unknown directive, or a bad
+attribute, fails the build.  That is MDX's expressiveness without owning
+MDX's compiler.
+
+
+6.  The design system is the core, not a plugin
+-----------------------------------------------
+
+`design/tokens.toml' is the source of truth:
+
+  [color]
+  surface = "#0b0d10"
+  accent  = "#e8623c"
+
+  [space]
+  scale = [0, 4, 8, 12, 16, 24, 32, 48]
+
+A build script generates, from that one file, both Rust constants and
+CSS custom properties.  `tok::color::ACCENT' fails to compile if the
+token is renamed, and the CSS variable can never drift from the Rust
+constant because a single generator emits both.
+
+Components declare their own styles; the build collects the styles of
+components that were actually rendered, and ships only those.  Unused
+CSS is not pruned, it is never emitted.
+
+A design system is a crate.  `crabbucket-ui' is the default one.  Your
+own is a private crate that every one of your repo sites depends on, so
+restyling all of them is a version bump -- which is the actual reason to
+want first-class design systems on a fleet of small sites.
+
+
+7.  Fast by construction, no-refresh by choice
+----------------------------------------------
+
+The output is plain static HTML and CSS.  Zero JavaScript, perfect
+Lighthouse, works in a text browser.
+
+Opt in, per site, to a router of about a kilobyte: intercept same-origin
+clicks, fetch, swap `<main>', push history, drive the native View
+Transitions API for the cross-fade.  That is the Next.js feel -- no full
+repaint, no flash -- with no hydration, no virtual DOM and no framework.
+With JavaScript off it degrades to ordinary navigation, because it is
+ordinary navigation with a click handler in front of it.
+
+Wasm islands are a later escape hatch, deliberately not in v0.  A
+landing page and a docs site do not need them, and adding them early
+would warp every other decision.
+
+
+8.  The dev loop is turborust
+-----------------------------
+
+crabbucket ships no dev server, because turborust already is one:
+
+  [tasks.site]
+  cargo = "crabbucket-cli"
+  cmd   = "cargo run -p crabbucket-cli -- build examples/site"
+
+  [services.web]
+  depends_on = ["site"]
+  serve = { dir = "examples/site/dist", port = 8790 }
+
+turborust derives the watch globs from the crate's path-dependency
+closure, content-hashes the inputs, reruns the build only when something
+really changed, serves `dist/' with live reload, and puts rustc
+diagnostics in a browser overlay.  Writing a second, worse version of
+that inside crabbucket would be the least defensible thing in this
+document.
+
+The dogfooding is therefore structural rather than decorative:
+crabbucket's own site is built by crabbucket and developed under
+turborust, and both projects are load-bearing for the other.
+
+
+9.  Deliberately not in v0
+--------------------------
+
+  wasm islands, i18n, image optimisation, a plugin system, incremental
+  builds, MDX-style arbitrary expressions in Markdown.
+
+In v1, in roughly this order: a static search index with a small client,
+RSS, sitemap and OpenGraph image generation.
+
+
+10.  The command surface
+------------------------
+
+  crab new NAME     scaffold a site, with a turborust.toml
+  crab build [DIR]  build to dist/
+  crab check [DIR]  dead links, unknown tokens, orphan pages
+  crab serve        a shim that tells you to run `turborust up'

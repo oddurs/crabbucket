@@ -1,0 +1,18 @@
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
+	Initial import.
+
+	* doc/DESIGN: New file; the concept, and the reasoning behind it.
+	* crates/crabbucket: New crate; configuration, typed content
+	collections, Markdown rendering, base-path-aware URLs, the Theme
+	seam, and the build pipeline.
+	* crates/crabbucket-ui: New crate; the default design system.
+	build.rs generates Rust constants and CSS custom properties from
+	design/tokens.toml.
+	* crates/crabbucket-cli: New crate; the `crab' executable.
+	* examples/site: New site; crabbucket's own, built with crabbucket.
+	* design/tokens.toml: New file; the token source of truth.
+	* turborust.toml: New file; the dev loop.
+	* .github/workflows/ci.yml, .github/workflows/pages.yml: New files.
+	* Cargo.toml, Makefile, .gitignore, rustfmt.toml: New files.
+	* README, NEWS, AUTHORS, THANKS, HACKING, COPYING: New files.

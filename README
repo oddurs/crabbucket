@@ -1,0 +1,105 @@
+crabbucket
+==========
+
+crabbucket is a static site framework in Rust, for landing pages and
+documentation sites -- the kind that live next to a repository and get
+deployed to GitHub Pages.
+
+Its thesis is that a site is a typed value.  Links, frontmatter, design
+tokens and the base path are all typed, so the failures that usually
+break a small site -- a dead link, a page with no title, a renamed
+colour, a stylesheet 404ing because the site is served from /repo/ --
+are compile errors rather than production surprises.
+
+  The build either fails, or the site is correct.
+
+See the file doc/DESIGN for the full concept and the reasoning behind
+each choice.  It is short, and it is meant to be argued with.
+
+This is free software.  See the file COPYING for copying conditions.
+
+  Copyright (C) 2026 Oddur Sigurdsson
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.  There is NO WARRANTY, to the
+  extent permitted by law.
+
+
+Status
+------
+
+Early.  The design is settled; the implementation is not.  Nothing here
+is stable, including the parts that look stable.
+
+
+At a glance
+-----------
+
+  Content     Markdown with `+++' TOML frontmatter, deserialized into
+              your own structs.  Writing a page needs no Rust.
+  Components  maud functions.  Typed props, compile-checked HTML, no
+              template language and no runtime.
+  Design      One tokens file generates both Rust constants and CSS
+              custom properties, so the two cannot drift apart.  A
+              design system is a crate you depend on.
+  Routing     File-based, with a generated Route enum.  A link to a
+              page that does not exist does not compile.
+  Client      Zero JavaScript by default; opt in to a ~1KB router that
+              swaps <main> and drives View Transitions.
+  Dev loop    turborust.  crabbucket ships no dev server of its own.
+
+
+Layout
+------
+
+  crates/crabbucket      the framework
+  crates/crabbucket-cli  the `crab' executable
+  crates/crabbucket-ui   the default design system and component kit
+  examples/site          crabbucket's own site, built with crabbucket
+  design/tokens.toml     the token source of truth
+  doc/DESIGN             the concept
+
+
+Building
+--------
+
+Rust 1.85 or newer is required.
+
+  cargo build --release
+
+A Makefile is provided for the usual GNU targets, so the following also
+works and honours the customary `prefix' and `DESTDIR' variables:
+
+  make
+  make check
+  make install prefix=/usr/local
+
+
+Developing
+----------
+
+  turborust up
+
+turborust rebuilds the example site when anything it depends on changes,
+serves it with live reload, and shows build errors in a browser overlay.
+See <https://github.com/oddurs/turborust>.
+
+
+Reporting bugs
+--------------
+
+Please report bugs at <https://github.com/oddurs/crabbucket/issues>.
+
+
+Files
+-----
+
+  AUTHORS      who wrote crabbucket
+  COPYING      the GNU General Public License, version 3
+  ChangeLog    a log of changes, newest first
+  HACKING      notes for people working on the source
+  NEWS         user-visible changes, newest first
+  THANKS       people who have helped
+  doc/DESIGN   the design, and the reasoning behind it

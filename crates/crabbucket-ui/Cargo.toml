@@ -1,0 +1,20 @@
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+name = "crabbucket-ui"
+description = "The default design system and component kit for crabbucket."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[dependencies]
+crabbucket.workspace = true
+maud = "0.27"
+
+[build-dependencies]
+toml = "0.9"
