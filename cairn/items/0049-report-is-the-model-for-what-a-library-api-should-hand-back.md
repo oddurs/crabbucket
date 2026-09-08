@@ -3,6 +3,7 @@ id: 49
 title: Report is the model for what a library API should hand back
 type: chore
 status: backlog
+milestone: v1.0
 labels:
 - api
 created: 2026-09-08

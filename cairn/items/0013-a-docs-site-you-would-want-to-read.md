@@ -3,10 +3,11 @@ id: 13
 key: v0.2
 title: A docs site you would want to read
 type: milestone
-status: backlog
+status: done
 created: 2026-09-08
 updated: 2026-09-08
 priority: p2
+due: 2026-09-08
 ---
 
 The first milestone makes crabbucket correct; this one makes it pleasant.
