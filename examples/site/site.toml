@@ -9,6 +9,7 @@ description = "A static site framework in Rust, where the site is a typed value.
 
 # A GitHub Pages project site is served from /crabbucket/.  This is the only
 # place that fact is recorded; no page knows about it.
+url = "https://oddurs.github.io/crabbucket/"
 base = "/crabbucket/"
 
 router = true

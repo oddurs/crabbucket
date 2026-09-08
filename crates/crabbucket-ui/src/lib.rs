@@ -31,6 +31,7 @@
 use crabbucket::theme::{NavItem, Page, Theme};
 use crabbucket::{Config, Url};
 use maud::{DOCTYPE, Markup, PreEscaped, html};
+use serde::Deserialize;
 
 /// Design tokens, generated from `design/tokens.toml`.
 ///
@@ -41,6 +42,23 @@ pub mod tok {
     include!(concat!(env!("OUT_DIR"), "/tokens.rs"));
 }
 
+/// The layouts this design system offers.
+///
+/// `layout = "docs"` in a page's frontmatter deserializes into this enum, so a
+/// layout that does not exist fails the build naming the file, the line, and
+/// the layouts that do.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Layout {
+    /// Prose, centred, no sidebar.  The default.
+    #[default]
+    Page,
+    /// Prose with a sidebar listing the rest of the section.
+    Docs,
+    /// Wider measure and no masthead border, for a front page.
+    Landing,
+}
+
 /// The default design system.
 ///
 /// A site swaps design system by handing [`crabbucket::build`] a different
@@ -48,8 +66,35 @@ pub mod tok {
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Standard;
 
+impl Theme for Standard {
+    type Layout = Layout;
+
+    fn render(&self, page: &Page<'_, Layout>) -> String {
+        let nav = page.nav();
+
+        let content = match page.meta.layout {
+            Layout::Page | Layout::Landing => prose(page.html),
+            Layout::Docs => {
+                let section = page.route.split('/').next().unwrap_or("");
+                docs(&page.section(section), prose(page.html))
+            }
+        };
+
+        document(page.config, page.meta, &nav, content).into_string()
+    }
+
+    fn stylesheet(&self) -> String {
+        stylesheet()
+    }
+
+    fn router_js(&self) -> &str {
+        router_js()
+    }
+}
+
 /// The kind of a callout, which decides its accent.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum Kind {
     /// Neutral information.
     Note,
@@ -76,32 +121,61 @@ pub fn callout(kind: Kind, body: Markup) -> Markup {
     }
 }
 
+/// A list of links, with the current one marked.
+pub fn nav_list(items: &[NavItem]) -> Markup {
+    html! {
+        @for item in items {
+            a href=(item.href) aria-current=[item.current.then_some("page")] { (item.label) }
+        }
+    }
+}
+
+/// Prose with a section sidebar beside it.
+pub fn docs(section: &[NavItem], content: Markup) -> Markup {
+    html! {
+        div."docs" {
+            nav."docs__side" { (nav_list(section)) }
+            div."docs__main" { (content) }
+        }
+    }
+}
+
+/// Renders a body of Markdown-derived HTML inside the prose wrapper.
+///
+/// The HTML comes from the site's own content, which is trusted, so it is
+/// emitted unescaped.
+pub fn prose(html_fragment: &str) -> Markup {
+    html! { div."prose" { (PreEscaped(html_fragment)) } }
+}
+
 /// The whole document: head, navigation, content, footer.
-pub fn document(config: &Config, title: &str, nav: &[NavItem], content: Markup) -> Markup {
+pub fn document(
+    config: &Config,
+    meta: &crabbucket::PageMeta<Layout>,
+    nav: &[NavItem],
+    content: Markup,
+) -> Markup {
+    let description = meta.description.as_deref().unwrap_or(&config.description);
+
     html! {
         (DOCTYPE)
         html lang="en" {
             head {
                 meta charset="utf-8";
                 meta name="viewport" content="width=device-width, initial-scale=1";
-                title { (title) " — " (config.title) }
-                @if !config.description.is_empty() {
-                    meta name="description" content=(config.description);
+                title { (meta.title) " — " (config.title) }
+                @if !description.is_empty() {
+                    meta name="description" content=(description);
                 }
                 link rel="stylesheet" href=(Url::asset(config, "site.css"));
                 @if config.router {
                     script defer src=(Url::asset(config, "router.js")) {}
                 }
             }
-            body {
+            body class=(format!("layout-{}", layout_slug(meta.layout))) {
                 header."masthead" {
                     a."masthead__home" href=(Url::new(config, "")) { (config.title) }
-                    nav."masthead__nav" {
-                        @for item in nav {
-                            a href=(item.href)
-                              aria-current=[item.current.then_some("page")] { (item.label) }
-                        }
-                    }
+                    nav."masthead__nav" { (nav_list(nav)) }
                 }
                 main."page" { (content) }
                 footer."colophon" {
@@ -116,27 +190,12 @@ pub fn document(config: &Config, title: &str, nav: &[NavItem], content: Markup) 
     }
 }
 
-impl Theme for Standard {
-    fn render(&self, page: &Page<'_>) -> String {
-        let title = &page.meta.title;
-        document(page.config, title, page.nav, prose(page.html)).into_string()
+fn layout_slug(layout: Layout) -> &'static str {
+    match layout {
+        Layout::Page => "page",
+        Layout::Docs => "docs",
+        Layout::Landing => "landing",
     }
-
-    fn stylesheet(&self) -> String {
-        stylesheet()
-    }
-
-    fn router_js(&self) -> &str {
-        router_js()
-    }
-}
-
-/// Renders a body of Markdown-derived HTML inside the prose wrapper.
-///
-/// The HTML comes from the site's own content, which is trusted, so it is
-/// emitted unescaped.
-pub fn prose(html_fragment: &str) -> Markup {
-    html! { div."prose" { (PreEscaped(html_fragment)) } }
 }
 
 /// The site's complete stylesheet: the generated token block, then the base
@@ -186,6 +245,19 @@ main.page { max-width: var(--measure-page); margin: 0 auto; padding: var(--space
 .callout--note { border-left-color: var(--color-link); }
 .callout--warn { border-left-color: var(--color-accent); }
 .callout__body > :last-child { margin-bottom: 0; }
+.docs { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: var(--space-xl); align-items: start; }
+.docs__side { display: flex; flex-direction: column; gap: var(--space-xs); position: sticky; top: var(--space-lg); font-size: var(--size-step--1); }
+.docs__side a { color: var(--color-text-muted); text-decoration: none; padding: var(--space-xs) var(--space-sm); border-left: 2px solid var(--color-border); }
+.docs__side a:hover { color: var(--color-text); }
+.docs__side a[aria-current="page"] { color: var(--color-accent); border-left-color: var(--color-accent); }
+@media (max-width: 46rem) { .docs { grid-template-columns: 1fr; } .docs__side { position: static; flex-direction: row; flex-wrap: wrap; } }
+.layout-landing .prose { max-width: none; }
+.layout-landing .prose h1 { font-size: clamp(var(--size-step-3), 7vw, var(--size-step-4)); max-width: 18ch; }
+.layout-landing .prose > p:first-of-type { font-size: var(--size-step-1); color: var(--color-text-muted); max-width: 52ch; }
+.layout-landing table { border-collapse: collapse; width: 100%; max-width: var(--measure-prose); }
+.prose table { border-collapse: collapse; }
+.prose th, .prose td { text-align: left; padding: var(--space-sm) var(--space-md) var(--space-sm) 0; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+.prose th { color: var(--color-text-muted); font-weight: 600; font-size: var(--size-step--1); }
 .colophon { max-width: var(--measure-page); margin: 0 auto; padding: var(--space-lg); border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-size: var(--size-step--1); }
 @media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
 "#;

@@ -1,0 +1,103 @@
++++
+title = "Layouts"
+layout = "docs"
++++
+
+# Layouts
+
+A layout is a type, not a string.
+
+## The problem with `layout = "docs"`
+
+Every generator lets a page name its layout in frontmatter, and every
+generator resolves that name at render time. Misspell it and you get a
+fallback, a warning in a log nobody reads, or a page rendered with the wrong
+shell. It is the frontmatter equivalent of a dead link.
+
+## What crabbucket does instead
+
+A theme declares the layouts it offers as an associated type:
+
+```rust
+pub trait Theme {
+    type Layout: DeserializeOwned + Default;
+
+    fn render(&self, page: &Page<'_, Self::Layout>) -> String;
+    fn stylesheet(&self) -> String;
+    fn router_js(&self) -> &str;
+}
+```
+
+The default design system declares three:
+
+```rust
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Layout {
+    #[default]
+    Page,      // prose, centred, no sidebar
+    Docs,      // prose with a sidebar listing the rest of the section
+    Landing,   // wider measure, larger opening
+}
+```
+
+`PageMeta` is generic over it, so a page's `layout` field deserializes
+straight into the theme's own enum:
+
+```rust
+pub struct PageMeta<L> {
+    pub title: String,
+    #[serde(default)]
+    pub layout: L,
+    …
+}
+```
+
+Misspell it and the build stops, and the error lists what was available:
+
+```
+crab: content/docs/layouts.md: TOML parse error at line 3, column 10
+  |
+3 | layout = "dcos"
+  |          ^^^^^^
+unknown variant `dcos`, expected one of `page`, `docs`, `landing`
+```
+
+That message is `serde`'s, for free, because the layout was a type the whole
+time. There is no registry to maintain, no list of valid names to keep in
+sync, and no code in crabbucket that knows the word "docs".
+
+`render` then matches, which is exhaustive:
+
+```rust
+fn render(&self, page: &Page<'_, Layout>) -> String {
+    let content = match page.meta.layout {
+        Layout::Page | Layout::Landing => prose(page.html),
+        Layout::Docs => {
+            let section = page.route.split('/').next().unwrap_or("");
+            docs(&page.section(section), prose(page.html))
+        }
+    };
+
+    document(page.config, page.meta, &page.nav(), content).into_string()
+}
+```
+
+Add a layout to the enum and the compiler tells you where to handle it.
+
+## Navigation
+
+A theme is handed a [`SiteIndex`] rather than a pre-built navigation list,
+because the navigation a docs site wants is two views of the same set and only
+the theme knows which it needs:
+
+```rust
+page.nav()             // pages with a nav_order, in that order
+page.section("docs")   // every page under docs/, for a sidebar
+```
+
+Both mark the current page, and both build their hrefs through `Url`, so the
+base path is handled and `aria-current="page"` is set without the theme
+thinking about either.
+
+[`SiteIndex`]: https://github.com/oddurs/crabbucket/blob/main/crates/crabbucket/src/theme.rs

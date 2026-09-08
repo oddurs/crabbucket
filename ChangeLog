@@ -1,5 +1,31 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Resolve the open design questions; document and schedule the rest.
+
+	* crates/crabbucket/src/links.rs: New file.  Resolve every internal
+	href and src after rendering and fail the build on a dead one.
+	* crates/crabbucket/src/theme.rs (Theme): Add an associated Layout
+	type, so a page's layout deserializes into the theme's own enum.
+	(SiteIndex, PageRef): New; hand a theme every page rather than a
+	finished navigation list, so a docs sidebar is possible.
+	(PageMeta): Make generic over the layout type.
+	* crates/crabbucket/src/site.rs (build): Make generic over the
+	theme.  Render, then check, then write.
+	(Report): Report the number of links checked.
+	* crates/crabbucket/src/config.rs (Config): Add `url', for the
+	things that cannot be relative.
+	* crates/crabbucket/src/error.rs (Error): Add DeadLinks.
+	* crates/crabbucket-ui/src/lib.rs (Layout): New enum: page, docs,
+	landing.  Add a docs sidebar and a landing layout.
+	* doc/DESIGN: Revise sections 3, 6 and 12; add sections 9, 10 and
+	13.  Withdraw the promise to tree-shake component CSS.
+	* examples/site: Expand to eight documentation pages.
+	* cairn.toml, cairn/items, ROADMAP.md, AGENTS.md: New; the roadmap
+	and the issues, in the repository.
+	* README, NEWS, HACKING: Update for all of the above.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Initial import.
 
 	* doc/DESIGN: New file; the concept, and the reasoning behind it.

@@ -44,23 +44,45 @@ That is the whole product.  Everything below is in service of it.
   turborust   the dev loop.  Do not rebuild it; see section 8.
 
 
-3.  Typed routes
-----------------
+3.  Typed routes, and checked links
+-----------------------------------
 
-Routing is file-based, over `content/' and `src/routes/'.  A build step
-walks those trees and generates a `Route' enum.
+Routing is file-based over `content/'.  A file's path below that directory
+is its route; any `index.md' takes the route of its directory; every route
+is written as a directory holding an `index.html', so every URL ends in a
+slash and no static host needs rewrite rules.
 
-  a href=(url(Route::Docs("getting-started"))) { "Getting started" }
+There are two halves to making links trustworthy, and they are not the
+same problem.
 
-A link to a page that does not exist does not compile.  `crab check'
-reports orphans -- pages nothing links to -- as warnings.
+**Components have a compiler.**  A build step can walk the content tree
+and generate a `Route' enum, so that
+
+  a href=(url(Route::Docs("routing"))) { "Routing" }
+
+does not compile if the page is renamed.  This is not built yet.
+
+**Content does not.**  There is no compiler inside a `.md' file, so a
+Markdown link cannot be typed at all.  The next best thing -- and the
+thing that actually ships today -- is to make a dead internal link fail
+the build:
+
+  crab: 2 dead internal links:
+    content/docs/routing.md: layout/ -> /docs/layout/ does not exist
+    content/index.md: /repo/faq/ -> /faq/ does not exist
+
+It runs after every page is rendered, because a link is dead only
+relative to the finished set of routes.  It is not a warning and there is
+no flag to disable it: a link checker you can turn off is a link checker
+that is off.  External links are not checked -- their liveness is not a
+property of this build, and a generator that phones the network to decide
+whether it succeeded is a generator that fails on an aeroplane.
 
 `url()' is also the only place the base path is applied.  A GitHub Pages
-project site lives at `/crabbucket/', a user site at `/', and a custom
-domain at `/' again; the difference is one line of config and no page
-ever knows about it.  The single most common way these sites break is
-gone by construction rather than by discipline.
-
+project site lives at `/crabbucket/', a user site or custom domain at
+`/'; the difference is one line of config and no page ever knows about
+it.  The single most common way these sites break is gone by
+construction rather than by discipline.
 
 4.  Typed content
 -----------------
@@ -143,9 +165,15 @@ CSS custom properties.  `tok::color::ACCENT' fails to compile if the
 token is renamed, and the CSS variable can never drift from the Rust
 constant because a single generator emits both.
 
-Components declare their own styles; the build collects the styles of
-components that were actually rendered, and ships only those.  Unused
-CSS is not pruned, it is never emitted.
+Components declare their own styles.  An earlier draft of this document
+promised that the build would collect the styles of components actually
+rendered and ship only those; that promise is withdrawn.  On a
+forty-page docs site the whole stylesheet is a few kilobytes, and
+tree-shaking it optimises the wrong number.
+
+The problem worth solving is not size but **collision**: two component
+crates that both style `.card'.  That is a naming mechanism, not a build
+pipeline, and it is cheaper by an order of magnitude.  See section 11.
 
 A design system is a crate.  `crabbucket-ui' is the default one.  Your
 own is a private crate that every one of your repo sites depends on, so
@@ -196,8 +224,57 @@ crabbucket's own site is built by crabbucket and developed under
 turborust, and both projects are load-bearing for the other.
 
 
-9.  Deliberately not in v0
---------------------------
+9.  Layouts are types
+---------------------
+
+Every generator lets a page name its layout in frontmatter, and every
+generator resolves that name at render time.  Misspell it and you get a
+fallback, or a warning in a log nobody reads.  It is the frontmatter
+equivalent of a dead link, and it deserves the same treatment.
+
+So `Theme' carries an associated type:
+
+  pub trait Theme {
+      type Layout: DeserializeOwned + Default;
+      fn render(&self, page: &Page<'_, Self::Layout>) -> String;
+      …
+  }
+
+and `PageMeta<L>' is generic over it, so a page's `layout' field
+deserializes directly into the theme's own enum:
+
+  unknown variant `dcos', expected one of `page', `docs', `landing'
+
+That message is serde's, for free, because the layout was a type the
+whole time.  There is no registry to maintain, no list of valid names to
+keep in sync, and no code in crabbucket that knows the word "docs".
+`render' then matches on it, which is exhaustive, so adding a layout
+tells you where to handle it.
+
+The same argument is why a theme is handed a `SiteIndex' rather than a
+finished navigation list.  A docs site wants two views of the same set --
+a masthead and a section sidebar -- and only the theme knows which.
+
+
+10.  Style locality without a bundler
+-------------------------------------
+
+Replacing the withdrawn tree-shaking promise from section 6.
+
+A component's styles should live next to the component, and two crates
+should not be able to fight over a class name.  Both are achievable
+without anything that deserves the word "bundler": a component declares
+its CSS as an associated constant, the theme composes the sheet from the
+components it knows about, and class names carry a crate-derived prefix
+that a macro applies so nobody has to type it.
+
+What that deliberately does not buy: dead-CSS elimination.  If a site
+ever grows a stylesheet large enough for that to matter, the right
+response is to look at what went wrong upstream of the stylesheet.
+
+
+11.  Deliberately not in v0
+---------------------------
 
   wasm islands, i18n, image optimisation, a plugin system, incremental
   builds, MDX-style arbitrary expressions in Markdown.
@@ -206,10 +283,25 @@ In v1, in roughly this order: a static search index with a small client,
 RSS, sitemap and OpenGraph image generation.
 
 
-10.  The command surface
+12.  The command surface
 ------------------------
 
-  crab new NAME     scaffold a site, with a turborust.toml
-  crab build [DIR]  build to dist/
-  crab check [DIR]  dead links, unknown tokens, orphan pages
-  crab serve        a shim that tells you to run `turborust up'
+  crab build [DIR]  build to dist/, refusing to finish on a dead link
+  crab dev          a shim that points at `turborust up' and exits 2
+  crab serve        the same shim, for the same reason
+
+There is no separate `crab check'.  Checking that used to be its own
+command is now part of `crab build', which is the only way it stays
+switched on.  `crab new' is not built yet.
+
+
+13.  A note on this document
+----------------------------
+
+Sections 3, 6 and 12 have all been revised since the first draft, in
+each case because building the thing showed the first answer to be
+wrong.  Two of those revisions removed work rather than adding it.
+
+The document is meant to be argued with, including by whoever is
+implementing it, and a design note that has never been overruled by
+contact with the code is a design note nobody was reading.

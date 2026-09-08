@@ -67,7 +67,9 @@ fn build(site_dir: &Path) -> ExitCode {
             let pages = report.routes.len();
             let plural = if pages == 1 { "page" } else { "pages" };
             println!(
-                "{PACKAGE}: {pages} {plural} -> {}",
+                "{PACKAGE}: {pages} {plural}, {} link{} checked -> {}",
+                report.links,
+                if report.links == 1 { "" } else { "s" },
                 display(&report.out_dir)
             );
             if report.drafts > 0 {

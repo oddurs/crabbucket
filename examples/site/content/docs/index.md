@@ -1,16 +1,26 @@
 +++
 title = "Documentation"
+layout = "docs"
 nav_order = 2
 nav_label = "Docs"
 +++
 
 # Documentation
 
-crabbucket is early. The design is settled; the implementation is not.
+crabbucket is early. The design is settled and written down; the
+implementation is catching up with it. Everything on these pages describes
+behaviour that exists today, and says so plainly where it does not.
 
-Links in Markdown are relative, so they survive the base path. Typed links
-from Markdown — the `Route` enum reaching into content — are not built yet;
-see section 3 of `doc/DESIGN`.
+## Start here
 
-- [Content](content/) — Markdown with typed frontmatter
-- [Design systems](design-systems/) — tokens, components, themes
+- [Getting started](getting-started/) — a site from nothing, in five minutes
+- [Content](content/) — Markdown, frontmatter, and typed collections
+- [Routing](routing/) — routes, the base path, and link checking
+
+## Then
+
+- [Layouts](layouts/) — why a layout is a type and not a string
+- [Design systems](design-systems/) — tokens, components, and themes as crates
+- [The dev loop](dev-loop/) — why there is no `crab dev`
+- [Deploying](deploying/) — GitHub Pages, and what makes it work
+- [Design](design/) — the reasoning behind all of the above

@@ -29,6 +29,7 @@
 pub mod config;
 pub mod content;
 pub mod error;
+pub mod links;
 pub mod markdown;
 pub mod site;
 pub mod theme;
@@ -38,7 +39,7 @@ pub use config::Config;
 pub use content::{Collection, Entry};
 pub use error::{Error, Result};
 pub use site::{Report, build};
-pub use theme::{NavItem, Page, PageMeta, Theme};
+pub use theme::{NavItem, Page, PageMeta, PageRef, SiteIndex, Theme};
 pub use url::Url;
 
 /// Re-exported so that a site crate needs only one dependency to write

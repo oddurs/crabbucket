@@ -40,6 +40,12 @@ pub struct Config {
     #[serde(default)]
     pub description: String,
 
+    /// The site's absolute URL, needed only by the things that cannot be
+    /// relative: feeds, sitemaps, and `og:` metadata.  Omitted, those are
+    /// simply not emitted, rather than emitted wrong.
+    #[serde(default)]
+    pub url: Option<String>,
+
     /// The path the site is served from, with leading and trailing slashes;
     /// `/` for a user site or custom domain, `/repo/` for a project site.
     #[serde(default = "root")]

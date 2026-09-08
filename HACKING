@@ -28,6 +28,24 @@ overlay.  crabbucket deliberately has no dev server of its own; writing a
 second, worse one here would be the least defensible thing in the tree.
 
 
+The roadmap
+-----------
+
+The roadmap and the issues live in the repository, as Markdown files under
+`cairn/items', described by the schema in `cairn.toml'.  ROADMAP.md is
+generated from them and should not be edited by hand.
+
+  cairn next          what is ready to start
+  cairn claim <ID>    take it
+  cairn show <ID>     read it in full
+  cairn close <ID>    finish it
+  cairn check         validate every item against the schema
+
+Do not open a TODO file.  An item that is not in `cairn/items' is not on
+the roadmap, and a roadmap that drifts from the work is the rot the tool
+exists to prevent.  AGENTS.md says the same thing to coding agents.
+
+
 Before sending a patch
 ----------------------
 
@@ -53,6 +71,7 @@ Rust code is formatted by rustfmt; see rustfmt.toml.  Beyond that:
     colour or a length.
   - Every user-visible change gets a NEWS entry, and every change gets a
     ChangeLog entry.
+  - A change that closes a roadmap item closes it in the same commit.
 
 ChangeLog entries use the customary GNU format: a header line with the
 date, author name and address, then a blank line, then a one-line

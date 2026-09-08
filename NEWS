@@ -6,7 +6,7 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
 
   Initial import.  A site is Markdown content with `+++' TOML frontmatter
   and a `site.toml'; `crab build' renders it to a directory of static
-  pages.
+  pages, one directory per route.
 
   Design tokens are generated from design/tokens.toml into both Rust
   constants and CSS custom properties, so the two cannot drift apart.
@@ -14,13 +14,24 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
   The base path is recorded once and applied in one place, so a project
   site served from /repo/ works without any page knowing about it.
 
+  Layouts are an associated type on the theme.  `layout = "docs"'
+  deserializes into the theme's own enum, so a layout that does not exist
+  fails the build listing the ones that do.
+
+  Every internal link is resolved after rendering and checked against the
+  routes and assets the build produced.  A dead link fails the build,
+  with every offender listed at once, each naming the page that wrote it.
+  There is no flag to disable it.
+
   An optional client-side router of about a kilobyte swaps <main> and
   drives the View Transitions API, and degrades to ordinary navigation.
 
 ** Notes
 
-  The design is described in doc/DESIGN and is settled.  The
-  implementation is not: typed routes, Markdown directives and scoped
-  component CSS are described there but not yet built.
+  The design is described in doc/DESIGN.  What is planned, and why, is in
+  ROADMAP.md and in cairn/items.
+
+  Still unbuilt, and described as such: a generated Route enum, Markdown
+  directives, heading ids, syntax highlighting and search.
 
   There is no dev server, and there will not be one.  Run `turborust up'.

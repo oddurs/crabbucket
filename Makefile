@@ -29,12 +29,12 @@ TARGETDIR = target/$(CARGO_PROFILE)
 
 DOCS = README NEWS AUTHORS THANKS ChangeLog COPYING doc/DESIGN
 
-.PHONY: all check fmt lint test site install uninstall clean distclean dist help
+.PHONY: all check fmt lint test site roadmap install uninstall clean distclean dist help
 
 all:
 	$(CARGO) build --workspace $(CARGO_FLAGS)
 
-check: fmt lint test site
+check: fmt lint test site roadmap
 
 fmt:
 	$(CARGO) fmt --all --check
@@ -47,6 +47,10 @@ test:
 
 site:
 	$(CARGO) run -q -p crabbucket-cli -- build $(SITE)
+
+# Validate the roadmap items against cairn.toml, if cairn is installed.
+roadmap:
+	@command -v cairn >/dev/null && cairn check || echo 'cairn not installed; skipping'
 
 install: all
 	$(INSTALL) -d $(DESTDIR)$(bindir)
@@ -69,4 +73,4 @@ dist:
 	$(CARGO) package --workspace
 
 help:
-	@echo 'Targets: all check fmt lint test site install uninstall clean distclean dist'
+	@echo 'Targets: all check fmt lint test site roadmap install uninstall clean distclean dist'

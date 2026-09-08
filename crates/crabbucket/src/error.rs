@@ -21,7 +21,10 @@
 //! name the file it came from is a bug report waiting to happen, so the type
 //! makes it impossible to construct one.
 
+use std::fmt::Write as _;
 use std::path::PathBuf;
+
+use crate::links::DeadLink;
 
 /// A build failure, always attributed to a file.
 #[derive(Debug, thiserror::Error)]
@@ -61,6 +64,13 @@ pub enum Error {
         source: toml::de::Error,
     },
 
+    /// One or more pages link somewhere that does not exist.
+    ///
+    /// Every dead link is reported at once, because fixing them one build at a
+    /// time is the reason link checking gets turned off.
+    #[error("{}", dead_links(.0))]
+    DeadLinks(Vec<DeadLink>),
+
     /// The site's configuration file was not valid.
     #[error("{path}: {source}")]
     Config {
@@ -70,6 +80,27 @@ pub enum Error {
         #[source]
         source: toml::de::Error,
     },
+}
+
+/// Formats a whole batch of dead links, one per line, each naming its page.
+fn dead_links(links: &[DeadLink]) -> String {
+    let mut out = format!(
+        "{} dead internal link{}:",
+        links.len(),
+        if links.len() == 1 { "" } else { "s" }
+    );
+
+    for link in links {
+        let _ = write!(
+            out,
+            "\n  {}: {} -> {} does not exist",
+            link.source.display(),
+            link.href,
+            link.target
+        );
+    }
+
+    out
 }
 
 impl Error {

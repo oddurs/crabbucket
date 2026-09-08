@@ -77,6 +77,7 @@ mod tests {
         Config {
             title: "t".into(),
             description: String::new(),
+            url: None,
             base: base.into(),
             router: false,
         }
