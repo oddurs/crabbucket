@@ -6,6 +6,7 @@ resolver = "3"
 members = [
     "crates/crabbucket",
     "crates/crabbucket-cli",
+    "crates/crabbucket-og",
     "crates/crabbucket-routes",
     "crates/crabbucket-theme-plain",
     "crates/crabbucket-tokens",
@@ -24,6 +25,7 @@ readme = "README"
 
 [workspace.dependencies]
 crabbucket = { path = "crates/crabbucket", version = "0.1.0" }
+crabbucket-og = { path = "crates/crabbucket-og", version = "0.1.0" }
 crabbucket-routes = { path = "crates/crabbucket-routes", version = "0.1.0" }
 crabbucket-theme-plain = { path = "crates/crabbucket-theme-plain", version = "0.1.0" }
 crabbucket-tokens = { path = "crates/crabbucket-tokens", version = "0.1.0" }

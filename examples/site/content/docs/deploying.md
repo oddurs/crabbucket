@@ -20,6 +20,7 @@ dist/
   router.js            only if the site asked for it
   search.json          only if site.toml asks for search
   search.js            only if site.toml asks for search
+  og/index.png         one card per page, if the design system draws them
   notes/feed.xml       only for a configured feed, and only with a url
   notes/atom.xml       "
   sitemap.xml          only if site.toml has a url

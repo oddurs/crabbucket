@@ -27,6 +27,8 @@
 //! a layout the theme does not have fails the build naming the file, the line
 //! and the layouts that do exist.
 
+use std::path::Path;
+
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
@@ -227,6 +229,15 @@ pub struct Page<'a, L> {
     pub site: &'a SiteIndex,
     /// The site's feeds, for the `<link rel="alternate">` tags in the head.
     pub feeds: &'a [FeedLink],
+    /// Somewhere a design system may keep expensive things between builds.
+    ///
+    /// Outside `dist/`, which is deleted every build, and safe to delete: a
+    /// miss costs time and nothing else.
+    pub cache: &'a Path,
+    /// Where this page's social card will be written, if the design system
+    /// draws one.  `None` when the site has no absolute URL, since a card is
+    /// only ever referenced from one.
+    pub card: Option<&'a Url>,
 }
 
 /// A feed, as a page's head needs it.
@@ -291,6 +302,19 @@ pub trait Theme {
         Directives::new()
     }
 
+    /// The social card for a page, as PNG bytes.
+    ///
+    /// `None` means this design system does not draw them, which is the
+    /// default.  Drawing one is expensive, so a design system that does should
+    /// keep them in [`Page::cache`] -- `crabbucket-og` does that for you.
+    ///
+    /// Only called when the site has an absolute URL, because a card that
+    /// cannot be linked to absolutely is a card nothing will ever fetch.
+    fn og_image(&self, page: &Page<'_, Self::Layout>) -> Option<Vec<u8>> {
+        let _ = page;
+        None
+    }
+
     /// The search client, written to `search.js` when the site asks for it.
     ///
     /// `None` means this design system has no search.  A site that asks for
@@ -314,6 +338,8 @@ pub trait Theme {
 
 #[cfg(test)]
 mod tests {
+    use std::path::Path;
+
     use super::{NavItem, Page, PageMeta, PageRef, SiteIndex};
     use crate::config::Config;
 
@@ -406,6 +432,8 @@ mod tests {
             headings: &[],
             site,
             feeds: &[],
+            cache: Path::new(""),
+            card: None,
         };
         page.neighbours("docs")
     }

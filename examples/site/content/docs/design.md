@@ -70,12 +70,14 @@ decision.
 
 ## What is decided but not built
 
-- **Generated OpenGraph images**, so a shared link is not a grey rectangle.
-
-Everything else this section has listed since the first draft is now built:
+Nothing. Everything this section has listed since the first draft is built:
 [typed routes](../routing/), [directives](../components/),
-[search](../search/), a table of contents, and a light palette. This list is
-kept honest by being short.
+[search](../search/), [feeds](../feeds/), [social cards](../social-cards/), a
+table of contents, and a light palette.
+
+That is not a claim that the design is finished — it is a claim that the
+document and the code now say the same thing, which is the only state in which
+either is worth reading.
 
 The tracked, ordered version of it is
 [ROADMAP.md](https://github.com/oddurs/crabbucket/blob/main/ROADMAP.md).

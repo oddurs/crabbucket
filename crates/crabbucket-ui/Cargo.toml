@@ -14,6 +14,7 @@ readme.workspace = true
 
 [dependencies]
 crabbucket.workspace = true
+crabbucket-og.workspace = true
 maud = "0.27"
 serde = { version = "1", features = ["derive"] }
 

@@ -111,6 +111,8 @@ fn classes_in_markup() -> BTreeSet<String> {
             headings: &headings,
             site: &site,
             feeds: &[],
+            cache: std::path::Path::new(""),
+            card: None,
         };
 
         let html = Standard.render(&page);

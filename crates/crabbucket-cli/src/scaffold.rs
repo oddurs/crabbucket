@@ -181,7 +181,7 @@ fn content_files() -> Vec<(&'static str, String)> {
             ".github/workflows/pages.yml",
             include_str!("templates/pages.yml").to_string(),
         ),
-        (".gitignore", "/dist\n".to_string()),
+        (".gitignore", "/dist\n/.crabbucket\n".to_string()),
     ]
 }
 
@@ -213,7 +213,7 @@ fn crate_files(name: &str, theme: &Theme) -> Vec<(&'static str, String)> {
             ".github/workflows/pages.yml",
             include_str!("templates/crate-pages.yml").to_string(),
         ),
-        (".gitignore", "/dist\n/target\n".to_string()),
+        (".gitignore", "/dist\n/target\n/.crabbucket\n".to_string()),
     ]
 }
 

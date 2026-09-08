@@ -1,0 +1,20 @@
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+name = "crabbucket-og"
+description = "Renders OpenGraph cards for crabbucket sites."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+# A design system that wants OpenGraph images depends on this; crabbucket
+# itself does not.  It is 53 crates and about four seconds of compilation, and
+# a site with no interest in social previews should pay neither.
+[dependencies]
+resvg = { version = "0.45", default-features = false, features = ["text"] }
+png = "0.17"
