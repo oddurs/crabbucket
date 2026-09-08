@@ -1,0 +1,44 @@
+# How the tests are run.
+#
+# nextest runs each test in its own process, which is why this file can set a
+# timeout at all: a hung test is killed and reported rather than sitting there
+# until the CI job's own limit expires an hour later with no clue in the log.
+#
+# It does not run doctests -- nothing but `cargo test --doc' does -- so
+# `make test' runs both.  See "Testing" in HACKING.
+#
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[profile.default]
+# Almost every test here is a fixture site built in a temporary directory and
+# finishes in milliseconds.  Ten seconds is not a budget, it is a diagnosis:
+# a test that reaches it is stuck.
+slow-timeout = { period = "10s", terminate-after = 3 }
+failure-output = "immediate-final"
+fail-fast = false
+
+[profile.ci]
+# No retries.  A test that passes on the second attempt is a test that is
+# lying, and this suite has already shipped one such: three fixtures sharing
+# one temporary directory, green on two platforms and red on the third.
+retries = 0
+slow-timeout = { period = "30s", terminate-after = 2 }
+failure-output = "immediate-final"
+status-level = "fail"
+final-status-level = "slow"
+fail-fast = false
+
+[profile.ci.junit]
+path = "junit.xml"
+
+# The scaffold test compiles a generated crate against this working copy,
+# is the only check that `crab new --theme' emits code that builds.  It costs
+# about a minute and is gated behind CRABBUCKET_SLOW_TESTS.
+[[profile.default.overrides]]
+filter = 'test(=the_generated_crate_compiles_and_builds_its_site)'
+slow-timeout = { period = "120s", terminate-after = 3 }
+
+[[profile.ci.overrides]]
+filter = 'test(=the_generated_crate_compiles_and_builds_its_site)'
+slow-timeout = { period = "300s", terminate-after = 2 }

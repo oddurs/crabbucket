@@ -35,6 +35,16 @@ const PUBLISHED: [&str; 7] = [
     "crabbucket-ui",
 ];
 
+/// The crates that are deliberately not published, and their manifests.
+const UNPUBLISHED: [(&str, &str); 3] = [
+    ("crabbucket-bench", "bench/Cargo.toml"),
+    (
+        "crabbucket-book-samples",
+        "examples/book-samples/Cargo.toml",
+    ),
+    ("crabbucket-example-site", "examples/site-crate/Cargo.toml"),
+];
+
 fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
@@ -141,6 +151,51 @@ fn the_readme_is_markdown_because_that_is_what_crates_io_renders() {
             0,
             "README:{}: an odd number of backticks: {line:?}",
             number + 1
+        );
+    }
+}
+
+#[test]
+fn the_published_list_is_the_same_in_every_place_that_has_one() {
+    // Three files name these seven crates: this test, the Makefile's `api'
+    // target and the release workflow's packaging guard.  A list repeated
+    // three times is a list that will disagree with itself, so this is the
+    // one that decides and the other two are checked against it.
+    let makefile = fs::read_to_string(root().join("Makefile")).expect("no Makefile");
+    let workflow = fs::read_to_string(root().join(".github/workflows/release.yml"))
+        .expect("no release workflow");
+
+    for name in PUBLISHED {
+        assert!(
+            makefile.contains(name),
+            "the Makefile's PUBLISHED does not name {name}"
+        );
+        assert!(
+            workflow.contains(name),
+            "the release workflow does not check {name}"
+        );
+    }
+
+    // And nothing that is not published: a `publish = false' crate has no
+    // business in a list about publishing, and the release workflow has
+    // already failed once because one of them was in one.
+    for (name, manifest) in UNPUBLISHED {
+        assert!(
+            !makefile.contains(name),
+            "the Makefile names {name}, which is `publish = false'"
+        );
+        assert!(
+            !workflow.contains(name),
+            "the release workflow names {name}, which is `publish = false'"
+        );
+
+        let path = root().join(manifest);
+        let manifest =
+            fs::read_to_string(&path).unwrap_or_else(|err| panic!("{}: {err}", path.display()));
+
+        assert!(
+            manifest.contains("publish = false"),
+            "{name} is treated as unpublished but does not say so"
         );
     }
 }

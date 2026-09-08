@@ -31,7 +31,21 @@ TARGETDIR = target/$(CARGO_PROFILE)
 
 DOCS = README NEWS AUTHORS THANKS ChangeLog COPYING doc/DESIGN doc/STABILITY
 
-.PHONY: all check fmt lint test site roadmap install uninstall clean distclean dist help
+.PHONY: all check fmt lint test doc-test cover audit api site roadmap \
+        install uninstall clean distclean dist help
+
+# `cargo test' is the fallback: nextest is better in every way that matters
+# here -- a process per test, a timeout, and a summary you can read -- but it
+# is a separate installation, and a contributor who has not installed it
+# should still be able to run the suite.
+NEXTEST := $(shell command -v cargo-nextest 2>/dev/null)
+COVER_FLOOR = 93
+
+# The crates that go to crates.io, in dependency order.  `bench' and the two
+# examples are `publish = false'.  crates/crabbucket/tests/packaging.rs asserts
+# this list matches the manifests, so it cannot drift from them in silence.
+PUBLISHED = crabbucket-routes crabbucket-tokens crabbucket-og \
+            crabbucket crabbucket-ui crabbucket-theme-plain crabbucket-cli
 
 all:
 	$(CARGO) build --workspace $(CARGO_FLAGS)
@@ -44,8 +58,41 @@ fmt:
 lint:
 	$(CARGO) clippy --workspace --all-targets --all-features -- -D warnings
 
-test:
+# Two commands, because nothing runs both.  `--all-targets' excludes doctests
+# -- quietly, and it is the default thing to write -- so every `///' example in
+# the public API went unverified until this line existed.
+test: doc-test
+ifdef NEXTEST
+	$(CARGO) nextest run --workspace --all-targets
+else
+	@echo 'cargo-nextest not installed; falling back to cargo test'
 	$(CARGO) test --workspace --all-targets
+endif
+
+doc-test:
+	$(CARGO) test --workspace --doc
+
+# A number, so that it falling is something anybody can notice.  bench/ is a
+# measuring tool rather than the product and is not counted.
+cover:
+	$(CARGO) llvm-cov --workspace --all-targets --ignore-filename-regex '(^|/)bench/' \
+	  --fail-under-lines $(COVER_FLOOR) --summary-only
+
+cover-html:
+	$(CARGO) llvm-cov --workspace --all-targets --ignore-filename-regex '(^|/)bench/' \
+	  --open
+
+# Licences, advisories, duplicate dependencies and where crates came from.
+# This is a GPL-3.0-or-later project: a GPL-incompatible transitive licence is
+# a licensing bug, not a preference.
+audit:
+	$(CARGO) deny --all-features check
+
+# What `doc/STABILITY' promises, checked against the branch this one came from
+# rather than against a release, because there is not one yet.
+api:
+	$(CARGO) semver-checks $(addprefix -p ,$(PUBLISHED)) \
+	  --baseline-rev $$(git merge-base HEAD origin/main 2>/dev/null || echo HEAD~1)
 
 site:
 	$(CARGO) run -q -p crabbucket-cli -- build $(SITE)
@@ -78,4 +125,6 @@ dist:
 	$(CARGO) package --workspace
 
 help:
-	@echo 'Targets: all check fmt lint test site roadmap install uninstall clean distclean dist'
+	@echo 'Build:    all install uninstall clean distclean dist'
+	@echo 'Check:    check fmt lint test doc-test site roadmap'
+	@echo 'Measure:  cover cover-html audit api'

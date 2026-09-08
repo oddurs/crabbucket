@@ -1,0 +1,98 @@
+# Licences, advisories and where crates came from.
+#
+# This project is GPL-3.0-or-later.  That is not a preference about
+# dependencies, it is a constraint on them: a transitive dependency under a
+# licence the GPL cannot absorb makes the combined work undistributable, and
+# that is a thing to find out from CI rather than from a user.
+#
+# Everything here is an allow-list, for the same reason `include' in each
+# crate's manifest is: a new licence appearing in the tree should be a decision
+# somebody made, not a thing that happened.
+#
+#   make audit
+#
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[graph]
+# The four platforms this is built and tested on.  A dependency that only
+# exists on a target nobody uses is not worth an advisory alert.
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "aarch64-unknown-linux-gnu",
+    "x86_64-apple-darwin",
+    "aarch64-apple-darwin",
+    "x86_64-pc-windows-msvc",
+]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+
+# `all', not the default `workspace', so an unmaintained crate three levels
+# down is still a decision somebody makes rather than a thing that happened.
+# The cost is that this list has to be kept; that is the intended cost.  If it
+# ever becomes noise rather than signal, narrow this rather than emptying the
+# list, so that the narrowing is the visible change.
+unmaintained = "all"
+
+# Each of these is unmaintained rather than vulnerable, and none has a safe
+# upgrade.  A vulnerability would not be ignorable; being unmaintained is a
+# reason to watch, not a reason to stop.
+ignore = [
+    # bincode 1.3.3, via syntect's dump-load.  Syntect reads its bundled
+    # syntax definitions from a bincode dump, so this leaves when syntect
+    # does.  No vulnerability; the project was retired.
+    "RUSTSEC-2025-0141",
+
+    # rustybuzz, via resvg.  Only crabbucket-og depends on it, and only to
+    # shape text in a social card; a site that draws no cards never compiles
+    # it.
+    "RUSTSEC-2026-0206",
+
+    # ttf-parser, the same resvg tree and the same maintainer, retired at the
+    # same time.  Same reasoning.
+    "RUSTSEC-2026-0192",
+]
+
+[licenses]
+version = 2
+# Every licence below is one the GPL can absorb.  Adding to this list is
+# claiming that of a new one; do not do it without checking.
+allow = [
+    "0BSD",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "GPL-3.0-or-later",
+    "ISC",
+    "MIT",
+    "Unicode-3.0",
+    "Unlicense",
+    "Zlib",
+]
+# A crate whose expression cannot be resolved to the list above is a crate
+# somebody has to read the licence of.
+confidence-threshold = 0.93
+
+[[licenses.exceptions]]
+# Apache-2.0 WITH LLVM-exception, as the Rust standard library and much of the
+# ecosystem carry.  Strictly more permissive than Apache-2.0 alone.
+allow = ["Apache-2.0 WITH LLVM-exception"]
+name = "linux-raw-sys"
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+# A build that pulls in two copies of a parser is a build that can disagree
+# with itself about what a file says.
+deny = []
+skip = []
+skip-tree = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
