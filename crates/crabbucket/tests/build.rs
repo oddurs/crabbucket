@@ -589,6 +589,72 @@ fn a_site_that_did_not_ask_for_search_gets_none() {
     assert!(!out.join("search.js").exists());
 }
 
+// ----------------------------------------------------------- the site root
+
+#[test]
+fn a_site_root_link_lands_under_the_base() {
+    let (_, out) = ok("site-root");
+    let html = read(&out, "index.html");
+
+    assert!(html.contains("href=\"/repo/docs/\""), "got {html}");
+    assert!(
+        !html.contains("~/docs/"),
+        "a site-root link reached the output: {html}"
+    );
+}
+
+#[test]
+fn a_site_root_link_is_the_one_thing_the_error_page_can_use() {
+    // The error page is served in place of any path, so a relative link on it
+    // has no directory to resolve against and a spelled-out absolute one
+    // hard-codes the base.  This is what is left.
+    let (_, out) = ok("site-root");
+    let html = read(&out, "404.html");
+
+    assert!(html.contains("href=\"/repo/docs/\""), "got {html}");
+}
+
+#[test]
+fn a_site_root_link_follows_an_overridden_base() {
+    // The bug this fixes: the same content under a different base used to
+    // produce a link to the old one, silently, because a link outside the
+    // base is not checked.
+    let (result, out) = build_with("site-root", Some("/elsewhere/"));
+    result.expect("should build");
+
+    let html = read(&out, "index.html");
+    assert!(html.contains("href=\"/elsewhere/docs/\""), "got {html}");
+    assert!(
+        !html.contains("/repo/"),
+        "the configured base survived: {html}"
+    );
+}
+
+#[test]
+fn a_tilde_in_prose_is_not_a_link() {
+    let (_, out) = ok("site-root");
+    let html = read(&out, "index.html");
+
+    assert!(
+        html.contains("~/Code/crabbucket"),
+        "a shell path was rewritten: {html}"
+    );
+}
+
+#[test]
+fn a_site_root_link_to_nowhere_is_still_a_dead_link() {
+    let Error::DeadLinks(dead) = fails("dead-site-root") else {
+        panic!("expected dead links");
+    };
+
+    assert_eq!(dead.len(), 1);
+    assert_eq!(dead[0].reason, Reason::NoSuchRoute);
+    assert_eq!(
+        dead[0].target, "/gone/",
+        "checked after resolution, like any other link"
+    );
+}
+
 // ------------------------------------------------------------- the base path
 
 #[test]
@@ -755,6 +821,7 @@ fn every_failure_names_a_file() {
         "unknown-directive",
         "bad-attribute",
         "unterminated-directive",
+        "dead-site-root",
     ] {
         let err = build(fixture).0.expect_err("should fail");
         assert!(

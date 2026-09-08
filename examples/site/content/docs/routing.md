@@ -90,6 +90,36 @@ decide whether it succeeded is a generator that fails on an aeroplane.
 A bare `#` is left alone: it is the conventional spelling of "no
 destination", not a broken link.
 
+## Saying "the site root"
+
+Prefer relative links. They survive a change of `base` because they never
+mention it.
+
+Sometimes you cannot use one — the error page is served in place of *any*
+path, so it has no directory to be relative to. Writing the absolute path out
+hard-codes the base into the page, and that fails silently: a link outside the
+base is not this build's business, so nothing checks it and nothing complains
+when the site moves.
+
+So `~/` means the site root, whatever the base is:
+
+```markdown
+The [documentation](~/docs/) is probably where you were going.
+```
+
+```
+/repo/     →  /repo/docs/
+/          →  /docs/
+/preview/  →  /preview/docs/
+```
+
+It is resolved on the finished page, so it works in content and in components
+alike, and it is checked afterwards like any other link — `~/gone/` fails the
+build the same way `/repo/gone/` would.
+
+Only inside `href` and `src`. A shell path in prose or a code block —
+`~/Code/crabbucket`, which appears on this very site — is left alone.
+
 ## The error page
 
 `content/404.md` becomes `dist/404.html` — a file rather than a directory,

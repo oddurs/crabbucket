@@ -18,6 +18,12 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
 
 ** Bug fixes
 
+  `~/' in a link means the site root, whatever the base path is.  Content
+  had no way to write a site-absolute link that survived the base
+  changing: spelling one out hard-coded the base, and did so silently,
+  because a link outside the base is not checked.  Only inside `href' and
+  `src', so a shell path in prose is left alone.
+
   A design system that offered a search client but did not load it shipped
   a search box that could never appear.  crabbucket-ui now loads it, and
   the build warns when any client is written that no page loads -- the

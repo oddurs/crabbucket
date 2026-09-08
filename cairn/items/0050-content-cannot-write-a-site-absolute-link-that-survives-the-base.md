@@ -2,7 +2,7 @@
 id: 50
 title: Content cannot write a site-absolute link that survives the base
 type: bug
-status: backlog
+status: done
 milestone: v0.3
 created: 2026-09-08
 updated: 2026-09-08
@@ -47,8 +47,27 @@ move it.
 
 ## Acceptance criteria
 
-- [ ] Content can write a site-root-relative link without naming the base
-- [ ] `--base` moves it, and link checking follows
-- [ ] The example site's 404 page uses it
-- [ ] Building the example site under a base override passes
-- [ ] Documented on the routing page beside the error-page rule
+- [x] Content can write a site-root-relative link without naming the base
+- [x] `--base` moves it, and link checking follows
+- [x] The example site's 404 page uses it
+- [x] Building the example site under a base override passes
+- [x] Documented on the routing page beside the error-page rule
+
+## 2026-09-08
+
+Done, with the first of the three options: a leading `~/`, resolved
+against the base.
+
+Resolved on the finished page rather than in the Markdown pass, which was
+not the plan and is better: it works in content and in components alike,
+and nothing downstream has to know the convention exists. By the time the
+link checker sees it, it is an ordinary absolute link and is checked like
+one -- `~/gone/` fails exactly as `/repo/gone/` would.
+
+Only inside `href` and `src`. These docs contain `~/Code/crabbucket` in
+prose, and rewriting that would have been worse than the problem being
+solved. There is a test named after it.
+
+The example site's error page now uses it, and the seam test in
+crabbucket-theme-plain builds the example site with `--base /` again --
+the override it had to avoid when this was filed.
