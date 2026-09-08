@@ -23,7 +23,7 @@ use crabbucket_ui::Standard;
 
 /// Renders a page body with the default design system's directives.
 fn render(source: &str) -> String {
-    let config = crabbucket::Config::for_tests();
+    let config = crabbucket::Config::blank();
     let data = crabbucket::directive::Data::default();
     let context = crabbucket::directive::Context::new(&config, &data);
 
@@ -33,7 +33,7 @@ fn render(source: &str) -> String {
 }
 
 fn fails(source: &str) -> String {
-    let config = crabbucket::Config::for_tests();
+    let config = crabbucket::Config::blank();
     let data = crabbucket::directive::Data::default();
     let context = crabbucket::directive::Context::new(&config, &data);
 

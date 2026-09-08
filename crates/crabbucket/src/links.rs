@@ -31,11 +31,13 @@
 //! succeeded is a generator that fails on an aeroplane.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::fmt;
 use std::path::{Path, PathBuf};
 
 use crate::config::Config;
 
 /// Why a link is dead.
+#[non_exhaustive]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Reason {
     /// Nothing is served at that path.
@@ -80,6 +82,16 @@ impl DeadLink {
     /// The one-line explanation, without the source path.
     pub fn describe(&self) -> String {
         format!("{} -> {}", self.href, self.reason.describe(&self.target))
+    }
+}
+
+/// The page, and then what is wrong with the link on it.
+///
+/// A caller that pulls one out of [`crate::Error::DeadLinks`] and prints it
+/// should get the sentence, not the struct.
+impl fmt::Display for DeadLink {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}: {}", self.source.display(), self.describe())
     }
 }
 
@@ -404,15 +416,13 @@ mod tests {
     use crate::config::Config;
 
     fn config(base: &str) -> Config {
-        Config {
-            title: "t".into(),
-            description: String::new(),
-            url: None,
-            base: base.into(),
-            search: false,
-            feeds: Vec::new(),
-            pages: Vec::new(),
-            router: false,
+        {
+            let mut config = Config::blank();
+            config.title = "t".into();
+            config.description = String::new();
+            config.url = None;
+            config.base = base.into();
+            config
         }
     }
 

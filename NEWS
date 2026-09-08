@@ -78,6 +78,23 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
   `build_with' now takes its `Options' by value, because they carry
   directives, which cannot be borrowed out of a shared reference.
 
+** API
+
+  doc/STABILITY says what 1.0 will promise and what it will not, which
+  types may grow without breaking, and where the design has no guarantee
+  to offer.
+
+  Error, Reason, Config, Options and Report are `#[non_exhaustive]'.  All
+  five have gained members in every release so far, and deciding this
+  after 1.0 would itself be the breaking change.
+
+  `Options' is built with `Options::new()' and its methods rather than as
+  a literal.  `Config::blank()' replaces `Config::for_tests'.
+
+  Everything a caller must construct or receive is re-exported at the
+  crate root, which an audit found untrue of eight types.  `DeadLink'
+  gained a Display.
+
 ** Bug fixes
 
   A link to a route without a trailing slash -- `/docs/agents' rather than

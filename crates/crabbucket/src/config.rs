@@ -31,6 +31,7 @@ use crate::error::{Error, Result};
 /// getting that wrong is the single most common way one of these sites ships
 /// broken.  It is recorded once, here, and applied in exactly one place --
 /// [`crate::url::Url`] -- so no page ever has to know about it.
+#[non_exhaustive]
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     /// The site's title, used in `<title>` and in feeds.
@@ -119,9 +120,14 @@ impl Config {
 }
 
 impl Config {
-    /// A configuration with nothing in it, for tests and for the rare caller
-    /// that needs a context before it has read a file.
-    pub fn for_tests() -> Self {
+    /// A configuration with nothing in it.
+    ///
+    /// A real site's configuration is read from `site.toml`; this is for tests
+    /// and for the rare caller that needs one before it has a file.  The
+    /// fields are public, so anything else is set by assigning to them --
+    /// which is why the struct is `non_exhaustive` and this is not a `Default`
+    /// somebody would reach for in earnest.
+    pub fn blank() -> Self {
         Config {
             title: String::new(),
             description: String::new(),

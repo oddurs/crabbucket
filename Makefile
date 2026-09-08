@@ -29,7 +29,7 @@ CARGO_PROFILE = release
 CARGO_FLAGS = --release
 TARGETDIR = target/$(CARGO_PROFILE)
 
-DOCS = README NEWS AUTHORS THANKS ChangeLog COPYING doc/DESIGN
+DOCS = README NEWS AUTHORS THANKS ChangeLog COPYING doc/DESIGN doc/STABILITY
 
 .PHONY: all check fmt lint test site roadmap install uninstall clean distclean dist help
 

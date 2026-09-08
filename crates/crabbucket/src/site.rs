@@ -147,6 +147,7 @@ type Rendering<'a, T> = (
 );
 
 /// What a build produced, for the benefit of whoever asked for it.
+#[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Report {
     /// The routes written, in the order they were written.
@@ -217,6 +218,7 @@ fn plural<'a>(count: usize, one: &'a str, many: &'a str) -> &'a str {
 
 /// Overrides for one invocation, which the configuration file does not know
 /// about and should not be edited to express.
+#[non_exhaustive]
 #[derive(Debug, Default)]
 pub struct Options {
     /// Write somewhere other than `dist/`.
@@ -243,6 +245,50 @@ pub struct Options {
     /// silently replacing a component would change every page that uses it
     /// without a word.
     pub directives: Directives,
+}
+
+impl Options {
+    /// No overrides, which is what `build` uses.
+    pub fn new() -> Self {
+        Options::default()
+    }
+
+    /// Write the site somewhere other than `dist/`.
+    pub fn out_dir(mut self, dir: impl Into<PathBuf>) -> Self {
+        self.out_dir = Some(dir.into());
+        self
+    }
+
+    /// Serve from somewhere other than the configured base path.
+    pub fn base(mut self, base: impl Into<String>) -> Self {
+        self.base = Some(base.into());
+        self
+    }
+
+    /// Serve from an override that may not be there, which is the shape a
+    /// command line argument arrives in.
+    pub fn maybe_base(mut self, base: Option<impl Into<String>>) -> Self {
+        self.base = base.map(Into::into);
+        self
+    }
+
+    /// Supply every declared page's body at once.
+    pub fn pages(mut self, pages: BTreeMap<String, String>) -> Self {
+        self.pages = pages;
+        self
+    }
+
+    /// Supply the body of a page the site declared in `site.toml`.
+    pub fn page(mut self, route: impl Into<String>, body: impl Into<String>) -> Self {
+        self.pages.insert(route.into(), body.into());
+        self
+    }
+
+    /// Register directives of the site's own, alongside its design system's.
+    pub fn directives(mut self, directives: Directives) -> Self {
+        self.directives = directives;
+        self
+    }
 }
 
 /// Builds the site rooted at `site_dir` into `site_dir/dist`.
@@ -798,15 +844,13 @@ mod tests {
     use crate::config::Config;
 
     fn config(base: &str) -> Config {
-        Config {
-            title: "t".into(),
-            description: String::new(),
-            url: Some("https://example.com/".into()),
-            base: base.into(),
-            search: false,
-            feeds: Vec::new(),
-            pages: Vec::new(),
-            router: false,
+        {
+            let mut config = Config::blank();
+            config.title = "t".into();
+            config.description = String::new();
+            config.url = Some("https://example.com/".into());
+            config.base = base.into();
+            config
         }
     }
 

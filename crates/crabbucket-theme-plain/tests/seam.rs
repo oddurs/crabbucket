@@ -41,11 +41,7 @@ fn build_into(name: &str) -> (crabbucket::Report, PathBuf) {
     // The site's own base, not an override: the error page carries a
     // site-absolute link, and content has no way to write one that survives
     // the base changing under it.
-    let options = Options {
-        out_dir: Some(out.clone()),
-        base: None,
-        ..Options::default()
-    };
+    let options = Options::new().out_dir(out.clone());
     let report = crabbucket::build_with(&example_site(), &Plain, options)
         .unwrap_or_else(|err| panic!("Plain cannot build the example site: {err}"));
 

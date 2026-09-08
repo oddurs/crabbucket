@@ -441,7 +441,7 @@ mod tests {
     /// Renders with no directives registered, which is what most of these
     /// tests are about.
     fn plain(source: &str) -> Body {
-        let config = crate::config::Config::for_tests();
+        let config = crate::config::Config::blank();
         let data = crate::directive::Data::default();
         let context = crate::directive::Context::new(&config, &data);
 

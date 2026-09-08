@@ -41,13 +41,14 @@ pub mod url;
 
 pub use config::Config;
 pub use content::{Collection, Entry};
-pub use directive::Directives;
-pub use error::{Error, Result};
+pub use directive::{Context, Data, Directives};
+pub use error::{Error, Result, Snippet};
 pub use feed::Feed;
-pub use markdown::Heading;
+pub use links::{DeadLink, Reason};
+pub use markdown::{Body, Heading};
 pub use site::{Options, Report, build, build_with};
 pub use style::{Style, StyleSheet};
-pub use theme::{NavItem, Page, PageMeta, PageRef, SiteIndex, Theme};
+pub use theme::{FeedLink, NavItem, NoExtra, Page, PageMeta, PageRef, SiteIndex, Theme};
 pub use url::Url;
 
 /// Re-exported so that a site crate needs only one dependency to write

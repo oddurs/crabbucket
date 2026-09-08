@@ -540,7 +540,7 @@ mod tests {
 
     /// A context a directive that reads neither the config nor data can use.
     fn nothing() -> (crate::config::Config, Data) {
-        (crate::config::Config::for_tests(), Data::default())
+        (crate::config::Config::blank(), Data::default())
     }
 
     fn directives() -> Directives {

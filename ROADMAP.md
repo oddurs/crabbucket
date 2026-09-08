@@ -76,22 +76,22 @@ Prove the theme seam by implementing it twice, and give components the guarantee
 
 ## v1.0 — Stable enough to depend on
 
-`###·······` 30% · 3 of 10 done
+`#####·····` 50% · 5 of 10 done
 
 The point at which a breaking change starts costing someone other than the author something real.
 
 ### backlog
 
 - [ ] [`0032`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0032-publish-the-crates-to-crates-io.md) Publish the crates to crates.io <sup>chore · p0</sup>
-- [ ] [`0033`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0033-write-down-what-is-stable-and-what-is-not.md) Write down what is stable and what is not <sup>docs · p0</sup>
 - [ ] [`0034`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0034-the-book.md) The book <sup>docs · p1</sup>
 - [ ] [`0035`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0035-msrv-and-platform-matrix-in-ci.md) MSRV and platform matrix in CI <sup>chore · p1</sup>
 - [ ] [`0036`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0036-measure-the-build-on-a-site-large-enough-to-matter.md) Measure the build on a site large enough to matter <sup>chore · p2</sup>
 - [ ] [`0048`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0048-validate-the-scaffolded-turborust-toml-against-turborust-schema.md) Validate the scaffolded turborust.toml against turborust schema <sup>chore · p2</sup>
-- [ ] [`0049`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0049-report-is-the-model-for-what-a-library-api-should-hand-back.md) Report is the model for what a library API should hand back <sup>chore · p3 · api</sup>
 
 ### done
 
+- [x] [`0033`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0033-write-down-what-is-stable-and-what-is-not.md) Write down what is stable and what is not <sup>docs · p0</sup>
+- [x] [`0049`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0049-report-is-the-model-for-what-a-library-api-should-hand-back.md) Report is the model for what a library API should hand back <sup>chore · p3 · api</sup>
 - [x] [`0051`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0051-frontmatter-a-site-adds-is-silently-dropped.md) Frontmatter a site adds is silently dropped <sup>bug · p1 · migration</sup>
 - [x] [`0052`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0052-a-site-cannot-add-a-page-that-is-not-a-markdown-file.md) A site cannot add a page that is not a Markdown file <sup>feature · p1 · migration</sup>
 - [x] [`0053`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0053-a-directive-cannot-read-anything-but-its-own-attributes.md) A directive cannot read anything but its own attributes <sup>feature · p2 · migration</sup>
