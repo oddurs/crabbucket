@@ -50,6 +50,27 @@ separate words; inline ones do not.
 anyone searches for, and it was landing in the index between every heading and
 the paragraph after it.
 
+## Keeping a block out of the index
+
+Inline code stays indexed, because `serde::Deserialize` is exactly the kind of
+thing people search for. A *block* can be a different case: a terminal
+capture or a diagram is a thousand box-drawing characters that will match
+nothing anybody types, and will wreck every excerpt they land in.
+
+Mark one with a fence flag:
+
+````markdown
+```console no-search
+╭────────────╮ │ Amiri 1 ││ style weight 400 · width 100% │
+╰────────────╯
+```
+````
+
+The block still renders and still highlights; it simply is not indexed. The
+flag becomes `data-search="off"` on the `<pre>`, and anything carrying that
+attribute is skipped along with its contents — so a directive or a design
+system can mark a region too.
+
 ## The client
 
 Fetched on first interaction rather than on page load, so a reader who never

@@ -1,0 +1,16 @@
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+name = "crabbucket-tokens"
+description = "Generates Rust constants and CSS custom properties from a design token file."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[dependencies]
+toml = "0.9"

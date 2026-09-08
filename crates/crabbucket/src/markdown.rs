@@ -50,6 +50,13 @@ use crate::directive::{Block, Directives, Fault, scan};
 /// The prefix on every class emitted by the highlighter.
 const CLASS_PREFIX: &str = "tok-";
 
+/// The fence flag that keeps a block out of the search index.
+///
+/// Inline code stays indexed regardless, so that `serde::Deserialize` remains
+/// findable.  This is for blocks whose content is not made of words anybody
+/// would search for: a terminal capture, a diagram, ASCII art.
+const NO_SEARCH: &str = "no-search";
+
 /// One heading, as the table of contents and the link checker need it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Heading {
@@ -294,21 +301,19 @@ fn syntaxes() -> &'static SyntaxSet {
 )]
 fn highlight_code(events: &mut Vec<Event<'_>>) {
     let mut replacements: Vec<(usize, usize, String)> = Vec::new();
-    let mut open: Option<(usize, String)> = None;
+    let mut open: Option<(usize, Info)> = None;
     let mut code = String::new();
 
     for index in 0..events.len() {
         match &events[index] {
-            Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(language))) => {
-                // The info string may carry more than a language.
-                let language = language.split_whitespace().next().unwrap_or("").to_string();
-                open = Some((index, language));
+            Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(info))) => {
+                open = Some((index, Info::read(info)));
                 code.clear();
             }
             Event::Text(chunk) if open.is_some() => code.push_str(chunk),
             Event::End(TagEnd::CodeBlock) => {
-                if let Some((start, language)) = open.take()
-                    && let Some(html) = highlight(&code, &language)
+                if let Some((start, info)) = open.take()
+                    && let Some(html) = fence(&code, &info)
                 {
                     replacements.push((start, index, html));
                 }
@@ -323,7 +328,66 @@ fn highlight_code(events: &mut Vec<Event<'_>>) {
     }
 }
 
-/// Highlights one block, or returns `None` if the language is not known.
+/// A fence's info string: a language, and any flags after it.
+#[derive(Debug, Default, PartialEq, Eq)]
+struct Info {
+    language: String,
+    excluded: bool,
+}
+
+impl Info {
+    fn read(info: &str) -> Self {
+        let mut parsed = Info::default();
+
+        for word in info.split_whitespace() {
+            if word == NO_SEARCH {
+                parsed.excluded = true;
+            } else if parsed.language.is_empty() {
+                parsed.language = word.to_string();
+            }
+        }
+
+        parsed
+    }
+
+    /// The attributes this fence's `<pre>` carries.
+    fn attributes(&self) -> String {
+        let mut out = String::new();
+
+        if !self.language.is_empty() {
+            out.push_str(&format!(" data-language=\"{}\"", escape(&self.language)));
+        }
+
+        if self.excluded {
+            out.push_str(" data-search=\"off\"");
+        }
+
+        out
+    }
+}
+
+/// Renders one fenced block, or returns `None` to leave it to the default
+/// rendering.
+///
+/// A block is taken over when there is something to add: highlighting, or an
+/// attribute that changes what the build does with it.
+fn fence(code: &str, info: &Info) -> Option<String> {
+    let highlighted = highlight(code, &info.language);
+
+    if highlighted.is_none() && !info.excluded {
+        return None;
+    }
+
+    let body = highlighted.unwrap_or_else(|| escape_text(code));
+
+    Some(format!(
+        "<pre class=\"code\"{}><code>{body}</code></pre>",
+        info.attributes()
+    ))
+}
+
+/// Highlights one block's contents, or returns `None` if the language is not
+/// known.
 fn highlight(code: &str, language: &str) -> Option<String> {
     if language.is_empty() {
         return None;
@@ -348,11 +412,14 @@ fn highlight(code: &str, language: &str) -> Option<String> {
             .ok()?;
     }
 
-    Some(format!(
-        "<pre class=\"code\" data-language=\"{}\"><code>{}</code></pre>",
-        escape(language),
-        generator.finalize()
-    ))
+    Some(generator.finalize())
+}
+
+/// Escapes text going into an element rather than an attribute.
+fn escape_text(text: &str) -> String {
+    text.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
 }
 
 /// Escapes the few characters that matter inside an attribute value.
@@ -436,6 +503,39 @@ mod tests {
         let html = to_html("```rust\nfn main() {}\n```\n");
         assert!(html.contains("data-language=\"rust\""), "got {html}");
         assert!(html.contains("tok-"), "no scope classes in {html}");
+    }
+
+    #[test]
+    fn a_fence_can_take_itself_out_of_the_search_index() {
+        let html = to_html("```console no-search\nnot words\n```\n");
+
+        assert!(html.contains("data-search=\"off\""), "got {html}");
+        assert!(
+            html.contains("data-language=\"console\""),
+            "the language survives: {html}"
+        );
+    }
+
+    #[test]
+    fn the_flag_works_without_a_language_too() {
+        let html = to_html("``` no-search\nnot words\n```\n");
+
+        assert!(html.contains("data-search=\"off\""), "got {html}");
+        assert!(
+            !html.contains("data-language"),
+            "no-search is not a language: {html}"
+        );
+        assert!(
+            html.contains("not words"),
+            "the content is still rendered: {html}"
+        );
+    }
+
+    #[test]
+    fn an_excluded_block_still_escapes_its_content() {
+        let html = to_html("``` no-search\n<script>&\n```\n");
+
+        assert!(html.contains("&lt;script&gt;&amp;"), "got {html}");
     }
 
     #[test]

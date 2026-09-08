@@ -151,17 +151,17 @@ fn every_registered_directive_is_documented_by_being_usable() {
 
 #[test]
 fn the_router_stays_small() {
-    // Around 7KB raw, which is about 2.6KB over the wire once a server has
+    // Around 8KB raw, which is about 3KB over the wire once a server has
     // gzipped it.  The budget is on the raw file because that is the number
     // that grows without anyone noticing, and it is deliberately close to the
     // current size: this file is meant to stay small enough to read.
-    let size = Standard.router_js().len();
-    assert!(size < 7800, "the router has grown to {size} bytes");
+    let size = Standard.router_js().expect("ui has a router").len();
+    assert!(size < 8600, "the router has grown to {size} bytes");
 }
 
 #[test]
 fn neither_client_carries_an_unresolved_placeholder() {
-    let router = Standard.router_js();
+    let router = Standard.router_js().expect("ui has a router");
     assert!(
         !router.contains('@'),
         "a placeholder reached the router: {router}"
@@ -171,7 +171,7 @@ fn neither_client_carries_an_unresolved_placeholder() {
         "the router does not know the contents class"
     );
 
-    let search = Standard.search_js();
+    let search = Standard.search_js().expect("ui has search");
     assert!(
         !search.contains('@'),
         "a placeholder reached the search client: {search}"
@@ -199,7 +199,7 @@ fn the_search_client_is_syntactically_valid_javascript() {
 
     let path = std::env::temp_dir().join("crabbucket-search-check.js");
     let mut file = std::fs::File::create(&path).expect("cannot write the client out");
-    file.write_all(Standard.search_js().as_bytes())
+    file.write_all(Standard.search_js().expect("ui has search").as_bytes())
         .expect("cannot write the client out");
     drop(file);
 
@@ -218,8 +218,31 @@ fn the_search_client_is_syntactically_valid_javascript() {
 }
 
 #[test]
+fn the_router_lets_a_design_system_hook_a_navigation() {
+    // Without this a theme with anything interactive has to fork the router,
+    // which silently costs it prefetching, scroll-spy, tab memory and copy
+    // buttons.  One event fixes it for everyone.
+    let js = Standard.router_js().expect("ui has a router");
+
+    assert!(
+        js.contains("crabbucket:render"),
+        "no extension point in the router"
+    );
+    assert!(js.contains("CustomEvent"), "the hook is not an event: {js}");
+
+    // The built-in enhancers go through the same door a theme's would, so the
+    // door cannot rot: if it breaks, the default design system breaks first.
+    for enhancer in ["tabs", "spy", "copy"] {
+        assert!(
+            js.contains(&format!("addEventListener(RENDERED, {enhancer})")),
+            "`{enhancer}` is still called by name rather than listening"
+        );
+    }
+}
+
+#[test]
 fn the_router_moves_focus_and_announces_itself() {
-    let js = Standard.router_js();
+    let js = Standard.router_js().expect("ui has a router");
 
     for behaviour in [
         "aria-live",
@@ -370,7 +393,7 @@ fn the_router_is_syntactically_valid_javascript() {
 
     let path = std::env::temp_dir().join("crabbucket-router-check.js");
     let mut file = std::fs::File::create(&path).expect("cannot write the router out");
-    file.write_all(Standard.router_js().as_bytes())
+    file.write_all(Standard.router_js().expect("ui has a router").as_bytes())
         .expect("cannot write the router out");
     drop(file);
 

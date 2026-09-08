@@ -111,6 +111,12 @@ pub struct Check {
     /// and anything outside the base path are not counted, because they were
     /// not checked.
     pub examined: usize,
+    /// Every internal target some page referred to, live or dead.
+    ///
+    /// A file the build writes and no page mentions is not a dead link -- it
+    /// is the opposite, and just as broken.  This is what lets the build
+    /// notice one.
+    pub referenced: BTreeSet<String>,
 }
 
 /// Every route the build will write, and the heading ids on each.
@@ -129,6 +135,7 @@ pub fn check(
 ) -> Check {
     let mut dead = Vec::new();
     let mut examined = 0;
+    let mut referenced = BTreeSet::new();
 
     for page in pages {
         for href in hrefs(page.html) {
@@ -137,6 +144,7 @@ pub fn check(
             };
 
             examined += 1;
+            referenced.insert(link.path.trim_start_matches('/').to_string());
 
             if page.error_page && is_relative(&href) {
                 dead.push(DeadLink {
@@ -197,7 +205,11 @@ pub fn check(
 
     dead.sort();
     dead.dedup();
-    Check { dead, examined }
+    Check {
+        dead,
+        examined,
+        referenced,
+    }
 }
 
 /// Pulls every `href` and `src` value out of a document.

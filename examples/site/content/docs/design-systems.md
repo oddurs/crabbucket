@@ -126,6 +126,46 @@ rebuilds nothing. `crab new --theme` writes the right one; the difference is
 not cosmetic and it is silent when it is wrong.
 :::
 
+## Loading your clients
+
+A design system that offers a router or a search client has to load it. The
+head is the theme's, so nothing else can put the tag there:
+
+```rust
+@if config.router { script defer src=(Url::asset(config, "router.js")) {} }
+@if config.search { script defer src=(Url::asset(config, "search.js")) {} }
+```
+
+Forgetting one ships a feature that silently does nothing — the file is
+written, no page loads it, and the search box sits hidden waiting for a client
+that never arrives. So the build says so:
+
+```
+crab: warning: search.js was written but no page loads it; the design
+system's document template is missing its script tag
+```
+
+A design system with no router and no search says nothing at all, and gets
+neither the file nor the warning; a site that asks for one anyway is told
+once, and still builds.
+
+## Hooking a navigation
+
+The router swaps `<main>` without reloading, so anything a design system
+attaches to the DOM has to run again afterwards. It fires an event rather than
+calling components by name:
+
+```js
+addEventListener('crabbucket:render', () => {
+  // Runs on first load and after every client-side navigation.
+});
+```
+
+The built-in tab memory, contents highlighting and copy buttons all go through
+that same event, which is deliberate: if the door rots, the default design
+system breaks first. Forking the router to add one function call would
+silently cost you prefetching, scroll-spy, tab persistence and copy buttons.
+
 ## Styles live beside components
 
 Each component declares its own styles, with `&` standing in for its class

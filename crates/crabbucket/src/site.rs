@@ -211,16 +211,23 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
         rendered.push((*entry, url, theme.render(&page)));
     }
 
+    // What the site asked for, and what the design system actually has.  A
+    // mismatch is worth saying and not worth stopping for: the page still
+    // works, it just has less in it than the configuration implies.
+    let mut warnings = Vec::new();
+    let router = declined(config.router, theme.router_js(), "router", &mut warnings);
+    let search = declined(config.search, theme.search_js(), "search", &mut warnings);
+
     let mut assets: BTreeSet<String> = BTreeSet::new();
     assets.insert("site.css".to_string());
-    if config.router {
+    if router.is_some() {
         assets.insert("router.js".to_string());
     }
     if config.url.is_some() {
         assets.insert("sitemap.xml".to_string());
         assets.insert("robots.txt".to_string());
     }
-    if config.search {
+    if search.is_some() {
         assets.insert("search.json".to_string());
         assets.insert("search.js".to_string());
     }
@@ -255,18 +262,24 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
         return Err(Error::DeadLinks(checked.dead));
     }
 
+    // A client the build writes and no page loads is the opposite of a dead
+    // link, and just as broken: the feature is configured, the file is
+    // shipped, and nothing happens.  It is a warning rather than an error
+    // because a design system is allowed to load its own scripts some other
+    // way -- but the silence is worth breaking.
+    warnings.extend(unloaded("router.js", router.is_some(), &checked.referenced));
+    warnings.extend(unloaded("search.js", search.is_some(), &checked.referenced));
+
     for (entry, _, html) in &rendered {
         write(&page_path(&out_dir, &entry.route), html)?;
     }
 
     write(&out_dir.join("site.css"), &theme.stylesheet())?;
-    if config.router {
-        write(&out_dir.join("router.js"), &theme.router_js())?;
+    if let Some(client) = &router {
+        write(&out_dir.join("router.js"), client)?;
     }
 
-    let mut warnings = Vec::new();
-
-    if config.search {
+    if let Some(client) = &search {
         let documents: Vec<search::Document<'_>> = rendered
             .iter()
             .filter(|(entry, _, _)| entry.route != ERROR_ROUTE)
@@ -283,7 +296,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
         warnings.extend(search::outgrown(index.len()));
 
         write(&out_dir.join("search.json"), &index)?;
-        write(&out_dir.join("search.js"), &theme.search_js())?;
+        write(&out_dir.join("search.js"), client)?;
     }
 
     if let Some(url) = &config.url {
@@ -304,6 +317,42 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
         links: checked.examined,
         warnings,
     })
+}
+
+/// Says so if a client was written and no page loads it.
+fn unloaded(
+    file: &str,
+    written: bool,
+    referenced: &std::collections::BTreeSet<String>,
+) -> Option<String> {
+    (written && !referenced.contains(file)).then(|| {
+        format!(
+            "{file} was written but no page loads it; \
+             the design system's document template is missing its script tag"
+        )
+    })
+}
+
+/// Reconciles what the site asked for with what the design system has.
+///
+/// Returns the client to write, if there is one to write, and records a
+/// warning when the site asked for something its design system does not offer.
+fn declined(
+    asked: bool,
+    offered: Option<String>,
+    what: &str,
+    warnings: &mut Vec<String>,
+) -> Option<String> {
+    match (asked, offered) {
+        (true, Some(client)) => Some(client),
+        (true, None) => {
+            warnings.push(format!(
+                "site.toml asks for the {what}, but this design system has none;                  the site is built without it"
+            ));
+            None
+        }
+        (false, _) => None,
+    }
 }
 
 /// The site's absolute root, without a trailing slash.

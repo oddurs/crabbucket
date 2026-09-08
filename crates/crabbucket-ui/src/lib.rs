@@ -128,12 +128,12 @@ impl Theme for Standard {
         components::directives()
     }
 
-    fn search_js(&self) -> String {
-        search_js()
+    fn search_js(&self) -> Option<String> {
+        Some(search_js())
     }
 
-    fn router_js(&self) -> String {
-        router_js()
+    fn router_js(&self) -> Option<String> {
+        Some(router_js())
     }
 }
 
@@ -321,6 +321,9 @@ pub fn document(
                 link rel="stylesheet" href=(Url::asset(config, "site.css"));
                 @if config.router {
                     script defer src=(Url::asset(config, "router.js")) {}
+                }
+                @if config.search {
+                    script defer src=(Url::asset(config, "search.js")) {}
                 }
             }
             body class=(SITE.with(meta.layout.slug())) {

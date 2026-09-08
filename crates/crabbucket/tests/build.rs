@@ -67,9 +67,26 @@ impl Theme for Plain {
             .map(|item| format!("<a href=\"{}\">{}</a>", item.href, item.label))
             .collect::<String>();
 
+        // A design system has to load the clients the site asked for.  Leaving
+        // one out ships a feature that silently does nothing, so the build
+        // says so -- see `Forgetful` below.
+        let scripts = [
+            page.config.router.then_some("router.js"),
+            page.config.search.then_some("search.js"),
+        ]
+        .into_iter()
+        .flatten()
+        .map(|file| {
+            format!(
+                "<script defer src=\"{}\"></script>",
+                crabbucket::Url::asset(page.config, file)
+            )
+        })
+        .collect::<String>();
+
         format!(
             "<!doctype html><html><head><title>{}</title>\
-             <link rel=\"stylesheet\" href=\"{}\"></head>\
+             <link rel=\"stylesheet\" href=\"{}\">{scripts}</head>\
              <body><nav>{nav}</nav><main>{}</main></body></html>",
             page.meta.title,
             crabbucket::Url::asset(page.config, "site.css"),
@@ -89,8 +106,63 @@ impl Theme for Plain {
         "body { color: inherit; }".to_string()
     }
 
-    fn router_js(&self) -> String {
-        "/* test */".to_string()
+    fn router_js(&self) -> Option<String> {
+        Some("/* test */".to_string())
+    }
+
+    fn search_js(&self) -> Option<String> {
+        Some("/* test */".to_string())
+    }
+}
+
+/// A design system that offers a router and then forgets to load it.
+///
+/// This is a real mistake made in a real design system: `search = true` wrote
+/// `search.js`, the head had no tag for it, and the search box sat hidden
+/// waiting for a client that never arrived.  Nothing was broken enough to
+/// fail; it simply did nothing.
+struct Forgetful;
+
+impl Theme for Forgetful {
+    type Layout = Layout;
+
+    fn render(&self, page: &Page<'_, Layout>) -> String {
+        format!(
+            "<!doctype html><html><head><title>{}</title>\
+             <link rel=\"stylesheet\" href=\"{}\"></head><body><main>{}</main></body></html>",
+            page.meta.title,
+            crabbucket::Url::asset(page.config, "site.css"),
+            page.html
+        )
+    }
+
+    fn stylesheet(&self) -> String {
+        String::new()
+    }
+
+    fn router_js(&self) -> Option<String> {
+        Some("/* never loaded */".to_string())
+    }
+}
+
+/// A design system with no router and no search, for the fixtures that ask
+/// for one anyway.
+struct Bare;
+
+impl Theme for Bare {
+    type Layout = Layout;
+
+    fn render(&self, page: &Page<'_, Layout>) -> String {
+        format!(
+            "<!doctype html><html><head><title>{}</title><link rel=\"stylesheet\" href=\"{}\"></head><body><main>{}</main></body></html>",
+            page.meta.title,
+            crabbucket::Url::asset(page.config, "site.css"),
+            page.html
+        )
+    }
+
+    fn stylesheet(&self) -> String {
+        "body { color: inherit; }".to_string()
     }
 }
 
@@ -301,6 +373,95 @@ fn an_unterminated_directive_fails_at_the_line_it_opened_on() {
         "got {message}"
     );
     assert!(message.contains(":7:1:"), "got {message}");
+}
+
+// ------------------------------------------------- what a theme declines
+
+#[test]
+fn a_theme_without_a_router_gets_a_warning_and_a_working_site() {
+    // The site asked for a router.  This design system has none.  That is
+    // worth saying and not worth stopping for: the page still works, it just
+    // has less in it than the configuration implies.
+    let site = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/sites/ok");
+    let out = std::env::temp_dir().join(format!("crabbucket-bare-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&out);
+
+    let options = Options {
+        out_dir: Some(out.clone()),
+        base: None,
+    };
+    let report = crabbucket::build_with(&site, &Bare, &options).expect("should still build");
+
+    assert!(
+        !out.join("router.js").exists(),
+        "a client was written for a theme with none"
+    );
+    assert!(out.join("index.html").is_file(), "the site did not build");
+
+    assert_eq!(report.warnings.len(), 1, "got {:?}", report.warnings);
+    assert!(
+        report.warnings[0].contains("asks for the router"),
+        "got {:?}",
+        report.warnings
+    );
+    assert!(
+        report.warnings[0].contains("has none"),
+        "got {:?}",
+        report.warnings
+    );
+}
+
+#[test]
+fn a_theme_without_search_writes_no_index_either() {
+    let site = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/sites/search");
+    let out = std::env::temp_dir().join(format!("crabbucket-bare-search-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&out);
+
+    let options = Options {
+        out_dir: Some(out.clone()),
+        base: None,
+    };
+    let report = crabbucket::build_with(&site, &Bare, &options).expect("should still build");
+
+    assert!(
+        !out.join("search.json").exists(),
+        "an index with no client to read it"
+    );
+    assert!(!out.join("search.js").exists());
+    assert!(
+        report.warnings[0].contains("asks for the search"),
+        "got {:?}",
+        report.warnings
+    );
+}
+
+#[test]
+fn a_client_nobody_loads_is_reported() {
+    // The opposite of a dead link, and just as broken: the feature is
+    // configured, the file is shipped, and nothing happens.
+    let site = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/sites/ok");
+    let out = std::env::temp_dir().join(format!("crabbucket-forgot-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&out);
+
+    let options = Options {
+        out_dir: Some(out.clone()),
+        base: None,
+    };
+    let report = crabbucket::build_with(&site, &Forgetful, &options).expect("should still build");
+
+    assert!(out.join("router.js").is_file(), "the client was written");
+
+    assert_eq!(report.warnings.len(), 1, "got {:?}", report.warnings);
+    assert!(
+        report.warnings[0].contains("router.js"),
+        "got {:?}",
+        report.warnings
+    );
+    assert!(
+        report.warnings[0].contains("no page loads it"),
+        "got {:?}",
+        report.warnings
+    );
 }
 
 // ------------------------------------------------------------------ report

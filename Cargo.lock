@@ -82,13 +82,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "crabbucket-theme-plain"
+version = "0.1.0"
+dependencies = [
+ "crabbucket",
+ "crabbucket-tokens",
+ "maud",
+ "serde",
+]
+
+[[package]]
+name = "crabbucket-tokens"
+version = "0.1.0"
+dependencies = [
+ "toml",
+]
+
+[[package]]
 name = "crabbucket-ui"
 version = "0.1.0"
 dependencies = [
  "crabbucket",
+ "crabbucket-tokens",
  "maud",
  "serde",
- "toml",
 ]
 
 [[package]]
