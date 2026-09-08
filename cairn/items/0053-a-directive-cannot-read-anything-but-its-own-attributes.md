@@ -2,7 +2,7 @@
 id: 53
 title: A directive cannot read anything but its own attributes
 type: feature
-status: backlog
+status: done
 milestone: v1.0
 labels:
 - migration
@@ -46,7 +46,40 @@ configuration are available; routes are not, without restructuring the build.
 
 ## Acceptance criteria
 
-- [ ] A directive can read site-supplied data and the configuration
-- [ ] The data is deserialized into the site's own types
-- [ ] The existing simple registration form still works unchanged
-- [ ] What a handler cannot see, and why, is documented
+- [x] A directive can read site-supplied data and the configuration
+- [x] The data is deserialized into the site's own types
+- [x] The existing simple registration form still works unchanged
+- [x] What a handler cannot see, and why, is documented
+
+## 2026-09-08
+
+Done, and it turned out to be two things rather than one.
+
+The item was about a directive seeing more than its attributes. Building
+the demonstration showed the other half: a *site* could not register a
+directive at all -- only its design system could. cairn's `<Terminal>`
+belongs to cairn, not to a theme, so the context alone would have had no
+user. `Options::directives` closes that, and a name the design system
+already uses is an error rather than an override.
+
+`add_with` is fallible where `add` is not, deliberately: the reason to want
+a context is almost always to look something up, and a lookup that misses
+should stop the build at the directive's line rather than render nothing.
+
+The ordering constraint the item predicted held exactly. Directives run
+while content is being loaded, so there is no site index and a handler
+cannot ask about other pages -- and that ordering is what makes the route
+table and link checking possible. The configuration and `data/*.toml` exist
+before any of it, so those are what a handler gets. Documented as a
+limitation rather than left to be discovered.
+
+One API change fell out: `build_with` takes `Options` by value now, because
+`Directives` holds boxed closures and cannot be borrowed out of a shared
+reference. `Options` lost its `PartialEq`, and the CLI's `Command` with it,
+so three assertions became `matches!`.
+
+One thing I noticed and did not act on: `Page<'_, Self>` from 0051 blocks a
+site from wrapping a theme to add behaviour, because `Page<'_, Wrapper>`
+and `Page<'_, Inner>` are different types even when their Layout and Extra
+match. `Options::directives` serves the case that prompted this, so the
+wrapping question can wait for something that actually needs it.

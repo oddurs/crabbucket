@@ -65,6 +65,19 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
   enum.  Declaring without rendering, rendering without declaring, and
   claiming a route the content already has are all errors.
 
+  A site can register directives of its own, through
+  `Options::directives', and a directive can read more than its own
+  attributes.  `Directives::add_with' hands a handler a context carrying
+  the configuration and the site's `data/*.toml' files, deserialized into
+  the site's own types.  A lookup that misses fails the build at the
+  directive's line.
+
+  A name the design system already uses is an error rather than an
+  override.
+
+  `build_with' now takes its `Options' by value, because they carry
+  directives, which cannot be borrowed out of a shared reference.
+
 ** Bug fixes
 
   A link to a route without a trailing slash -- `/docs/agents' rather than

@@ -274,7 +274,7 @@ fn build_theme<T: Theme>(fixture: &str, theme: &T) -> (Report, PathBuf) {
         ..Options::default()
     };
 
-    let report = crabbucket::build_with(&site, theme, &options)
+    let report = crabbucket::build_with(&site, theme, options)
         .unwrap_or_else(|err| panic!("`{fixture}` should build, but: {err}"));
 
     (report, out)
@@ -304,7 +304,7 @@ fn build_with(fixture: &str, base: Option<&str>) -> (Result<Report, Error>, Path
         ..Options::default()
     };
 
-    (crabbucket::build_with(&site, &Plain, &options), out)
+    (crabbucket::build_with(&site, &Plain, options), out)
 }
 
 /// Builds a fixture that is expected to succeed.
@@ -497,7 +497,7 @@ fn a_theme_without_a_router_gets_a_warning_and_a_working_site() {
         base: None,
         ..Options::default()
     };
-    let report = crabbucket::build_with(&site, &Bare, &options).expect("should still build");
+    let report = crabbucket::build_with(&site, &Bare, options).expect("should still build");
 
     assert!(
         !out.join("router.js").exists(),
@@ -529,7 +529,7 @@ fn a_theme_without_search_writes_no_index_either() {
         base: None,
         ..Options::default()
     };
-    let report = crabbucket::build_with(&site, &Bare, &options).expect("should still build");
+    let report = crabbucket::build_with(&site, &Bare, options).expect("should still build");
 
     assert!(
         !out.join("search.json").exists(),
@@ -556,7 +556,7 @@ fn a_client_nobody_loads_is_reported() {
         base: None,
         ..Options::default()
     };
-    let report = crabbucket::build_with(&site, &Forgetful, &options).expect("should still build");
+    let report = crabbucket::build_with(&site, &Forgetful, options).expect("should still build");
 
     assert!(out.join("router.js").is_file(), "the client was written");
 
@@ -581,7 +581,7 @@ fn the_whole_api_a_caller_needs_is_at_the_crate_root() {
     // symmetric name did not compile and the workaround was to move `dist/`
     // by hand.  This test is here so that cannot happen again.
     let _: fn(&Path, &Plain) -> Result<Report, Error> = crabbucket::build;
-    let _: fn(&Path, &Plain, &Options) -> Result<Report, Error> = crabbucket::build_with;
+    let _: fn(&Path, &Plain, Options) -> Result<Report, Error> = crabbucket::build_with;
     let _ = crabbucket::Options::default();
 }
 
@@ -698,7 +698,111 @@ fn a_site_that_did_not_ask_for_search_gets_none() {
     assert!(!out.join("search.js").exists());
 }
 
+// ------------------------------------------------- directives the site owns
+
+#[derive(Debug, Deserialize)]
+struct Things {
+    #[serde(flatten)]
+    by_name: std::collections::BTreeMap<String, Thing>,
+}
+
+#[derive(Debug, Deserialize)]
+struct Thing {
+    label: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct Named {
+    name: String,
+}
+
+/// The site's own directive, reading the site's own data.
+fn site_directives() -> Directives {
+    let mut directives = Directives::new();
+
+    directives.add_with("thing", |props: Named, _, context| {
+        let things: Things = context.data("things")?;
+        let thing = things
+            .by_name
+            .get(&props.name)
+            .ok_or_else(|| format!("there is no thing called `{}`", props.name))?;
+
+        Ok(maud::html! { p."thing" { (thing.label) } })
+    });
+
+    directives
+}
+
+#[test]
+fn a_site_can_register_a_directive_of_its_own() {
+    // A component usually belongs to a design system.  Not always: this one
+    // reads data the site generates, and no design system should know that.
+    let (result, out) = build_owning("site-data", site_directives());
+    result.expect("should build");
+
+    let html = read(&out, "index.html");
+    assert!(
+        html.contains("The first thing"),
+        "the directive did not run: {html}"
+    );
+}
+
+#[test]
+fn a_site_directive_that_cannot_find_its_data_fails_at_the_line() {
+    let mut directives = Directives::new();
+    directives.add_with("thing", |_: Named, _, context| {
+        let _: Things = context.data("absent")?;
+        Ok(maud::html! {})
+    });
+
+    let (result, _) = build_owning("site-data", directives);
+    let message = result.expect_err("should fail").render(false);
+
+    assert!(message.contains("content/index.md:7:1"), "got {message}");
+    assert!(message.contains("no `data/absent.toml`"), "got {message}");
+}
+
+#[test]
+fn a_site_may_not_quietly_replace_a_component() {
+    // Overriding a design system's component would change every page that
+    // uses it without a word.
+    let mut directives = Directives::new();
+    directives.add("note", |_: Named, body| body);
+
+    let (result, _) = build_owning("directives", directives);
+    let message = result.expect_err("should fail").render(false);
+
+    assert!(
+        message.contains("`note` is registered by both"),
+        "got {message}"
+    );
+}
+
 // ---------------------------------------------- pages the site renders itself
+
+/// Builds a fixture with directives the site brought.
+fn build_owning(fixture: &str, directives: Directives) -> (Result<Report, Error>, PathBuf) {
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+
+    let site = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/sites")
+        .join(fixture);
+    let out = std::env::temp_dir().join(format!(
+        "crabbucket-owning-{}-{}-{fixture}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+
+    let _ = fs::remove_dir_all(&out);
+
+    let options = Options {
+        out_dir: Some(out.clone()),
+        directives,
+        ..Options::default()
+    };
+
+    (crabbucket::build_with(&site, &Plain, options), out)
+}
 
 /// Builds a fixture with bodies for the pages it declares.
 fn build_declaring(fixture: &str, pages: &[(&str, &str)]) -> (Result<Report, Error>, PathBuf) {
@@ -724,7 +828,7 @@ fn build_declaring(fixture: &str, pages: &[(&str, &str)]) -> (Result<Report, Err
         ..Options::default()
     };
 
-    (crabbucket::build_with(&site, &Plain, &options), out)
+    (crabbucket::build_with(&site, &Plain, options), out)
 }
 
 #[test]
@@ -830,7 +934,7 @@ fn a_declared_page_gets_the_same_frontmatter_checking() {
     };
 
     // `Demanding` requires a `summary`, and the declaration has none.
-    let err = crabbucket::build_with(&site, &Demanding, &options).expect_err("should fail");
+    let err = crabbucket::build_with(&site, &Demanding, options).expect_err("should fail");
     let message = err.render(false);
 
     assert!(
@@ -866,7 +970,7 @@ fn a_page_missing_a_field_the_design_system_requires_fails() {
         base: None,
         ..Options::default()
     };
-    let err = crabbucket::build_with(&site, &Demanding, &options).expect_err("should fail");
+    let err = crabbucket::build_with(&site, &Demanding, options).expect_err("should fail");
 
     let message = err.render(false);
     assert!(

@@ -1,0 +1,13 @@
+# Terminal recordings the site generates elsewhere and refers to by name.
+#
+# This is what a directive's Context is for: `:::terminal{name = "build"}`
+# looks a recording up here, and a name that is not here fails the build
+# naming the page and the line.
+
+[build]
+command = "crab build"
+output = "6 pages, 55 links checked -> dist"
+
+[rename]
+command = "mv content/docs/routing.md content/docs/route-table.md && cargo build"
+output = "error[E0599]: no variant named `DocsRouting` found for enum `Route`"

@@ -23,6 +23,7 @@ path = "src/main.rs"
 crabbucket.workspace = true
 crabbucket-theme-plain.workspace = true
 maud = "0.27"
+serde = { version = "1", features = ["derive"] }
 
 [build-dependencies]
 crabbucket-routes.workspace = true

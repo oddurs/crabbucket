@@ -45,7 +45,7 @@ use syntect::html::{ClassStyle, ClassedHTMLGenerator};
 use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
 
-use crate::directive::{Block, Directives, Fault, scan};
+use crate::directive::{Block, Context, Directives, Fault, scan};
 
 /// The prefix on every class emitted by the highlighter.
 const CLASS_PREFIX: &str = "tok-";
@@ -90,10 +90,11 @@ impl Body {
 ///
 /// Fails if a directive is unterminated, unknown to `directives`, or carries
 /// attributes that do not fit the type it was registered with.
-pub fn render(source: &str, directives: &Directives) -> Result<Body, Fault> {
+pub fn render(source: &str, directives: &Directives, context: &Context<'_>) -> Result<Body, Fault> {
     let blocks = scan(source)?;
     let mut pass = Pass {
         directives,
+        context,
         headings: Vec::new(),
         seen: BTreeMap::new(),
     };
@@ -112,6 +113,7 @@ pub fn render(source: &str, directives: &Directives) -> Result<Body, Fault> {
 /// assigns them.
 struct Pass<'a> {
     directives: &'a Directives,
+    context: &'a Context<'a>,
     headings: Vec<Heading>,
     seen: BTreeMap<String, usize>,
 }
@@ -130,7 +132,9 @@ impl Pass<'_> {
                     body,
                 } => {
                     let inner = PreEscaped(self.blocks(body)?);
-                    let rendered = self.directives.render(name, attrs, inner, *line)?;
+                    let rendered =
+                        self.directives
+                            .render(name, attrs, inner, *line, self.context)?;
                     out.push_str(&rendered.into_string());
                 }
             }
@@ -437,7 +441,11 @@ mod tests {
     /// Renders with no directives registered, which is what most of these
     /// tests are about.
     fn plain(source: &str) -> Body {
-        render(source, &Directives::new()).expect("no directives, so nothing to fail")
+        let config = crate::config::Config::for_tests();
+        let data = crate::directive::Data::default();
+        let context = crate::directive::Context::new(&config, &data);
+
+        render(source, &Directives::new(), &context).expect("no directives, so nothing to fail")
     }
 
     fn to_html(source: &str) -> String {

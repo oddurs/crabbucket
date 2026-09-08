@@ -29,7 +29,7 @@ use std::path::{Path, PathBuf};
 use serde::de::DeserializeOwned;
 use walkdir::WalkDir;
 
-use crate::directive::Directives;
+use crate::directive::{Context, Directives};
 use crate::error::{Error, Result};
 use crate::markdown;
 
@@ -82,7 +82,7 @@ impl<T: DeserializeOwned> Collection<T> {
     ///
     /// Fails if a file is unreadable, lacks frontmatter, or has frontmatter
     /// that does not deserialize into `T`.
-    pub fn load(dir: &Path, directives: &Directives) -> Result<Self> {
+    pub fn load(dir: &Path, directives: &Directives, context: &Context<'_>) -> Result<Self> {
         let mut entries = Vec::new();
 
         for found in WalkDir::new(dir).sort_by_file_name() {
@@ -96,7 +96,7 @@ impl<T: DeserializeOwned> Collection<T> {
                 continue;
             }
 
-            entries.push(Entry::load(path, dir, directives)?);
+            entries.push(Entry::load(path, dir, directives, context)?);
         }
 
         entries.sort_by(|a, b| a.route.cmp(&b.route));
@@ -146,7 +146,12 @@ impl<T: DeserializeOwned> Entry<T> {
     ///
     /// Fails if the file is unreadable, lacks frontmatter, or has frontmatter
     /// that does not deserialize into `T`.
-    pub fn load(path: &Path, root: &Path, directives: &Directives) -> Result<Self> {
+    pub fn load(
+        path: &Path,
+        root: &Path,
+        directives: &Directives,
+        context: &Context<'_>,
+    ) -> Result<Self> {
         let text = fs::read_to_string(path).map_err(|source| Error::io(path, source))?;
         let (frontmatter, body, body_line) = split(&text, path)?;
 
@@ -155,7 +160,7 @@ impl<T: DeserializeOwned> Entry<T> {
         let meta: T = toml::from_str(frontmatter)
             .map_err(|error| Error::schema(path, &error, frontmatter, 1))?;
 
-        let rendered = markdown::render(body, directives)
+        let rendered = markdown::render(body, directives, context)
             .map_err(|fault| Error::directive(path, &fault, body, body_line - 1))?;
 
         Ok(Entry {

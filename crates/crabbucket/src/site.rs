@@ -31,6 +31,7 @@ use toml::value::Datetime;
 
 use crate::config::Config;
 use crate::content::{Collection, Entry};
+use crate::directive::Directives;
 use crate::error::{Error, Result};
 use crate::feed::{self, Item};
 use crate::links::{self, Rendered};
@@ -48,7 +49,7 @@ use crate::url::Url;
 fn declared_pages<T: Theme>(
     site_dir: &Path,
     config: &Config,
-    options: &Options,
+    pages: &BTreeMap<String, String>,
 ) -> Result<Vec<Written<T>>> {
     let manifest = site_dir.join("site.toml");
     let mut entries = Vec::new();
@@ -74,7 +75,7 @@ fn declared_pages<T: Theme>(
                     snippet: None,
                 })?;
 
-        let Some(html) = options.pages.get(&route) else {
+        let Some(html) = pages.get(&route) else {
             return Err(Error::Unrendered {
                 path: manifest,
                 route,
@@ -96,7 +97,7 @@ fn declared_pages<T: Theme>(
         });
     }
 
-    for route in options.pages.keys() {
+    for route in pages.keys() {
         if !routes.contains(route.trim_matches('/')) {
             return Err(Error::Undeclared {
                 path: manifest,
@@ -216,7 +217,7 @@ fn plural<'a>(count: usize, one: &'a str, many: &'a str) -> &'a str {
 
 /// Overrides for one invocation, which the configuration file does not know
 /// about and should not be edited to express.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Default)]
 pub struct Options {
     /// Write somewhere other than `dist/`.
     pub out_dir: Option<PathBuf>,
@@ -232,6 +233,16 @@ pub struct Options {
     /// Declared and not supplied is an error, and so is the reverse: a page
     /// half-added is worse than one not added.
     pub pages: BTreeMap<String, String>,
+    /// Directives the site registers itself.
+    ///
+    /// A component usually belongs to a design system, but not always: a
+    /// `terminal` that reads recordings the site generates belongs to the
+    /// site, and no design system should have to know about it.
+    ///
+    /// A name the design system already uses is an error, because a site
+    /// silently replacing a component would change every page that uses it
+    /// without a word.
+    pub directives: Directives,
 }
 
 /// Builds the site rooted at `site_dir` into `site_dir/dist`.
@@ -242,7 +253,7 @@ pub struct Options {
 /// any page links somewhere that does not exist, or if the output cannot be
 /// written.
 pub fn build<T: Theme>(site_dir: &Path, theme: &T) -> Result<Report> {
-    build_with(site_dir, theme, &Options::default())
+    build_with(site_dir, theme, Options::default())
 }
 
 /// Builds the site, with overrides.
@@ -250,15 +261,31 @@ pub fn build<T: Theme>(site_dir: &Path, theme: &T) -> Result<Report> {
 /// # Errors
 ///
 /// As [`build`].
-pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Result<Report> {
+pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: Options) -> Result<Report> {
     let mut config = Config::load(site_dir)?;
     if let Some(base) = &options.base {
         config.set_base(base);
     }
 
-    let directives = theme.directives();
-    let content =
-        Collection::<PageMeta<T::Layout, T::Extra>>::load(&site_dir.join("content"), &directives)?;
+    // Read before any content, because a directive may ask for it while a page
+    // is being loaded.
+    let data = crate::directive::Data::load(&site_dir.join("data"))?;
+    let context = crate::directive::Context::new(&config, &data);
+
+    let mut directives = theme.directives();
+    directives
+        .merge(options.directives)
+        .map_err(|message| Error::Schema {
+            path: site_dir.join("site.toml"),
+            message,
+            snippet: None,
+        })?;
+
+    let content = Collection::<PageMeta<T::Layout, T::Extra>>::load(
+        &site_dir.join("content"),
+        &directives,
+        &context,
+    )?;
     let out_dir = match &options.out_dir {
         Some(dir) => dir.clone(),
         None => site_dir.join("dist"),
@@ -270,7 +297,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
 
     // Pages the site rendered itself, checked against what it declared and
     // then treated exactly like content.
-    let declared = declared_pages::<T>(site_dir, &config, options)?;
+    let declared = declared_pages::<T>(site_dir, &config, &options.pages)?;
 
     // A route claimed twice is one of them silently winning, which is exactly
     // the class of failure this project exists to refuse.

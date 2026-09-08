@@ -184,8 +184,14 @@ mod tests {
 
     use super::directives;
 
+    /// A context for a directive that reads neither the configuration nor any
+    /// data, which is all of these.
     fn render(source: &str) -> String {
-        markdown::render(source, &directives())
+        let config = crabbucket::Config::for_tests();
+        let data = crabbucket::directive::Data::default();
+        let context = crabbucket::directive::Context::new(&config, &data);
+
+        markdown::render(source, &directives(), &context)
             .unwrap_or_else(|fault| panic!("line {}: {}", fault.line, fault.message))
             .html
     }
@@ -252,8 +258,16 @@ mod tests {
 
     #[test]
     fn an_attribute_neither_design_system_has_still_fails() {
-        let err = markdown::render(":::callout{knid = \"warn\"}\nx\n:::\n", &directives())
-            .expect_err("should fail");
+        let config = crabbucket::Config::for_tests();
+        let data = crabbucket::directive::Data::default();
+        let context = crabbucket::directive::Context::new(&config, &data);
+
+        let err = markdown::render(
+            ":::callout{knid = \"warn\"}\nx\n:::\n",
+            &directives(),
+            &context,
+        )
+        .expect_err("should fail");
 
         assert!(
             err.message.contains("unknown field `knid`"),

@@ -40,9 +40,12 @@
 
 use std::collections::BTreeMap;
 use std::fmt;
+use std::path::Path;
 
 use maud::Markup;
 use serde::de::DeserializeOwned;
+
+use crate::config::Config;
 
 /// Something wrong with a directive, at a line within the page body.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -71,7 +74,99 @@ impl fmt::Display for Fault {
 /// A directive's attributes, before they are given a type.
 pub type Attributes = toml::Table;
 
-type Handler = Box<dyn Fn(&Attributes, Markup) -> Result<Markup, String> + Send + Sync>;
+/// Everything a directive can see beyond its own attributes and body.
+///
+/// Deliberately not much.  Directives run while content is being loaded, so
+/// there is no site index yet and a handler cannot ask about other pages --
+/// that ordering is what makes the route table and link checking possible at
+/// all.  The configuration and the site's data files exist before any of it,
+/// so those are what a handler gets.
+pub struct Context<'a> {
+    /// The site's configuration, which carries the base path.
+    pub config: &'a Config,
+    data: &'a Data,
+}
+
+impl<'a> Context<'a> {
+    /// The context a build hands to every directive on a page.
+    pub fn new(config: &'a Config, data: &'a Data) -> Self {
+        Context { config, data }
+    }
+
+    /// Reads `data/NAME.toml` into a type the site chose.
+    ///
+    /// # Errors
+    ///
+    /// Fails if there is no such file, or if it does not fit `T`.  Both become
+    /// build failures naming the page and the line the directive is on, which
+    /// is where somebody can do something about them.
+    pub fn data<T: DeserializeOwned>(&self, name: &str) -> Result<T, String> {
+        let table = self
+            .data
+            .files
+            .get(name)
+            .ok_or_else(|| format!("there is no `data/{name}.toml`"))?;
+
+        toml::Value::Table(table.clone())
+            .try_into()
+            .map_err(|err: toml::de::Error| format!("data/{name}.toml: {}", err.message()))
+    }
+
+    /// Every data file the site has, by name.
+    pub fn data_files(&self) -> Vec<&str> {
+        self.data.files.keys().map(String::as_str).collect()
+    }
+}
+
+/// The site's `data/` directory, read once per build.
+#[derive(Debug, Default, Clone)]
+pub struct Data {
+    files: BTreeMap<String, toml::Table>,
+}
+
+impl Data {
+    /// Reads every `.toml` file in `dir`, keyed by file stem.
+    ///
+    /// A missing directory is an empty one: a site is allowed to have no data.
+    ///
+    /// # Errors
+    ///
+    /// Fails if a file is unreadable or is not valid TOML, naming it.
+    pub fn load(dir: &Path) -> crate::Result<Self> {
+        let mut files = BTreeMap::new();
+
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return Ok(Data::default());
+        };
+
+        for entry in entries {
+            let path = entry.map_err(|err| crate::Error::io(dir, err))?.path();
+
+            if path.extension().is_none_or(|extension| extension != "toml") {
+                continue;
+            }
+
+            let text =
+                std::fs::read_to_string(&path).map_err(|err| crate::Error::io(&path, err))?;
+
+            let table: toml::Table = text
+                .parse()
+                .map_err(|err: toml::de::Error| crate::Error::schema(&path, &err, &text, 0))?;
+
+            let name = path
+                .file_stem()
+                .map(|stem| stem.to_string_lossy().into_owned())
+                .unwrap_or_default();
+
+            files.insert(name, table);
+        }
+
+        Ok(Data { files })
+    }
+}
+
+type Handler =
+    Box<dyn Fn(&Attributes, Markup, &Context<'_>) -> Result<Markup, String> + Send + Sync>;
 
 /// The directives a theme offers.
 ///
@@ -124,7 +219,7 @@ impl Directives {
         P: DeserializeOwned,
         F: Fn(P, Markup) -> Markup + Send + Sync + 'static,
     {
-        let handler: Handler = Box::new(move |attrs, body| {
+        let handler: Handler = Box::new(move |attrs, body, _| {
             let props: P = toml::Value::Table(attrs.clone())
                 .try_into()
                 .map_err(|err: toml::de::Error| err.message().to_string())?;
@@ -133,6 +228,54 @@ impl Directives {
 
         self.handlers.insert(name.to_string(), handler);
         self
+    }
+
+    /// Registers a handler that needs more than its own attributes.
+    ///
+    /// The fallible form, because the reason to want a [`Context`] is usually
+    /// to look something up, and a lookup that misses should fail the build
+    /// naming the page and the line rather than rendering something empty.
+    ///
+    /// Most directives are pure functions of their attributes and should use
+    /// [`Directives::add`].
+    pub fn add_with<P, F>(&mut self, name: &str, render: F) -> &mut Self
+    where
+        P: DeserializeOwned,
+        F: Fn(P, Markup, &Context<'_>) -> Result<Markup, String> + Send + Sync + 'static,
+    {
+        let handler: Handler = Box::new(move |attrs, body, context| {
+            let props: P = toml::Value::Table(attrs.clone())
+                .try_into()
+                .map_err(|err: toml::de::Error| err.message().to_string())?;
+            render(props, body, context)
+        });
+
+        self.handlers.insert(name.to_string(), handler);
+        self
+    }
+
+    /// Takes another set's handlers, refusing a name already registered.
+    ///
+    /// Used to add a site's own directives to its design system's.  A silent
+    /// override would mean a site quietly replacing a component and every page
+    /// using it changing without a word, which is the sort of thing that is
+    /// found six months later.
+    ///
+    /// # Errors
+    ///
+    /// Fails naming the first directive registered twice.
+    pub fn merge(&mut self, other: Directives) -> Result<(), String> {
+        for (name, handler) in other.handlers {
+            if self.handlers.contains_key(&name) {
+                return Err(format!(
+                    "`{name}` is registered by both the design system and the site"
+                ));
+            }
+
+            self.handlers.insert(name, handler);
+        }
+
+        Ok(())
     }
 
     /// Every registered name, in order.
@@ -152,12 +295,14 @@ impl Directives {
         attrs: &Attributes,
         body: Markup,
         line: usize,
+        context: &Context<'_>,
     ) -> Result<Markup, Fault> {
         let Some(handler) = self.handlers.get(name) else {
             return Err(Fault::at(line, self.unknown(name)));
         };
 
-        handler(attrs, body).map_err(|message| Fault::at(line, format!("`{name}`: {message}")))
+        handler(attrs, body, context)
+            .map_err(|message| Fault::at(line, format!("`{name}`: {message}")))
     }
 
     fn unknown(&self, name: &str) -> String {
@@ -386,11 +531,16 @@ mod tests {
     use maud::html;
     use serde::Deserialize;
 
-    use super::{Attributes, Block, Directives, scan};
+    use super::{Attributes, Block, Context, Data, Directives, scan};
 
     #[derive(Deserialize)]
     struct Props {
         kind: String,
+    }
+
+    /// A context a directive that reads neither the config nor data can use.
+    fn nothing() -> (crate::config::Config, Data) {
+        (crate::config::Config::for_tests(), Data::default())
     }
 
     fn directives() -> Directives {
@@ -517,8 +667,15 @@ mod tests {
 
     #[test]
     fn a_registered_directive_gets_its_props_typed() {
+        let (config, data) = nothing();
         let out = directives()
-            .render("callout", &attrs("warn"), html! { p { "hi" } }, 1)
+            .render(
+                "callout",
+                &attrs("warn"),
+                html! { p { "hi" } },
+                1,
+                &Context::new(&config, &data),
+            )
             .unwrap()
             .into_string();
 
@@ -527,8 +684,15 @@ mod tests {
 
     #[test]
     fn a_missing_attribute_is_reported_as_serde_sees_it() {
+        let (config, data) = nothing();
         let fault = directives()
-            .render("callout", &Attributes::new(), html! {}, 7)
+            .render(
+                "callout",
+                &Attributes::new(),
+                html! {},
+                7,
+                &Context::new(&config, &data),
+            )
             .unwrap_err();
 
         assert_eq!(fault.line, 7);
@@ -541,8 +705,15 @@ mod tests {
 
     #[test]
     fn an_unknown_directive_lists_the_ones_that_exist() {
+        let (config, data) = nothing();
         let fault = directives()
-            .render("callou", &Attributes::new(), html! {}, 3)
+            .render(
+                "callou",
+                &Attributes::new(),
+                html! {},
+                3,
+                &Context::new(&config, &data),
+            )
             .unwrap_err();
         assert!(fault.message.contains("`callou`"), "got {}", fault.message);
         assert!(
@@ -554,8 +725,15 @@ mod tests {
 
     #[test]
     fn a_theme_with_no_directives_says_so() {
+        let (config, data) = nothing();
         let fault = Directives::new()
-            .render("callout", &Attributes::new(), html! {}, 1)
+            .render(
+                "callout",
+                &Attributes::new(),
+                html! {},
+                1,
+                &Context::new(&config, &data),
+            )
             .unwrap_err();
         assert!(fault.message.contains("has none"), "got {}", fault.message);
     }

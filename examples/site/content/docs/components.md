@@ -116,6 +116,62 @@ fn directives(&self) -> Directives {
 attribute it did not ask for and never has to check one it did. A name nothing
 is registered under fails the build listing the names that are.
 
+## Directives the site owns
+
+A component usually belongs to a design system. Not always: a `terminal` that
+reads recordings the site generates belongs to the *site*, and no design
+system should have to know about it.
+
+```rust
+let options = Options {
+    directives: my_directives(),
+    ..Options::default()
+};
+```
+
+A name the design system already uses is an error. A site silently replacing a
+component would change every page that uses it without a word.
+
+## What a directive can see
+
+`add` gives a handler its attributes and its body, which is all most of them
+need. `add_with` gives it a context as well:
+
+```rust
+directives.add_with("terminal", |props: Terminal, _, context| {
+    let recordings: Recordings = context.data("recordings")?;
+
+    let recording = recordings
+        .by_name
+        .get(&props.name)
+        .ok_or_else(|| format!("there is no recording called `{}`", props.name))?;
+
+    Ok(html! { pre { code { "$ " (recording.command) } } })
+});
+```
+
+`context.data("recordings")` reads `data/recordings.toml` into the site's own
+type. A missing file, a file that does not fit the type, and a lookup that
+misses all fail the build at the directive's line:
+
+```
+crab: content/docs/index.md:24:1: `terminal`: there is no recording called `nope`
+   |
+24 | :::terminal{name = "nope"}
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+```
+
+`add_with` is the fallible form for exactly that reason: the point of wanting
+a context is usually to look something up, and a lookup that misses should
+stop the build rather than render nothing.
+
+:::callout{kind = "note", title = "What a directive cannot see"}
+Other pages. Directives run while content is being loaded, so there is no site
+index yet — and that ordering is what makes the route table and link checking
+possible at all. The configuration and the data files exist before any of it,
+so those are what a handler gets.
+:::
+
 ## Directives inside code fences
 
 Everything on this page is a real directive, and every example of one *in a

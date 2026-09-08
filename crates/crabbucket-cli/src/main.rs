@@ -54,7 +54,7 @@ fn main() -> ExitCode {
             print!("{}", version());
             ExitCode::SUCCESS
         }
-        Ok(Command::Build { dir, options }) => build(&dir, &options),
+        Ok(Command::Build { dir, options }) => build(&dir, options),
         Ok(Command::New(request)) => new(&request),
         Ok(Command::NoDevServer) => {
             eprintln!("{PACKAGE}: there is no built-in dev server; run `turborust up'.");
@@ -70,7 +70,7 @@ fn main() -> ExitCode {
 }
 
 /// What the command line asked for.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 enum Command {
     Help,
     Version,
@@ -165,7 +165,7 @@ fn value<'a>(
 }
 
 /// Builds a site and reports what was written.
-fn build(site_dir: &Path, options: &Options) -> ExitCode {
+fn build(site_dir: &Path, options: Options) -> ExitCode {
     match crabbucket::build_with(site_dir, &Standard, options) {
         Ok(report) => {
             // The report knows how to say all of this.  The executable only
@@ -296,7 +296,7 @@ mod tests {
 
     #[test]
     fn no_arguments_is_help() {
-        assert_eq!(parse(&args(&[])).unwrap(), Command::Help);
+        assert!(matches!(parse(&args(&[])).unwrap(), Command::Help));
     }
 
     #[test]
@@ -343,8 +343,14 @@ mod tests {
 
     #[test]
     fn dev_and_serve_both_point_at_turborust() {
-        assert_eq!(parse(&args(&["dev"])).unwrap(), Command::NoDevServer);
-        assert_eq!(parse(&args(&["serve"])).unwrap(), Command::NoDevServer);
+        assert!(matches!(
+            parse(&args(&["dev"])).unwrap(),
+            Command::NoDevServer
+        ));
+        assert!(matches!(
+            parse(&args(&["serve"])).unwrap(),
+            Command::NoDevServer
+        ));
     }
 
     #[test]
