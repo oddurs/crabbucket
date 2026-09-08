@@ -372,6 +372,19 @@ fn a_url_gets_a_sitemap_and_robots_and_nothing_else_does() {
 }
 
 #[test]
+fn what_the_build_writes_has_the_same_line_endings_everywhere() {
+    // A design system's stylesheet and clients arrive through `include_str!`,
+    // so on a CRLF checkout they carry carriage returns.  The same site built
+    // on two machines should be the same bytes.
+    let (_, out) = ok("ok");
+
+    for file in ["index.html", "site.css", "router.js"] {
+        let written = read(&out, file);
+        assert!(!written.contains('\r'), "{file} was written with CRLF");
+    }
+}
+
+#[test]
 fn a_content_file_with_windows_line_endings_builds() {
     // Git hands a checkout CRLF on Windows, so this is what a content file
     // looks like to half the world.  It did not parse at all until the

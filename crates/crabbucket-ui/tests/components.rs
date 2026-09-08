@@ -163,7 +163,11 @@ fn the_router_stays_small() {
     // gzipped it.  The budget is on the raw file because that is the number
     // that grows without anyone noticing, and it is deliberately close to the
     // current size: this file is meant to stay small enough to read.
-    let size = Standard.router_js().expect("ui has a router").len();
+    // What ships, not what is on disk: a CRLF checkout carries an extra byte
+    // per line, and the build normalises them away before writing.
+    let router = Standard.router_js().expect("ui has a router").replace("\r\n", "\n");
+    let size = router.len();
+
     assert!(size < 8600, "the router has grown to {size} bytes");
 }
 

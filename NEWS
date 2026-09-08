@@ -101,6 +101,11 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
 
 ** Bug fixes
 
+  What the build writes has line feeds on every platform.  A design
+  system's stylesheet and clients arrive through `include_str!', so a
+  checkout with CRLF produced a site that differed byte for byte from the
+  same site built anywhere else.
+
   A content file with CRLF line endings failed to parse at all.  The
   opening `+++' had always accepted them; the closing one left a carriage
   return on the frontmatter's last line, and TOML rejects a bare one.

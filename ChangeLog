@@ -7,6 +7,8 @@
 	newline, so the frontmatter kept the carriage return of its last
 	line; TOML rejects a bare one.  Found by the Windows job on the
 	first run of the matrix that added it.
+	* crates/crabbucket/src/site.rs (write): Normalise line endings, so
+	the same site built on two machines is the same bytes.
 	* crates/crabbucket/tests/sites/crlf, .gitattributes: A fixture with
 	CRLF line endings, pinned so git does not normalise away the thing
 	it exists to catch.
