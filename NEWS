@@ -150,6 +150,12 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
   noticed" is not an argument that has held here.  A seed corpus is
   committed; what the fuzzer grows from it is not.
 
+  The supply-chain gate added one release earlier earned itself
+  immediately: the XML parser these tests use was pulled in at 0.38, and
+  `cargo deny' refused it over RUSTSEC-2026-0194 and -0195, two
+  denial-of-service bugs in the reader.  Found before the branch merged
+  rather than after.
+
   Mutation testing, which asks whether the tests would notice.  Its first
   run found that emptying `Url`'s `Render' implementation broke no test --
   meaning nothing tested the mechanism by which every link in every page

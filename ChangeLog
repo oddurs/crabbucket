@@ -28,6 +28,8 @@
 	* .github/workflows/ci.yml: Scheduled fuzz and mutants jobs.
 	* crates/crabbucket/src/url.rs (tests): A `Render' test, after
 	cargo-mutants found that emptying it broke nothing.
+	* crates/crabbucket-ui/Cargo.toml: quick-xml 0.42, not 0.38, which
+	`make audit' refused: RUSTSEC-2026-0194 and -0195.
 	* HACKING: The four kinds of test that are not example-based.
 
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
