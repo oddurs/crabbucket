@@ -19,6 +19,7 @@ behaviour that exists today, and says so plainly where it does not.
 
 ## Then
 
+- [Components](components/) — callouts, cards, tabs and steps
 - [Layouts](layouts/) — why a layout is a type and not a string
 - [Design systems](design-systems/) — tokens, components, and themes as crates
 - [The dev loop](dev-loop/) — why there is no `crab dev`

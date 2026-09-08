@@ -40,21 +40,25 @@ Done: content in, a deployed site out, with the three gates that make the centra
 
 ## v0.2 — A docs site you would want to read
 
-`··········` 0% · 0 of 9 done
+`###·······` 30% · 3 of 10 done
 
 The first milestone makes crabbucket correct; this one makes it pleasant.
 
 ### backlog
 
-- [ ] [`0014`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0014-markdown-directives-resolve-to-typed-components.md) Markdown directives resolve to typed components <sup>feature · p0 · design</sup>
 - [ ] [`0015`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0015-table-of-contents-from-heading-ids.md) Table of contents from heading ids <sup>feature · p1</sup>
 - [ ] [`0016`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0016-static-search-index-and-a-small-client.md) Static search index and a small client <sup>feature · p1</sup>
-- [ ] [`0017`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0017-router-move-focus-and-announce-navigation.md) Router: move focus and announce navigation <sup>bug · p1 · accessibility</sup>
 - [ ] [`0018`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0018-a-light-theme-driven-by-the-token-file.md) A light theme, driven by the token file <sup>feature · p1 · design</sup>
 - [ ] [`0019`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0019-previous-and-next-links-within-a-section.md) Previous and next links within a section <sup>feature · p2</sup>
 - [ ] [`0020`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0020-copy-button-on-code-blocks.md) Copy button on code blocks <sup>feature · p2</sup>
 - [ ] [`0021`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0021-prefetch-on-hover-and-on-viewport-entry.md) Prefetch on hover and on viewport entry <sup>feature · p2</sup>
-- [ ] [`0022`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0022-ship-callout-card-and-tabs-as-directives.md) Ship callout, card and tabs as directives <sup>feature · p2</sup>
+- [ ] [`0047`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0047-nothing-checks-the-turborust-config-crabbucket-ships.md) Nothing checks the turborust config crabbucket ships <sup>bug · p1 · coupling</sup>
+
+### done
+
+- [x] [`0014`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0014-markdown-directives-resolve-to-typed-components.md) Markdown directives resolve to typed components <sup>feature · p0 · design</sup>
+- [x] [`0017`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0017-router-move-focus-and-announce-navigation.md) Router: move focus and announce navigation <sup>bug · p1 · accessibility</sup>
+- [x] [`0022`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0022-ship-callout-card-and-tabs-as-directives.md) Ship callout, card and tabs as directives <sup>feature · p2</sup>
 
 ## v0.3 — A fleet, not a site
 

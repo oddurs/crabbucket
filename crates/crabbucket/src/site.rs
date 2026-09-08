@@ -91,7 +91,8 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
         config.set_base(base);
     }
 
-    let content = Collection::<PageMeta<T::Layout>>::load(&site_dir.join("content"))?;
+    let directives = theme.directives();
+    let content = Collection::<PageMeta<T::Layout>>::load(&site_dir.join("content"), &directives)?;
     let out_dir = match &options.out_dir {
         Some(dir) => dir.clone(),
         None => site_dir.join("dist"),

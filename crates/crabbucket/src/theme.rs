@@ -31,6 +31,7 @@ use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
 use crate::config::Config;
+use crate::directive::Directives;
 use crate::url::Url;
 
 /// The frontmatter every page has, whatever else it has.
@@ -204,6 +205,14 @@ pub trait Theme {
 
     /// The stylesheet written to `site.css`.
     fn stylesheet(&self) -> String;
+
+    /// The directives this design system offers to Markdown.
+    ///
+    /// A theme with no components to reach from content says nothing, and a
+    /// page that writes `:::anything` then fails the build saying so.
+    fn directives(&self) -> Directives {
+        Directives::new()
+    }
 
     /// The client router written to `router.js`, when the site asks for one.
     ///

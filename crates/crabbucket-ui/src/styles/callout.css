@@ -10,4 +10,14 @@
 
 .&--note { border-left-color: var(--color-link); }
 .&--warn { border-left-color: var(--color-accent); }
+
+.&__title {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--size-step-0);
+  font-weight: 600;
+}
+
+.&--note .&__title { color: var(--color-link); }
+.&--warn .&__title { color: var(--color-accent); }
+
 .&__body > :last-child { margin-bottom: 0; }

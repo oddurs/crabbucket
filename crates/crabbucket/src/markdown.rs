@@ -27,14 +27,25 @@
 //! scope classes.  The colours are the theme's business; the classes are this
 //! module's.  Nothing is shipped to the browser to make code coloured, because
 //! the text was already static when it was written.
+//!
+//! A page is first split into Markdown and [directives][crate::directive], and
+//! each run of Markdown is parsed on its own.  One consequence is worth
+//! knowing: a link reference definition or a footnote is visible only within
+//! the run that defines it, because CommonMark scopes both to a document and
+//! each run is a document.  Directives are for components rather than for
+//! prose, so this has not bitten yet; if it does, the fix is to hoist
+//! definitions across runs before parsing rather than to merge the runs.
 
 use std::collections::BTreeMap;
 use std::sync::OnceLock;
 
+use maud::PreEscaped;
 use pulldown_cmark::{CodeBlockKind, Event, HeadingLevel, Options, Parser, Tag, TagEnd, html};
 use syntect::html::{ClassStyle, ClassedHTMLGenerator};
 use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
+
+use crate::directive::{Block, Directives, Fault, scan};
 
 /// The prefix on every class emitted by the highlighter.
 const CLASS_PREFIX: &str = "tok-";
@@ -66,23 +77,72 @@ impl Body {
     }
 }
 
-/// Renders Markdown to a fragment of HTML.
-pub fn render(source: &str) -> Body {
-    let parser = Parser::new_ext(source, options());
-    let mut events: Vec<Event<'_>> = parser.collect();
+/// Renders a page body: Markdown, directives, and the headings they contain.
+///
+/// # Errors
+///
+/// Fails if a directive is unterminated, unknown to `directives`, or carries
+/// attributes that do not fit the type it was registered with.
+pub fn render(source: &str, directives: &Directives) -> Result<Body, Fault> {
+    let blocks = scan(source)?;
+    let mut pass = Pass {
+        directives,
+        headings: Vec::new(),
+        seen: BTreeMap::new(),
+    };
+    let html = pass.blocks(&blocks)?;
 
-    let headings = anchor_headings(&mut events);
-    highlight_code(&mut events);
-
-    let mut html = String::with_capacity(source.len() * 3 / 2);
-    html::push_html(&mut html, events.into_iter());
-
-    Body { html, headings }
+    Ok(Body {
+        html,
+        headings: pass.headings,
+    })
 }
 
-/// Renders Markdown to a fragment of HTML, discarding what was derived.
-pub fn to_html(source: &str) -> String {
-    render(source).html
+/// One rendering pass over a page.
+///
+/// Heading ids have to be unique across the whole page, not within one run of
+/// Markdown, so the `seen` counter lives here rather than in the function that
+/// assigns them.
+struct Pass<'a> {
+    directives: &'a Directives,
+    headings: Vec<Heading>,
+    seen: BTreeMap<String, usize>,
+}
+
+impl Pass<'_> {
+    fn blocks(&mut self, blocks: &[Block]) -> Result<String, Fault> {
+        let mut out = String::new();
+
+        for block in blocks {
+            match block {
+                Block::Text { source, .. } => out.push_str(&self.markdown(source)),
+                Block::Directive {
+                    line,
+                    name,
+                    attrs,
+                    body,
+                } => {
+                    let inner = PreEscaped(self.blocks(body)?);
+                    let rendered = self.directives.render(name, attrs, inner, *line)?;
+                    out.push_str(&rendered.into_string());
+                }
+            }
+        }
+
+        Ok(out)
+    }
+
+    fn markdown(&mut self, source: &str) -> String {
+        let mut events: Vec<Event<'_>> = Parser::new_ext(source, options()).collect();
+
+        self.headings
+            .extend(anchor_headings(&mut events, &mut self.seen));
+        highlight_code(&mut events);
+
+        let mut html = String::with_capacity(source.len() * 3 / 2);
+        html::push_html(&mut html, events.into_iter());
+        html
+    }
 }
 
 fn options() -> Options {
@@ -103,9 +163,11 @@ fn options() -> Options {
     clippy::needless_range_loop,
     reason = "the loop rewrites events by index"
 )]
-fn anchor_headings(events: &mut Vec<Event<'_>>) -> Vec<Heading> {
+fn anchor_headings(
+    events: &mut Vec<Event<'_>>,
+    seen: &mut BTreeMap<String, usize>,
+) -> Vec<Heading> {
     let mut headings = Vec::new();
-    let mut seen: BTreeMap<String, usize> = BTreeMap::new();
     let mut inserts: Vec<(usize, Event<'_>)> = Vec::new();
     let mut open: Option<(usize, u8, Option<String>)> = None;
     let mut text = String::new();
@@ -128,7 +190,7 @@ fn anchor_headings(events: &mut Vec<Event<'_>>) -> Vec<Heading> {
                     continue;
                 };
 
-                let id = explicit.unwrap_or_else(|| unique(&slug(&text), &mut seen));
+                let id = explicit.unwrap_or_else(|| unique(&slug(&text), seen));
 
                 // Rewrite the opening tag so the id is on the element itself,
                 // then put the permalink at the end of the heading's content.
@@ -302,7 +364,18 @@ fn escape(text: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{render, slug, to_html};
+    use super::{Body, render, slug};
+    use crate::directive::Directives;
+
+    /// Renders with no directives registered, which is what most of these
+    /// tests are about.
+    fn plain(source: &str) -> Body {
+        render(source, &Directives::new()).expect("no directives, so nothing to fail")
+    }
+
+    fn to_html(source: &str) -> String {
+        plain(source).html
+    }
 
     #[test]
     fn headings_and_emphasis_render() {
@@ -327,7 +400,7 @@ mod tests {
 
     #[test]
     fn every_heading_gets_an_id_and_a_permalink() {
-        let out = render("## Getting started\n\n### Install\n");
+        let out = plain("## Getting started\n\n### Install\n");
         assert_eq!(out.headings.len(), 2);
         assert_eq!(out.headings[0].id, "getting-started");
         assert_eq!(out.headings[0].level, 2);
@@ -339,21 +412,21 @@ mod tests {
 
     #[test]
     fn an_explicit_id_wins() {
-        let out = render("## Getting started {#start}\n");
+        let out = plain("## Getting started {#start}\n");
         assert_eq!(out.headings[0].id, "start");
         assert!(out.html.contains("<h2 id=\"start\">"));
     }
 
     #[test]
     fn repeated_headings_get_distinct_ids() {
-        let out = render("## Notes\n\n## Notes\n\n## Notes\n");
+        let out = plain("## Notes\n\n## Notes\n\n## Notes\n");
         let ids: Vec<&str> = out.headings.iter().map(|h| h.id.as_str()).collect();
         assert_eq!(ids, ["notes", "notes-2", "notes-3"]);
     }
 
     #[test]
     fn heading_text_survives_inline_markup() {
-        let out = render("## What `Url` *does*\n");
+        let out = plain("## What `Url` *does*\n");
         assert_eq!(out.headings[0].text, "What Url does");
         assert_eq!(out.headings[0].id, "what-url-does");
     }
@@ -383,7 +456,7 @@ mod tests {
 
     #[test]
     fn has_anchor_answers_the_fragment_checkers_question() {
-        let out = render("## One\n\n## Two\n");
+        let out = plain("## One\n\n## Two\n");
         assert!(out.has_anchor("one"));
         assert!(!out.has_anchor("three"));
     }

@@ -1,0 +1,40 @@
+/* Tabs with no JavaScript at all.
+ *
+ * Each tab is a self-contained radio, label and panel, so the component needs
+ * to know nothing about its siblings.  `order` puts every label on the first
+ * row and every panel below, which is what lets the three stay together in the
+ * markup.  With scripting off this is fully working tabs, not a fallback. */
+
+.& {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-xs);
+  margin: 0 0 var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.&__radio { position: absolute; opacity: 0; pointer-events: none; }
+
+.&__label {
+  order: 1;
+  padding: var(--space-xs) var(--space-md);
+  color: var(--color-text-muted);
+  font-size: var(--size-step--1);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.&__label:hover { color: var(--color-text); }
+
+.&__panel {
+  order: 2;
+  flex-basis: 100%;
+  display: none;
+  padding-top: var(--space-md);
+}
+
+.&__radio:checked + .&__label { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+.&__radio:focus-visible + .&__label { outline: 2px solid var(--color-link); outline-offset: -2px; }
+.&__radio:checked + .&__label + .&__panel { display: block; }
+.&__panel > :last-child { margin-bottom: 0; }

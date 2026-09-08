@@ -57,7 +57,7 @@ bridge between them.
 The output is plain static HTML and CSS. Zero JavaScript, works in a text
 browser.
 
-Opt in, per site, to a router of about a kilobyte: intercept same-origin
+Opt in, per site, to a router of about a kilobyte and a half, gzipped: intercept same-origin
 clicks, fetch, swap `<main>`, push history, drive the View Transitions API for
 the cross-fade. That is the Next.js feel with no hydration, no virtual DOM and
 no framework. With JavaScript off it degrades to ordinary navigation, because

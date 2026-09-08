@@ -2,7 +2,7 @@
 id: 14
 title: Markdown directives resolve to typed components
 type: feature
-status: backlog
+status: done
 milestone: v0.2
 labels:
 - design
@@ -54,10 +54,18 @@ form has been used in anger.
 
 ## Acceptance criteria
 
-- [ ] `:::name{attrs}` resolves to a registered component
-- [ ] Attributes deserialize into a typed props struct
-- [ ] Unknown directive fails the build, listing what is registered
-- [ ] Bad attributes fail with the file, the line, and serde's message
-- [ ] A directive written inside a fenced code block is left alone
-- [ ] Directive bodies may contain Markdown, including nested directives
-- [ ] `doc/DESIGN` section 5 matches what was built
+- [x] `:::name{attrs}` resolves to a registered component
+- [x] Attributes deserialize into a typed props struct
+- [x] Unknown directive fails the build, listing what is registered
+- [x] Bad attributes fail with the file, the line, and serde's message
+- [x] A directive written inside a fenced code block is left alone
+- [x] Directive bodies may contain Markdown, including nested directives
+- [x] `doc/DESIGN` section 5 matches what was built
+
+## 2026-09-08
+
+Done. The scanner works on lines rather than on pulldown-cmark's event stream, for one reason: a directive written inside a fenced code block must be left alone, and the components documentation page does exactly that. Tracking fences over lines is a dozen lines; recovering original text from an event stream is not.
+
+Attributes are a TOML inline table, so quoting, escaping and nesting are TOML's problem. Directives::add takes the props type as a parameter and deserializes before calling the handler, so a handler never sees an attribute it did not ask for.
+
+One consequence worth knowing and now documented in the module: each run of Markdown between directives is parsed as its own document, so a link reference definition or footnote is visible only within its run. Directives are for components rather than prose, so it has not bitten; the fix if it does is to hoist definitions, not to merge runs.

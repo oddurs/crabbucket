@@ -31,6 +31,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+use crabbucket::directive::Directives;
 use crabbucket::style::{Style, StyleSheet};
 use crabbucket::theme::{NavItem, Page, Theme};
 use crabbucket::{Config, PageMeta, Url};
@@ -39,6 +40,10 @@ use serde::Deserialize;
 
 /// The namespace every class in this design system carries.
 pub const NS: &str = "cb";
+
+pub mod components;
+
+pub use components::{Kind, callout};
 
 /// Design tokens, generated from `design/tokens.toml`.
 ///
@@ -103,41 +108,17 @@ impl Theme for Standard {
 
     fn stylesheet(&self) -> String {
         let mut sheet = StyleSheet::new();
-        sheet.extend([SITE, MASTHEAD, PROSE, DOCS, CALLOUT, COLOPHON]);
+        sheet.extend([SITE, MASTHEAD, PROSE, DOCS, COLOPHON]);
+        sheet.extend(components::STYLES.iter().copied());
         format!("{}\n{}", tok::CSS, sheet.render())
+    }
+
+    fn directives(&self) -> Directives {
+        components::directives()
     }
 
     fn router_js(&self) -> String {
         router_js()
-    }
-}
-
-/// The kind of a callout, which decides its accent.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum Kind {
-    /// Neutral information.
-    Note,
-    /// Something the reader can get wrong.
-    Warn,
-}
-
-impl Kind {
-    /// The modifier suffix used in the class name.
-    pub fn slug(self) -> &'static str {
-        match self {
-            Kind::Note => "note",
-            Kind::Warn => "warn",
-        }
-    }
-}
-
-/// An aside that stands apart from the prose around it.
-pub fn callout(kind: Kind, body: Markup) -> Markup {
-    html! {
-        aside class=(CALLOUT.with(kind.slug())) {
-            div class=(CALLOUT.element("body")) { (body) }
-        }
     }
 }
 
@@ -241,9 +222,6 @@ pub const PROSE: Style = Style::new(NS, "prose", include_str!("styles/prose.css"
 /// The documentation layout: a sidebar beside the content.
 pub const DOCS: Style = Style::new(NS, "docs", include_str!("styles/docs.css"));
 
-/// The callout component.
-pub const CALLOUT: Style = Style::new(NS, "callout", include_str!("styles/callout.css"));
-
 /// The footer.
 pub const COLOPHON: Style = Style::new(NS, "colophon", include_str!("styles/colophon.css"));
 
@@ -253,7 +231,8 @@ const ROUTER: &str = include_str!("router.js");
 mod tests {
     use crabbucket::style::StyleSheet;
 
-    use super::{CALLOUT, DOCS, Kind, MASTHEAD, NS, PROSE, SITE, callout};
+    use super::components::{CALLOUT, Callout, Kind, callout};
+    use super::{DOCS, MASTHEAD, NS, PROSE, SITE};
 
     #[test]
     fn every_class_in_the_stylesheet_carries_the_namespace() {
@@ -282,7 +261,11 @@ mod tests {
 
     #[test]
     fn markup_and_styles_agree_on_the_class_names() {
-        let markup = callout(Kind::Warn, maud::html! { p { "hi" } }).into_string();
+        let props = Callout {
+            kind: Kind::Warn,
+            title: None,
+        };
+        let markup = callout(&props, maud::html! { p { "hi" } }).into_string();
         assert!(markup.contains("cb-callout cb-callout--warn"));
         assert!(markup.contains("cb-callout__body"));
 

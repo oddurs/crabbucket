@@ -1,0 +1,32 @@
+/* An ordered walkthrough, numbered by CSS rather than by the author. */
+
+.& { counter-reset: step; margin: 0 0 var(--space-lg); }
+
+.&__step {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 var(--space-md) var(--space-xl);
+  border-left: 1px solid var(--color-border);
+}
+
+.&__step:last-child { border-left-color: transparent; padding-bottom: 0; }
+
+.&__step::before {
+  content: counter(step);
+  position: absolute;
+  left: calc(var(--space-lg) * -0.5 - 0.9rem);
+  top: 0;
+  width: 1.8rem;
+  height: 1.8rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--size-step--1);
+  font-variant-numeric: tabular-nums;
+}
+
+.&__title { margin: 0 0 var(--space-xs); font-size: var(--size-step-0); font-weight: 600; }
+.&__body > :last-child { margin-bottom: 0; }

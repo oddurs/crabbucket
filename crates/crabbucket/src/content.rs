@@ -29,6 +29,7 @@ use std::path::{Path, PathBuf};
 use serde::de::DeserializeOwned;
 use walkdir::WalkDir;
 
+use crate::directive::Directives;
 use crate::error::{Error, Result};
 use crate::markdown;
 
@@ -81,7 +82,7 @@ impl<T: DeserializeOwned> Collection<T> {
     ///
     /// Fails if a file is unreadable, lacks frontmatter, or has frontmatter
     /// that does not deserialize into `T`.
-    pub fn load(dir: &Path) -> Result<Self> {
+    pub fn load(dir: &Path, directives: &Directives) -> Result<Self> {
         let mut entries = Vec::new();
 
         for found in WalkDir::new(dir).sort_by_file_name() {
@@ -95,7 +96,7 @@ impl<T: DeserializeOwned> Collection<T> {
                 continue;
             }
 
-            entries.push(Entry::load(path, dir)?);
+            entries.push(Entry::load(path, dir, directives)?);
         }
 
         entries.sort_by(|a, b| a.route.cmp(&b.route));
@@ -145,23 +146,24 @@ impl<T: DeserializeOwned> Entry<T> {
     ///
     /// Fails if the file is unreadable, lacks frontmatter, or has frontmatter
     /// that does not deserialize into `T`.
-    pub fn load(path: &Path, root: &Path) -> Result<Self> {
+    pub fn load(path: &Path, root: &Path, directives: &Directives) -> Result<Self> {
         let text = fs::read_to_string(path).map_err(|source| Error::io(path, source))?;
-        let (frontmatter, body) = split(&text, path)?;
+        let (frontmatter, body, body_line) = split(&text, path)?;
 
         // The opening `+++` is line 1 of the file, so frontmatter line 1 is
         // line 2, and an editor jumping to the reported line lands on it.
         let meta: T = toml::from_str(frontmatter)
             .map_err(|error| Error::schema(path, &error, frontmatter, 1))?;
 
-        let body = markdown::render(body);
+        let rendered = markdown::render(body, directives)
+            .map_err(|fault| Error::directive(path, &fault, body, body_line - 1))?;
 
         Ok(Entry {
             meta,
             route: route_of(path, root),
             path: path.to_path_buf(),
-            html: body.html,
-            headings: body.headings,
+            html: rendered.html,
+            headings: rendered.headings,
         })
     }
 }
@@ -184,8 +186,13 @@ fn route_of(path: &Path, root: &Path) -> String {
     route
 }
 
-/// Splits a content file into its frontmatter and its body.
-fn split<'a>(text: &'a str, path: &Path) -> Result<(&'a str, &'a str)> {
+/// Splits a content file into its frontmatter and its body, and says which
+/// line of the file the body starts on.
+///
+/// The line number is what lets a failure inside the body be reported at the
+/// line an editor will jump to, rather than at the line the body thinks it is
+/// on.
+fn split<'a>(text: &'a str, path: &Path) -> Result<(&'a str, &'a str, usize)> {
     let rest = text
         .strip_prefix(FENCE)
         .and_then(|rest| {
@@ -203,8 +210,13 @@ fn split<'a>(text: &'a str, path: &Path) -> Result<(&'a str, &'a str)> {
         })?;
 
     let frontmatter = &rest[..end];
-    let body = rest[end + 1 + FENCE.len()..].trim_start_matches(['\r', '\n']);
-    Ok((frontmatter, body))
+    let after = &rest[end + 1 + FENCE.len()..];
+    let body = after.trim_start_matches(['\r', '\n']);
+
+    let consumed = text.len() - body.len();
+    let body_line = text[..consumed].matches('\n').count() + 1;
+
+    Ok((frontmatter, body, body_line))
 }
 
 #[cfg(test)]
@@ -217,15 +229,16 @@ mod tests {
     #[test]
     fn frontmatter_and_body_come_apart() {
         let text = "+++\ntitle = \"Hi\"\n+++\n\n# Heading\n";
-        let (frontmatter, body) = split(text, Path::new("t.md")).unwrap();
+        let (frontmatter, body, line) = split(text, Path::new("t.md")).unwrap();
         assert_eq!(frontmatter, "title = \"Hi\"");
         assert_eq!(body, "# Heading\n");
+        assert_eq!(line, 5, "the body starts on file line 5");
     }
 
     #[test]
     fn a_body_containing_a_fence_is_not_cut_short() {
         let text = "+++\ntitle = \"Hi\"\n+++\nbefore\n+++\nafter\n";
-        let (frontmatter, body) = split(text, Path::new("t.md")).unwrap();
+        let (frontmatter, body, _) = split(text, Path::new("t.md")).unwrap();
         assert_eq!(frontmatter, "title = \"Hi\"");
         assert_eq!(body, "before\n+++\nafter\n");
     }

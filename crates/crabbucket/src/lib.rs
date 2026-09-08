@@ -28,6 +28,7 @@
 
 pub mod config;
 pub mod content;
+pub mod directive;
 pub mod error;
 pub mod links;
 pub mod markdown;
@@ -38,6 +39,7 @@ pub mod url;
 
 pub use config::Config;
 pub use content::{Collection, Entry};
+pub use directive::Directives;
 pub use error::{Error, Result};
 pub use site::{Report, build};
 pub use style::{Style, StyleSheet};

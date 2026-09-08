@@ -75,6 +75,18 @@ impl Snippet {
         }
     }
 
+    /// Points at a whole line, for a failure that knows a line but not a span.
+    pub fn at_line(source: &str, line: usize, line_offset: usize) -> Self {
+        let text = source.lines().nth(line.saturating_sub(1)).unwrap_or("");
+
+        Snippet {
+            line: line + line_offset,
+            column: 1,
+            text: text.to_string(),
+            width: text.len().max(1),
+        }
+    }
+
     fn write(&self, out: &mut String, color: bool) {
         let gutter = " ".repeat(self.line.to_string().len());
         let caret = "^".repeat(self.width);
@@ -153,6 +165,20 @@ impl Error {
             snippet: error
                 .span()
                 .map(|span| Snippet::new(source, span, line_offset)),
+        }
+    }
+
+    /// Builds a schema error from a directive failure, locating it in `source`.
+    pub(crate) fn directive(
+        path: impl Into<PathBuf>,
+        fault: &crate::directive::Fault,
+        source: &str,
+        line_offset: usize,
+    ) -> Self {
+        Error::Schema {
+            path: path.into(),
+            message: fault.message.clone(),
+            snippet: Some(Snippet::at_line(source, fault.line, line_offset)),
         }
     }
 

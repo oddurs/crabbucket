@@ -13,6 +13,6 @@ description = "One line about @NAME@, used as the meta description."
 # that fact is recorded, and no page ever knows about it.
 base = "@BASE@"
 
-# Ship the client-side router: about a kilobyte that swaps <main> instead of
+# Ship the client-side router: about a kilobyte and a half, gzipped, that swaps <main> instead of
 # reloading the page, and degrades to ordinary navigation without it.
 router = @ROUTER@

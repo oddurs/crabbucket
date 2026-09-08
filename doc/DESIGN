@@ -187,9 +187,13 @@ want first-class design systems on a fleet of small sites.
 The output is plain static HTML and CSS.  Zero JavaScript, perfect
 Lighthouse, works in a text browser.
 
-Opt in, per site, to a router of about a kilobyte: intercept same-origin
-clicks, fetch, swap `<main>', push history, drive the native View
-Transitions API for the cross-fade.  That is the Next.js feel -- no full
+Opt in, per site, to a router of about a kilobyte and a half over the
+wire: intercept same-origin clicks, fetch, swap `<main>', push history,
+and drive the native View Transitions API for the cross-fade.  It also
+moves focus into the new content, announces the new title through a
+polite live region, and restores scroll position on Back, because a
+client-side navigation that does none of those is a downgrade on the
+full page load it replaced.  That is the Next.js feel -- no full
 repaint, no flash -- with no hydration, no virtual DOM and no framework.
 With JavaScript off it degrades to ordinary navigation, because it is
 ordinary navigation with a click handler in front of it.

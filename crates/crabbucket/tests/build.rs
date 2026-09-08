@@ -30,6 +30,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+use crabbucket::directive::Directives;
 use crabbucket::error::Error;
 use crabbucket::links::Reason;
 use crabbucket::site::{Options, Report};
@@ -44,6 +45,14 @@ enum Layout {
     #[default]
     Page,
     Docs,
+}
+
+/// The one directive the fixtures use, with a required attribute so that a
+/// misspelled one has something to fail against.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Note {
+    label: String,
 }
 
 struct Plain;
@@ -66,6 +75,14 @@ impl Theme for Plain {
             crabbucket::Url::asset(page.config, "site.css"),
             page.html,
         )
+    }
+
+    fn directives(&self) -> Directives {
+        let mut directives = Directives::new();
+        directives.add("note", |props: Note, body| {
+            maud::html! { aside data-label=(props.label) { (body) } }
+        });
+        directives
     }
 
     fn stylesheet(&self) -> String {
@@ -203,6 +220,87 @@ fn a_draft_is_skipped_and_leaves_the_navigation() {
         !read(&out, "index.html").contains("Secret"),
         "a draft reached the navigation"
     );
+}
+
+// -------------------------------------------------------------- directives
+
+#[test]
+fn a_directive_renders_through_its_component() {
+    let (_, out) = ok("directives");
+    let html = read(&out, "index.html");
+
+    assert!(
+        html.contains("<aside data-label=\"Careful\">"),
+        "got {html}"
+    );
+    assert!(
+        html.contains("<aside data-label=\"Nested\">"),
+        "directives do not nest: {html}"
+    );
+    assert!(
+        html.contains("<a href=\"docs/\">link</a>"),
+        "Markdown inside a directive: {html}"
+    );
+}
+
+#[test]
+fn a_directive_inside_a_code_fence_reaches_the_page_as_text() {
+    let (_, out) = ok("directives");
+    let html = read(&out, "index.html");
+
+    assert!(
+        html.contains("not a directive"),
+        "the fenced example vanished"
+    );
+    assert!(
+        !html.contains("data-label=\"not a directive\""),
+        "the fence was rendered: {html}"
+    );
+}
+
+#[test]
+fn headings_inside_and_outside_directives_share_one_id_space() {
+    let (report, _) = ok("directives");
+    assert_eq!(report.routes, ["", "docs"]);
+}
+
+#[test]
+fn a_link_written_inside_a_directive_is_still_checked() {
+    // The fixture links to `docs/` from inside a directive, and `docs/` exists.
+    // Removing it would make this build fail, which is the point.
+    let (report, _) = ok("directives");
+    assert!(report.links >= 2, "links inside directives were not seen");
+}
+
+#[test]
+fn an_unknown_directive_fails_and_lists_the_ones_that_exist() {
+    let message = fails("unknown-directive").render(false);
+    assert!(
+        message.contains("unknown directive `callout`"),
+        "got {message}"
+    );
+    assert!(message.contains("`note`"), "got {message}");
+    assert!(
+        message.contains(":7:1:"),
+        "the directive opens on line 7: {message}"
+    );
+}
+
+#[test]
+fn a_misspelled_attribute_fails_as_serde_sees_it() {
+    let message = fails("bad-attribute").render(false);
+    assert!(message.contains("unknown field `lable`"), "got {message}");
+    assert!(message.contains(":7:1:"), "got {message}");
+}
+
+#[test]
+fn an_unterminated_directive_fails_at_the_line_it_opened_on() {
+    let message = fails("unterminated-directive").render(false);
+    assert!(
+        message.contains("unterminated directive `note`"),
+        "got {message}"
+    );
+    assert!(message.contains(":7:1:"), "got {message}");
 }
 
 // ------------------------------------------------------------- the base path
@@ -368,6 +466,9 @@ fn every_failure_names_a_file() {
         "dead-asset",
         "dead-anchor",
         "relative-on-error-page",
+        "unknown-directive",
+        "bad-attribute",
+        "unterminated-directive",
     ] {
         let err = build(fixture).0.expect_err("should fail");
         assert!(
