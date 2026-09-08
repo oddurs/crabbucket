@@ -1,5 +1,18 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Validate the scaffolded turborust.toml against turborust's schema.
+
+	* crates/crabbucket-cli/schema/turborust.json: New; vendored from
+	`turborust schema', with its provenance in schema/README.
+	* crates/crabbucket-cli/tests/scaffold.rs: Validate both scaffold
+	shapes and this repository's own config against it, and check the
+	vendored copy has not drifted where turborust is installed.  The
+	hand-written structural assertions are gone: they restated the
+	schema in a second place, which is the shape of problem crabbucket
+	exists to remove.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Test the minimum Rust version, and three platforms.
 
 	* crates/crabbucket/src/content.rs (split): A content file with CRLF

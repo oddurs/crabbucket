@@ -295,77 +295,100 @@ fn the_generated_crate_compiles_and_builds_its_site() {
 
 // ------------------------------------------------------------- turborust
 
-/// The scaffolded turborust config, as TOML.
-fn turborust_config(args: &[&str]) -> toml::Table {
+/// turborust's own schema for `turborust.toml`, vendored.
+///
+/// Its definition rather than a restatement of it.  crabbucket ships a
+/// `turborust.toml` into every scaffolded site, and a schema change there
+/// should fail crabbucket's build rather than a user's.
+const SCHEMA: &str = include_str!("../schema/turborust.json");
+
+/// Validates a scaffolded config against that schema.
+///
+/// `additionalProperties` is `false` throughout it, so a key turborust has
+/// renamed or removed fails here rather than silently passing as an extra --
+/// which is what makes this worth a dependency.
+fn validate(args: &[&str]) {
     let dir = scaffold(args);
     let text = fs::read_to_string(dir.join("turborust.toml")).expect("no turborust.toml");
-    text.parse()
-        .expect("the scaffolded turborust.toml is not valid TOML")
-}
 
-#[test]
-fn the_scaffolded_turborust_config_has_the_shape_turborust_documents() {
-    let config = turborust_config(&[]);
+    let config: toml::Table = text
+        .parse()
+        .expect("the scaffolded turborust.toml is not TOML");
+    let config: serde_json::Value =
+        serde_json::to_value(&config).expect("a TOML table is representable as JSON");
 
-    let task = config["tasks"]["site"]
-        .as_table()
-        .expect("[tasks.site] is missing");
-    assert!(task["cmd"].as_str().is_some(), "a task needs a cmd");
+    let schema: serde_json::Value = serde_json::from_str(SCHEMA).expect("the schema is not JSON");
+    let validator = jsonschema::validator_for(&schema).expect("the schema does not compile");
+
+    let complaints: Vec<String> = validator
+        .iter_errors(&config)
+        .map(|err| format!("{}: {err}", err.instance_path()))
+        .collect();
+
     assert!(
-        task["inputs"].as_array().is_some(),
-        "a task without inputs is never cached"
+        complaints.is_empty(),
+        "`crab new {args:?}` writes a turborust.toml turborust would reject:\n  {}",
+        complaints.join("\n  ")
     );
-    assert!(task["outputs"].as_array().is_some());
-
-    let service = config["services"]["web"]
-        .as_table()
-        .expect("[services.web] is missing");
-    assert_eq!(
-        service["depends_on"].as_array().map(Vec::len),
-        Some(1),
-        "the web service must wait for the build"
-    );
-
-    let serve = service["serve"]
-        .as_table()
-        .expect("the web service must serve something");
-    assert_eq!(serve["dir"].as_str(), Some("dist"));
-    assert!(serve["port"].as_integer().is_some());
-
-    let overlay = config["overlay"].as_table().expect("[overlay] is missing");
-    for key in ["position", "emoji", "theme", "errors"] {
-        assert!(overlay.contains_key(key), "the overlay has no {key}");
-    }
 }
 
 #[test]
-fn turborust_itself_accepts_the_config_we_ship_it() {
-    // The structural test above catches our own typos.  Only turborust can
-    // catch turborust changing, so run it where it exists.
-    let Ok(probe) = Command::new("turborust").arg("--version").output() else {
+fn the_content_scaffold_writes_a_config_turborust_accepts() {
+    validate(&[]);
+}
+
+#[test]
+fn the_crate_scaffold_writes_a_config_turborust_accepts() {
+    // A different shape, and the one that was wrong when this was filed.
+    validate(&["--theme", "my-house-style"]);
+}
+
+#[test]
+fn this_repositorys_own_config_is_valid_too() {
+    // It is not scaffolded, and it is the one a contributor actually runs.
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../turborust.toml");
+    let text = fs::read_to_string(&path).expect("no turborust.toml");
+
+    let config: toml::Table = text.parse().expect("not TOML");
+    let config: serde_json::Value = serde_json::to_value(&config).expect("not representable");
+
+    let schema: serde_json::Value = serde_json::from_str(SCHEMA).expect("the schema is not JSON");
+    let validator = jsonschema::validator_for(&schema).expect("the schema does not compile");
+
+    let complaints: Vec<String> = validator
+        .iter_errors(&config)
+        .map(|err| format!("{}: {err}", err.instance_path()))
+        .collect();
+
+    assert!(
+        complaints.is_empty(),
+        "turborust would reject our own config:\n  {}",
+        complaints.join("\n  ")
+    );
+}
+
+#[test]
+fn turborust_itself_agrees_with_the_vendored_schema() {
+    // The vendored copy is a snapshot.  Where turborust is installed, check
+    // the snapshot is still what it says -- a drift here is the signal that
+    // the scaffold may need to change.
+    let Ok(emitted) = Command::new("turborust").arg("schema").output() else {
         eprintln!("skipping: turborust is not on PATH");
         return;
     };
 
-    if !probe.status.success() {
-        eprintln!("skipping: turborust is not usable");
+    if !emitted.status.success() {
+        eprintln!("skipping: turborust could not emit its schema");
         return;
     }
 
-    // Both shapes, because they are two different configs.
-    for args in [&[][..], &["--theme", "my-house-style"][..]] {
-        let dir = scaffold(args);
-        let planned = Command::new("turborust")
-            .arg("-C")
-            .arg(&dir)
-            .arg("plan")
-            .output()
-            .expect("turborust failed to run");
+    let theirs: serde_json::Value =
+        serde_json::from_slice(&emitted.stdout).expect("turborust emitted invalid JSON");
+    let ours: serde_json::Value =
+        serde_json::from_str(SCHEMA).expect("the vendored schema is invalid");
 
-        assert!(
-            planned.status.success(),
-            "turborust rejects the config `crab new {args:?}` writes:\n{}",
-            String::from_utf8_lossy(&planned.stderr)
-        );
-    }
+    assert_eq!(
+        ours, theirs,
+        "the vendored schema has drifted; regenerate it and check the scaffold still fits"
+    );
 }

@@ -92,9 +92,15 @@ turborust man               the man page
 turborust clean             drop cached task results
 ```
 
-`turborust schema` is the one worth knowing about from here: it emits a JSON
-Schema for `turborust.toml`, which is a better long-term answer than the
-structural test crabbucket currently keeps.
+`turborust schema` is the one crabbucket uses. It emits a JSON Schema for
+`turborust.toml`, and that schema is vendored at
+`crates/crabbucket-cli/schema/turborust.json` and validated against in tests:
+both scaffold shapes, and this repository's own config.
+
+`additionalProperties` is `false` throughout it, so a key turborust renames or
+removes fails crabbucket's build rather than a user's. Where turborust is
+installed, a further test checks the vendored copy has not drifted from what
+turborust emits today.
 
 ## A note on licences
 
