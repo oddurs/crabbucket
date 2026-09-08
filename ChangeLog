@@ -1,5 +1,18 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Give content a way to say "the site root".
+
+	* crates/crabbucket/src/links.rs (SITE_ROOT, absolutize): New.  A
+	leading `~/' resolves to the base path, in href and src only.
+	* crates/crabbucket/src/site.rs (build_with): Resolve it on the
+	finished page, so it works in content and components alike.
+	* examples/site/content/404.md: Use it; the page had the base path
+	written into it and broke under an override.
+	* crates/crabbucket-theme-plain/tests/seam.rs: Build with an
+	override again, which is what used to fail.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Generate a Route enum, and stop deriving routes in two places.
 
 	* crates/crabbucket-routes: New crate.  Route derivation, scanning,

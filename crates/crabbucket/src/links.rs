@@ -236,6 +236,61 @@ fn hrefs(html: &str) -> Vec<String> {
     found
 }
 
+/// The prefix that means "the site root", whatever the base path is.
+///
+/// Content has no other way to write a site-absolute link.  Spelling one out
+/// hard-codes the base into a page -- so `/repo/docs/` is right until the site
+/// moves, and wrong silently, because a link outside the base is not this
+/// build's business and is therefore not checked.
+///
+/// `~` is chosen because it means exactly this in a shell and means nothing at
+/// the start of a URL path, so there is no ambiguity to resolve.
+pub const SITE_ROOT: &str = "~/";
+
+/// Rewrites every `~/` link in a rendered page to the site's base path.
+///
+/// Only inside `href` and `src` attribute values, so a shell path in a code
+/// block -- `~/Code/crabbucket`, which these very docs contain -- is left
+/// alone.
+pub fn absolutize(html: &str, config: &Config) -> String {
+    let mut out = String::with_capacity(html.len());
+    let mut rest = html;
+
+    while let Some(at) = find_attribute(rest) {
+        let (before, after) = rest.split_at(at.start);
+        out.push_str(before);
+        out.push_str(at.attribute);
+
+        let value = &after[at.attribute.len()..];
+        match value.strip_prefix(SITE_ROOT) {
+            Some(path) => {
+                out.push_str(&config.base);
+                rest = path;
+            }
+            None => rest = value,
+        }
+    }
+
+    out.push_str(rest);
+    out
+}
+
+/// Where the next `href="` or `src="` begins.
+struct Attribute {
+    start: usize,
+    attribute: &'static str,
+}
+
+fn find_attribute(html: &str) -> Option<Attribute> {
+    ["href=\"", "src=\""]
+        .into_iter()
+        .filter_map(|attribute| {
+            html.find(attribute)
+                .map(|start| Attribute { start, attribute })
+        })
+        .min_by_key(|found| found.start)
+}
+
 /// Whether an href is relative, and so depends on where the page was served.
 fn is_relative(href: &str) -> bool {
     let href = href.trim();
@@ -336,7 +391,7 @@ mod tests {
     use std::collections::BTreeSet;
     use std::path::Path;
 
-    use super::{Link, Reason, Rendered, Routes, check, hrefs, resolve};
+    use super::{Link, Reason, Rendered, Routes, absolutize, check, hrefs, resolve};
     use crate::config::Config;
 
     fn config(base: &str) -> Config {
@@ -372,6 +427,63 @@ mod tests {
 
     fn path(config: &Config, page: &str, href: &str) -> Option<String> {
         resolve(config, page, href).map(|link| link.path)
+    }
+
+    #[test]
+    fn a_site_root_link_becomes_the_base_path() {
+        let config = config("/repo/");
+
+        assert_eq!(
+            absolutize(r#"<a href="~/docs/">d</a>"#, &config),
+            r#"<a href="/repo/docs/">d</a>"#
+        );
+        assert_eq!(
+            absolutize(r#"<a href="~/">home</a>"#, &config),
+            r#"<a href="/repo/">home</a>"#
+        );
+        assert_eq!(
+            absolutize(r#"<img src="~/logo.png">"#, &config),
+            r#"<img src="/repo/logo.png">"#
+        );
+    }
+
+    #[test]
+    fn a_site_root_link_follows_the_base_wherever_it_goes() {
+        // The whole point: the same content, two bases, no edit.
+        let html = r#"<a href="~/docs/">d</a>"#;
+
+        assert!(absolutize(html, &config("/repo/")).contains("/repo/docs/"));
+        assert!(absolutize(html, &config("/")).contains("\"/docs/\""));
+        assert!(absolutize(html, &config("/elsewhere/")).contains("/elsewhere/docs/"));
+    }
+
+    #[test]
+    fn a_tilde_outside_an_attribute_is_left_alone() {
+        // These docs contain `~/Code/crabbucket` in a code block.  Rewriting
+        // it would be worse than the problem being solved.
+        let config = config("/repo/");
+        let html = r#"<p>cd <code>~/Code/crabbucket</code></p><a href="~/docs/">d</a>"#;
+        let out = absolutize(html, &config);
+
+        assert!(out.contains("<code>~/Code/crabbucket</code>"), "got {out}");
+        assert!(out.contains("href=\"/repo/docs/\""), "got {out}");
+    }
+
+    #[test]
+    fn ordinary_links_pass_through_untouched() {
+        let config = config("/repo/");
+        let html =
+            r#"<a href="docs/">a</a><a href="/repo/x/">b</a><a href="https://e.example/">c</a>"#;
+
+        assert_eq!(absolutize(html, &config), html);
+    }
+
+    #[test]
+    fn several_site_root_links_in_one_page_are_all_rewritten() {
+        let config = config("/repo/");
+        let out = absolutize(r#"<a href="~/a/">a</a><a href="~/b/">b</a>"#, &config);
+
+        assert_eq!(out, r#"<a href="/repo/a/">a</a><a href="/repo/b/">b</a>"#);
     }
 
     #[test]

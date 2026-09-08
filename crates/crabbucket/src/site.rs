@@ -208,7 +208,14 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
             Url::new(&config, &entry.route)
         };
 
-        rendered.push((*entry, url, theme.render(&page)));
+        // `~/` means the site root, whatever the base is.  Resolved here, on
+        // the finished page, so it works in content and in components alike
+        // and nothing downstream has to know the convention exists.
+        rendered.push((
+            *entry,
+            url,
+            links::absolutize(&theme.render(&page), &config),
+        ));
     }
 
     // What the site asked for, and what the design system actually has.  A
