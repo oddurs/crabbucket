@@ -46,7 +46,7 @@ fn build_into(name: &str) -> (crabbucket::Report, PathBuf) {
         base: None,
         ..Options::default()
     };
-    let report = crabbucket::build_with(&example_site(), &Plain, &options)
+    let report = crabbucket::build_with(&example_site(), &Plain, options)
         .unwrap_or_else(|err| panic!("Plain cannot build the example site: {err}"));
 
     (report, out)

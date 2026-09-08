@@ -8,10 +8,12 @@ use std::collections::BTreeMap;
 use std::path::Path;
 use std::process::ExitCode;
 
+use crabbucket::directive::Directives;
 use crabbucket::site::Options;
 use crabbucket::{Config, Url};
 use crabbucket_theme_plain::Plain;
 use maud::{Markup, html};
+use serde::Deserialize;
 
 /// Generated from `content/` by `build.rs`.
 pub mod routes {
@@ -19,6 +21,60 @@ pub mod routes {
 }
 
 use routes::Route;
+
+/// The recordings in `data/recordings.toml`.
+///
+/// The site's own type, deserialized from the site's own file. crabbucket
+/// knows nothing about either.
+#[derive(Debug, Deserialize)]
+struct Recordings {
+    #[serde(flatten)]
+    by_name: BTreeMap<String, Recording>,
+}
+
+#[derive(Debug, Deserialize)]
+struct Recording {
+    command: String,
+    output: String,
+}
+
+/// `:::terminal{name = "build"}`
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Terminal {
+    name: String,
+    #[serde(default)]
+    caption: Option<String>,
+}
+
+/// The site's own directives, which its design system knows nothing about.
+///
+/// A `terminal` belongs to this site: it reads recordings this site generates.
+/// No design system should have to know that, and before `Options::directives`
+/// there was nowhere for it to live.
+fn directives() -> Directives {
+    let mut directives = Directives::new();
+
+    directives.add_with("terminal", |props: Terminal, _, context| {
+        let recordings: Recordings = context.data("recordings")?;
+
+        let recording = recordings
+            .by_name
+            .get(&props.name)
+            .ok_or_else(|| format!("there is no recording called `{}`", props.name))?;
+
+        Ok(html! {
+            figure {
+                pre { code { "$ " (recording.command) "\n" (recording.output) } }
+                @if let Some(caption) = &props.caption {
+                    figcaption { (caption) }
+                }
+            }
+        })
+    });
+
+    directives
+}
 
 /// A link to a route, which cannot point at a page that does not exist.
 pub fn link(config: &Config, route: Route, label: &str) -> Markup {
@@ -75,10 +131,11 @@ fn main() -> ExitCode {
 
     let options = Options {
         pages: BTreeMap::from([(String::new(), landing(&config).into_string())]),
+        directives: directives(),
         ..Options::default()
     };
 
-    match crabbucket::build_with(dir, &Plain, &options) {
+    match crabbucket::build_with(dir, &Plain, options) {
         Ok(report) => {
             println!("{report}");
             ExitCode::SUCCESS

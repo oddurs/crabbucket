@@ -1,5 +1,21 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Let a site own directives, and let a directive read site data.
+
+	* crates/crabbucket/src/directive.rs (Context, Data): New.  A
+	handler can read the configuration and `data/NAME.toml'.
+	(Directives::add_with): New, and fallible, because the reason to
+	want a context is to look something up.
+	(Directives::merge): New; a name in both is an error.
+	* crates/crabbucket/src/site.rs (Options::directives): New.
+	(build_with): Take Options by value; directives cannot be borrowed
+	out of a shared reference.
+	* crates/crabbucket/src/config.rs (Config::for_tests): New.
+	* examples/site-crate: A `terminal' directive reading
+	data/recordings.toml, which is the case that prompted all of this.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Let a site add a page that is not a Markdown file.
 
 	* crates/crabbucket/src/config.rs (Config::pages): New; the pages a

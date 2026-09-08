@@ -23,13 +23,21 @@ use crabbucket_ui::Standard;
 
 /// Renders a page body with the default design system's directives.
 fn render(source: &str) -> String {
-    markdown::render(source, &Standard.directives())
+    let config = crabbucket::Config::for_tests();
+    let data = crabbucket::directive::Data::default();
+    let context = crabbucket::directive::Context::new(&config, &data);
+
+    markdown::render(source, &Standard.directives(), &context)
         .unwrap_or_else(|fault| panic!("line {}: {}", fault.line, fault.message))
         .html
 }
 
 fn fails(source: &str) -> String {
-    markdown::render(source, &Standard.directives())
+    let config = crabbucket::Config::for_tests();
+    let data = crabbucket::directive::Data::default();
+    let context = crabbucket::directive::Context::new(&config, &data);
+
+    markdown::render(source, &Standard.directives(), &context)
         .expect_err("should have failed")
         .message
 }

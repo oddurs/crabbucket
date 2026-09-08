@@ -118,6 +118,23 @@ impl Config {
     }
 }
 
+impl Config {
+    /// A configuration with nothing in it, for tests and for the rare caller
+    /// that needs a context before it has read a file.
+    pub fn for_tests() -> Self {
+        Config {
+            title: String::new(),
+            description: String::new(),
+            url: None,
+            base: "/".to_string(),
+            search: false,
+            feeds: Vec::new(),
+            pages: Vec::new(),
+            router: false,
+        }
+    }
+}
+
 /// Forces a base path into the `/…/` shape the rest of the crate assumes.
 fn normalize_base(base: &str) -> String {
     let trimmed = base.trim().trim_matches('/');

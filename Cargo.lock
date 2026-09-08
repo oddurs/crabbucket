@@ -129,6 +129,7 @@ dependencies = [
  "crabbucket-routes",
  "crabbucket-theme-plain",
  "maud",
+ "serde",
 ]
 
 [[package]]

@@ -99,17 +99,26 @@ A site crate now [declares such a page](../routing/#pages-the-site-renders-itsel
 in `site.toml` and supplies its body. It is then a page like any other, the
 generated `Route` enum included. `examples/site-crate`'s landing page is one.
 
-### Directives cannot read site data — open
+### Directives cannot read site data — fixed
 
 `<Terminal name="mcp" />` looks a recording up by name, from data the site
-generates. A crabbucket directive sees its attributes and its body and nothing
-else, so there is no way to write that one at all.
+generates. Two things were missing: a directive could not read anything but
+its own attributes, and a *site* could not register a directive at all — only
+its design system could.
+
+Both are [done](../components/#directives-the-site-owns). `examples/site-crate`
+has a `terminal` that reads `data/recordings.toml`, and a name that is not
+there fails the build at the directive's line.
 
 ## The count
 
-Ten pages. Six migrated mechanically. One bug found and fixed. Three gaps
-found and filed, of which two are now fixed — including the one that blocked
-the other four pages. One remains.
+Ten pages. Six migrated mechanically, and the other four are now expressible
+too. One bug found and fixed. Three gaps found, filed, and all three since
+closed.
+
+The number that mattered was not how much migrated on the first attempt. It
+was how much of what did not was a real gap rather than a preference — and it
+was all of it.
 
 That is the honest number, and it is the number worth publishing: a migration
 guide that claims everything is easy is a guide nobody trusts twice.
