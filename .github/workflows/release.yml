@@ -1,0 +1,96 @@
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: Release
+
+# Two halves of the same thing.  Every pull request packages all seven crates
+# and verifies each tarball builds on its own, so a change that breaks
+# packaging is a red check rather than a discovery made at release time.  A
+# `v*' tag does that and then publishes.
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  package:
+    name: every crate packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: package
+
+      # --workspace resolves the path dependencies against each other, which
+      # is the only way to package crates that are not on crates.io yet.  It
+      # builds each tarball as well, so this is a real check and not a
+      # directory listing.
+      - run: cargo package --workspace --locked
+
+      # An allow-list can be wrong in the other direction, so look.
+      - name: no crate ships its tests
+        run: |
+          for crate in target/package/*.crate; do
+            if tar -tzf "$crate" | grep -q '/tests/'; then
+              echo "$crate ships tests/, which read repository files"
+              exit 1
+            fi
+          done
+
+      - name: every crate ships the licence it claims
+        run: |
+          for crate in target/package/crabbucket*.crate; do
+            case "$crate" in
+              *crabbucket-bench*|*crabbucket-example-site*) continue ;;
+            esac
+            tar -tzf "$crate" | grep -q '/COPYING$' || {
+              echo "$crate has no COPYING"
+              exit 1
+            }
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crates
+          path: target/package/*.crate
+
+  publish:
+    name: publish to crates.io
+    needs: package
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: crates-io
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+
+      # A tag that disagrees with the manifest publishes the wrong version
+      # under the right name, and a version can be yanked but never taken
+      # back.  So it is checked before anything is sent.
+      - name: the tag matches the manifest
+        run: |
+          tagged="${GITHUB_REF_NAME#v}"
+          declared=$(cargo pkgid -p crabbucket | sed 's/.*[#@]//')
+          echo "tag $tagged, manifest $declared"
+          [ "$tagged" = "$declared" ] || {
+            echo "the tag and the manifest disagree"
+            exit 1
+          }
+
+      # In dependency order, because a crate cannot be published before what
+      # it depends on.  `cargo publish' waits for the index, so no sleeps.
+      - name: publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          for crate in crabbucket-routes crabbucket-tokens crabbucket-og \
+                       crabbucket crabbucket-ui crabbucket-theme-plain \
+                       crabbucket-cli; do
+            echo "==> $crate"
+            cargo publish -p "$crate" --locked
+          done

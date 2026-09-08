@@ -82,8 +82,11 @@ The point at which a breaking change starts costing someone other than the autho
 
 ### backlog
 
-- [ ] [`0032`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0032-publish-the-crates-to-crates-io.md) Publish the crates to crates.io <sup>chore · p0</sup>
 - [ ] [`0034`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0034-the-book.md) The book <sup>docs · p1</sup>
+
+### in progress
+
+- [ ] [`0032`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0032-publish-the-crates-to-crates-io.md) Publish the crates to crates.io <sup>chore · p0</sup>
 
 ### done
 

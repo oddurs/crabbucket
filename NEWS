@@ -91,6 +91,32 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
   `build_with' now takes its `Options' by value, because they carry
   directives, which cannot be borrowed out of a shared reference.
 
+** Packaging
+
+  The crates are ready to publish.  Every one carries an `include' list --
+  an allow-list, so a new directory has to be added on purpose rather than
+  shipped because nobody noticed it -- along with keywords, categories and
+  a copy of COPYING, which GPLv3 section 4 asks for and a .crate file is
+  source for.
+
+  `tests/' ships in none of them.  Several test files read repository
+  files that a package cannot reach, and a test suite that cannot compile
+  is worse than one that is not there.
+
+  crabbucket-ui's design/tokens.toml moved into the crate.  Its build
+  script read it from the top of the tree, which packaged into a crate
+  that could not build at all; crabbucket-theme-plain had it right.  Each
+  design system owns its tokens, which was the intent anyway.
+
+  The README is indented by four spaces where it used to be two.
+  crates.io renders a readme with no extension as Markdown, and at two
+  spaces CommonMark reflows the aligned blocks into the paragraph above
+  and the alignment that carries the meaning is gone.  A test holds it.
+
+  A Release workflow packages all seven crates on every pull request and
+  publishes them, in dependency order, on a `v*' tag -- after checking
+  that the tag and the manifest agree.  HACKING has the checklist.
+
 ** API
 
   doc/STABILITY says what 1.0 will promise and what it will not, which

@@ -11,10 +11,31 @@ authors.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
+keywords = ["opengraph", "social-card", "static-site", "svg", "crabbucket"]
+categories = ["web-programming", "multimedia::images"]
 
 # A design system that wants OpenGraph images depends on this; crabbucket
 # itself does not.  It is 53 crates and about four seconds of compilation, and
 # a site with no interest in social previews should pay neither.
+# What ships to crates.io.  An allow-list rather than a deny-list, so a new
+# directory has to be added on purpose instead of being published by accident.
+#
+# `tests/' is deliberately absent.  Several test files read repository
+# files -- doc/STABILITY, doc/crab.1 -- that a package cannot reach, and a
+# test suite that cannot run is worse than one that is not there.  The tests
+# live in the repository, which `repository' names.
+#
+# COPYING is a copy of the one at the top of the tree; a test asserts they are
+# identical.  GPLv3 section 4 asks that every recipient of the source get the
+# licence with it, and a .crate file is source.
+include = [
+    "Cargo.toml",
+    "COPYING",
+    "src/**/*.rs",
+    "examples/**/*.rs",
+    "fonts/**",
+]
+
 [dependencies]
 resvg = { version = "0.45", default-features = false, features = ["text"] }
 png = "0.17"

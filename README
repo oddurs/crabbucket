@@ -11,20 +11,20 @@ break a small site -- a dead link, a page with no title, a renamed
 colour, a stylesheet 404ing because the site is served from /repo/ --
 are compile errors rather than production surprises.
 
-  The build either fails, or the site is correct.
+    The build either fails, or the site is correct.
 
 See the file doc/DESIGN for the full concept and the reasoning behind
 each choice.  It is short, and it is meant to be argued with.
 
 This is free software.  See the file COPYING for copying conditions.
 
-  Copyright (C) 2026 Oddur Sigurdsson
+    Copyright (C) 2026 Oddur Sigurdsson
 
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.  There is NO WARRANTY, to the
-  extent permitted by law.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.  There is NO WARRANTY, to the
+    extent permitted by law.
 
 
 Status
@@ -37,44 +37,45 @@ is stable, including the parts that look stable.
 At a glance
 -----------
 
-  Content     Markdown with `+++' TOML frontmatter, deserialized into
-              your own structs.  Writing a page needs no Rust.  Headings
-              are linkable and code is highlighted at build time.
-  Links       Every internal link -- route, asset and heading fragment
-              alike -- is resolved after rendering.  A dead one fails the
-              build; there is no flag to turn it off.
-  Components  maud functions.  Typed props, compile-checked HTML, no
-              template language and no runtime.
-  Design      One tokens file generates both Rust constants and CSS
-              custom properties, so the two cannot drift apart.  Styles
-              live beside their components and are namespaced.  A design
-              system is a crate you depend on.
-  Layouts     An associated type on the theme, so a layout that does
-              not exist fails the build listing the ones that do.
-  Client      Zero JavaScript by default.  Opt in to a 2.9KB gzipped
-              router -- navigation, prefetching, copy buttons -- and to
-              search.  Each ships nothing when it is not asked for.
-  Dev loop    turborust.  crabbucket ships no dev server of its own.
+    Content     Markdown with `+++` TOML frontmatter, deserialized into
+                your own structs.  Writing a page needs no Rust.  Headings
+                are linkable and code is highlighted at build time.
+    Links       Every internal link -- route, asset and heading fragment
+                alike -- is resolved after rendering.  A dead one fails the
+                build; there is no flag to turn it off.
+    Components  maud functions.  Typed props, compile-checked HTML, no
+                template language and no runtime.
+    Design      One tokens file generates both Rust constants and CSS
+                custom properties, so the two cannot drift apart.  Styles
+                live beside their components and are namespaced.  A design
+                system is a crate you depend on.
+    Layouts     An associated type on the theme, so a layout that does
+                not exist fails the build listing the ones that do.
+    Client      Zero JavaScript by default.  Opt in to a 2.9KB gzipped
+                router -- navigation, prefetching, copy buttons -- and to
+                search.  Each ships nothing when it is not asked for.
+    Dev loop    turborust.  crabbucket ships no dev server of its own.
 
 
 Layout
 ------
 
-  crates/crabbucket      the framework
-  crates/crabbucket-cli  the `crab' executable
-  crates/crabbucket-ui   the default design system and component kit
-  examples/site          crabbucket's own site, built with crabbucket
-  design/tokens.toml     the token source of truth
-  doc/DESIGN             the concept
-  cairn/items            the roadmap and the issues, one file each
+    crates/crabbucket      the framework
+    crates/crabbucket-cli  the `crab` executable
+    crates/crabbucket-ui   the default design system and component kit;
+                           its design/tokens.toml is where the colours,
+                           the type scale and the spacing live
+    examples/site          crabbucket's own site, built with crabbucket
+    doc/DESIGN             the concept
+    cairn/items            the roadmap and the issues, one file each
 
 
 Starting a site
 ---------------
 
-  crab new my-project --router
-  cd my-project
-  crab build
+    crab new my-project --router
+    cd my-project
+    crab build
 
 That scaffolds a site that builds with no edits, including a
 turborust.toml and a GitHub Pages workflow.
@@ -85,20 +86,20 @@ Building
 
 Rust 1.88 or newer is required.
 
-  cargo build --release
+    cargo build --release
 
 A Makefile is provided for the usual GNU targets, so the following also
-works and honours the customary `prefix' and `DESTDIR' variables:
+works and honours the customary `prefix` and `DESTDIR` variables:
 
-  make
-  make check
-  make install prefix=/usr/local
+    make
+    make check
+    make install prefix=/usr/local
 
 
 Developing
 ----------
 
-  turborust up
+    turborust up
 
 turborust rebuilds the example site when anything it depends on changes,
 serves it with live reload, and shows build errors in a browser overlay.
@@ -114,13 +115,13 @@ Please report bugs at <https://github.com/oddurs/crabbucket/issues>.
 Files
 -----
 
-  AUTHORS      who wrote crabbucket
-  COPYING      the GNU General Public License, version 3
-  ChangeLog    a log of changes, newest first
-  HACKING      notes for people working on the source
-  NEWS         user-visible changes, newest first
-  ROADMAP.md   what is planned, generated from cairn/items
-  THANKS       people who have helped
-  doc/DESIGN   the design, and the reasoning behind it
-  doc/STABILITY what 1.0 promises, and what it does not
-  doc/crab.1   the man page
+    AUTHORS      who wrote crabbucket
+    COPYING      the GNU General Public License, version 3
+    ChangeLog    a log of changes, newest first
+    HACKING      notes for people working on the source
+    NEWS         user-visible changes, newest first
+    ROADMAP.md   what is planned, generated from cairn/items
+    THANKS       people who have helped
+    doc/DESIGN   the design, and the reasoning behind it
+    doc/STABILITY what 1.0 promises, and what it does not
+    doc/crab.1   the man page

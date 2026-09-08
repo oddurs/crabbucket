@@ -1,5 +1,34 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Ready the seven crates for crates.io.
+
+	* crates/crabbucket-ui/design/tokens.toml: Moved here from
+	design/tokens.toml.  A build script cannot read outside its own
+	package, so the published crate could not build at all.
+	* crates/crabbucket-ui/build.rs: Read it from the crate.
+	* README, HACKING, turborust.toml,
+	examples/site/content/docs/design-systems.md: Follow the move, and
+	say that each design system owns its tokens.
+	* crates/*/Cargo.toml (include): New; an allow-list, so a new
+	directory has to be added on purpose.  `tests/' is in none of them:
+	several read doc/STABILITY and doc/crab.1, which a package does not
+	have.
+	(keywords, categories): New on the six that lacked them.
+	* crates/*/COPYING: New; a copy of the top-level one, which GPLv3
+	section 4 asks be distributed with the source.
+	* README: Indent by four spaces rather than two, and pair the
+	backticks.  crates.io renders an extensionless readme as Markdown,
+	and at two spaces CommonMark reflows the aligned blocks.
+	* crates/crabbucket/tests/packaging.rs: New.  Holds all of the
+	above: the licence copies match, every crate has an `include' and
+	the metadata, no crate ships tests, and the README stays Markdown.
+	* .github/workflows/release.yml: New.  Packages all seven on every
+	pull request; publishes in dependency order on a `v*' tag, after
+	checking the tag against the manifest.
+	* HACKING: The release checklist.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Measure the build against Hugo and Zola, and publish the result.
 
 	* bench/: New crate.  `generate' writes the same synthetic site three

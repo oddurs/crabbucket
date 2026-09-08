@@ -12,7 +12,8 @@ Layout
                          theme, site
   crates/crabbucket-cli  the `crab' executable, a thin front end
   crates/crabbucket-ui   the default design system; its build.rs
-                         generates the token module
+                         generates the token module from its own
+                         design/tokens.toml
   crates/crabbucket-theme-plain
                          a second design system, which exists so the
                          seam is a seam and not a habit
@@ -22,7 +23,6 @@ Layout
                          route derivation, and the `Route' enum a site
                          crate generates
   crates/crabbucket-og   social cards
-  design/tokens.toml     the token source of truth
   examples/site          crabbucket's own site
   examples/site-crate    a site that is a crate: typed routes, its own
                          theme and its own directive
@@ -80,6 +80,49 @@ which fails if the build is slower than the ceiling.  The ceiling is
 loose on purpose.  A shared runner varies by more than any change worth
 making, and a budget that fails on noise is a budget people rerun until
 it passes.
+
+
+Making a release
+----------------
+
+Seven crates go to crates.io.  They depend on each other, so they are
+published in this order, which is the order the release workflow uses:
+
+  crabbucket-routes  crabbucket-tokens  crabbucket-og
+  crabbucket
+  crabbucket-ui      crabbucket-theme-plain
+  crabbucket-cli
+
+`bench' and `examples/site-crate' are `publish = false'.  They are part of
+the repository, not of the product.
+
+The checklist:
+
+  1.  Decide the version and set it in [workspace.package], and in
+      [workspace.dependencies] where each path dependency also carries a
+      `version'.  Cargo will not publish a path dependency without one.
+  2.  Move the NEWS section for the release from "(unreleased)" to the
+      date, and start a new one above it.
+  3.  make check.
+  4.  cargo package --workspace --locked, and read the file list of each
+      tarball.  `include' is an allow-list; a new directory that should
+      ship is a directory nobody added to it.
+  5.  Open the pull request.  The Release workflow packages every crate on
+      every pull request, so this is checked before the tag exists.
+  6.  Merge, then tag the merge commit `vX.Y.Z' and push the tag.  The
+      workflow refuses to publish if the tag and the manifest disagree.
+  7.  Only after the first publish succeeds, change the install line in
+      examples/site/content/docs/getting-started.md from `cargo install
+      --git' to `cargo install crabbucket-cli'.  Documenting it earlier
+      documents something that does not work yet.
+
+Publishing needs a CARGO_REGISTRY_TOKEN secret on the `crates-io'
+environment, scoped to these seven crates.
+
+Two things that cannot be undone: a name, and a version.  A version can be
+yanked, which stops new dependants resolving to it, but it is never
+removed and the number is never reusable.  That is why step 4 is reading
+rather than skimming.
 
 
 Before sending a patch
