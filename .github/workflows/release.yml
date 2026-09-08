@@ -32,24 +32,27 @@ jobs:
       # directory listing.
       - run: cargo package --workspace --locked
 
-      # An allow-list can be wrong in the other direction, so look.
-      - name: no crate ships its tests
+      # An allow-list can be wrong in the other direction, so look.  Only at
+      # the crates that are published: `cargo package --workspace' packages
+      # the `publish = false' ones too, and what those contain is nobody's
+      # business but the repository's.
+      - name: the published crates contain what they should
         run: |
-          for crate in target/package/*.crate; do
+          for name in crabbucket crabbucket-cli crabbucket-og \
+                      crabbucket-routes crabbucket-theme-plain \
+                      crabbucket-tokens crabbucket-ui; do
+            # The version starts with a digit, so this does not also match
+            # `crabbucket-cli` when `name` is `crabbucket`.
+            crate=$(echo target/package/"$name"-[0-9]*.crate)
+            echo "==> $crate"
+
             if tar -tzf "$crate" | grep -q '/tests/'; then
-              echo "$crate ships tests/, which read repository files"
+              echo "$name ships tests/, which read repository files"
               exit 1
             fi
-          done
 
-      - name: every crate ships the licence it claims
-        run: |
-          for crate in target/package/crabbucket*.crate; do
-            case "$crate" in
-              *crabbucket-bench*|*crabbucket-example-site*) continue ;;
-            esac
             tar -tzf "$crate" | grep -q '/COPYING$' || {
-              echo "$crate has no COPYING"
+              echo "$name has no COPYING"
               exit 1
             }
           done

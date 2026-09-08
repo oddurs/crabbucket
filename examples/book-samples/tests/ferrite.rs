@@ -13,8 +13,13 @@ use std::path::{Path, PathBuf};
 use crabbucket::{Options, Report};
 use crabbucket_book_samples::Ferrite;
 
-fn site() -> PathBuf {
-    let dir = Path::new(env!("CARGO_TARGET_TMPDIR")).join("ferrite");
+/// A fixture site, in a directory of its own.
+///
+/// Of its own because these tests run in parallel: one directory shared
+/// between them is one test deleting the site another is building, which is
+/// a failure that shows up only on whichever machine is busiest.
+fn site(name: &str) -> PathBuf {
+    let dir = Path::new(env!("CARGO_TARGET_TMPDIR")).join(name);
     let _ = fs::remove_dir_all(&dir);
 
     let write = |path: &str, body: &str| {
@@ -46,8 +51,8 @@ fn site() -> PathBuf {
     dir
 }
 
-fn build() -> (Report, PathBuf) {
-    let dir = site();
+fn build(name: &str) -> (Report, PathBuf) {
+    let dir = site(name);
     let out = dir.join("dist");
     let report = crabbucket::build_with(&dir, &Ferrite, Options::new().out_dir(out.clone()))
         .unwrap_or_else(|err| panic!("Ferrite should build this site, but: {err}"));
@@ -57,7 +62,7 @@ fn build() -> (Report, PathBuf) {
 
 #[test]
 fn the_design_system_the_book_builds_renders_a_whole_site() {
-    let (report, out) = build();
+    let (report, out) = build("renders");
 
     assert_eq!(report.routes.len(), 3, "{:?}", report.routes);
     assert!(report.links >= 3, "nothing was checked: {}", report.links);
@@ -67,7 +72,7 @@ fn the_design_system_the_book_builds_renders_a_whole_site() {
 
 #[test]
 fn its_layouts_and_its_directive_both_do_something() {
-    let (_, out) = build();
+    let (_, out) = build("layouts");
 
     let chapter = fs::read_to_string(out.join("guide/first/index.html")).expect("no chapter");
 
@@ -88,7 +93,7 @@ fn its_layouts_and_its_directive_both_do_something() {
 
 #[test]
 fn the_stylesheet_carries_the_tokens_and_the_namespace() {
-    let (_, out) = build();
+    let (_, out) = build("stylesheet");
 
     let css = fs::read_to_string(out.join("site.css")).expect("no stylesheet");
 
