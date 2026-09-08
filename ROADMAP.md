@@ -98,12 +98,52 @@ The point at which a breaking change starts costing someone other than the autho
 - [x] [`0054`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0054-a-test-runner-coverage-floor-and-supply-chain-gates.md) A test runner, coverage floor and supply-chain gates <sup>chore · p1</sup>
 - [x] [`0055`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0055-test-the-claims-not-just-the-code-paths.md) Test the claims, not just the code paths <sup>chore · p1</sup>
 
-## Unscheduled
+## v1.1 — The parts that are simply missing
 
-`··········` 0% · 0 of 2 done
+`··········` 0% · 0 of 8 done
+
+Not a change of concept — a change of coverage.
 
 ### backlog
 
-- [ ] [`0037`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0037-wasm-islands.md) Wasm islands <sup>feature · p3 · out-of-scope</sup>
-- [ ] [`0038`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0038-internationalisation.md) Internationalisation <sup>feature · p3 · out-of-scope</sup>
+- [ ] [`0059`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0059-sharpen-the-thesis-the-typed-value-includes-the-client.md) Sharpen the thesis: the typed value includes the client <sup>docs · p0</sup>
+- [ ] [`0060`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0060-a-search-index-that-does-not-grow-with-the-site.md) A search index that does not grow with the site <sup>feature · p0</sup>
+- [ ] [`0061`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0061-one-seam-for-generated-routes.md) One seam for generated routes <sup>feature · p0</sup>
+- [ ] [`0062`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0062-an-asset-pipeline-images-that-are-enqueued-hashed-and-typed.md) An asset pipeline: images that are enqueued, hashed and typed <sup>feature · p1</sup>
+- [ ] [`0063`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0063-navigation-that-costs-nothing-view-transitions-and-speculation-rules.md) Navigation that costs nothing: view transitions and speculation rules <sup>feature · p1</sup>
+- [ ] [`0064`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0064-crab-check-external-which-the-build-will-never-do.md) crab check --external, which the build will never do <sup>feature · p2</sup>
+- [ ] [`0065`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0065-redirects-as-files-a-static-host-will-serve.md) Redirects, as files a static host will serve <sup>feature · p2</sup>
+- [ ] [`0066`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0066-a-directive-that-shells-out-instead-of-a-plugin-system.md) A directive that shells out, instead of a plugin system <sup>docs · p2</sup>
+
+## v1.2 — Faster, and content from anywhere
+
+`··········` 0% · 0 of 3 done
+
+Two constraints that are currently baked in and should not be.
+
+### backlog
+
+- [ ] [`0067`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0067-rebuild-only-what-changed.md) Rebuild only what changed <sup>feature · p1</sup>
+- [ ] [`0068`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0068-content-need-not-be-a-directory.md) Content need not be a directory <sup>feature · p1</sup>
+- [ ] [`0069`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0069-endpoints-a-typed-value-becomes-a-file.md) Endpoints: a typed value becomes a file <sup>feature · p2</sup>
+
+## v2.0 — The typed boundary reaches the browser
+
+`··········` 0% · 0 of 3 done
+
+The concept, finished.
+
+### backlog
+
+- [ ] [`0037`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0037-islands-typed-props-across-the-hydration-boundary.md) Islands: typed props across the hydration boundary <sup>feature · p0</sup>
+- [ ] [`0070`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0070-a-wasm-build-a-site-can-trust.md) A wasm build a site can trust <sup>feature · p0</sup>
+- [ ] [`0071`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0071-the-search-client-becomes-the-first-island.md) The search client becomes the first island <sup>feature · p1</sup>
+
+## Unscheduled
+
+`··········` 0% · 0 of 1 done
+
+### backlog
+
+- [ ] [`0038`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0038-internationalisation.md) Internationalisation <sup>feature · p3</sup>
 

@@ -3,8 +3,6 @@ id: 38
 title: Internationalisation
 type: feature
 status: backlog
-labels:
-- out-of-scope
 created: 2026-09-08
 updated: 2026-09-08
 priority: p3
@@ -38,3 +36,11 @@ Reopen when there is a real site to translate.
 
 - [ ] Left closed until a real translated site exists
 - [ ] If reopened, done as a core change, not an edge one
+
+## 2026-09-08
+
+Not scheduled, but the cost estimate has changed and the reason is worth recording.
+
+Two findings from the survey. Zola's taxonomies carry a lang field and generate a route per term per language, so once there is a typed generated-routes seam (0061) the per-language route generation is the same machinery rather than new machinery. And Pagefind partitions its whole search index by language -- every chunk hash is prefixed with a language_ref -- which is the piece that would otherwise be hardest, and 0060 is adopting that index shape anyway.
+
+So the honest position: i18n is cheaper after 0060 and 0061 than it looks now, and it is still XL because it touches Url, the nav, feeds, the sitemap, and every design system's layout. It stays unscheduled because the sites this framework exists for are in one language, and a feature nobody here needs is a feature nobody here will keep correct. Reopen when a real site needs a second language.
