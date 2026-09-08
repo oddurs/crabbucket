@@ -1,0 +1,41 @@
+# Whether the tests would notice.
+#
+# cargo-mutants changes the code -- a `>' becomes a `>=', a function returns
+# `Default::default()' -- and runs the suite.  A mutant that survives is a
+# change nothing objected to, which is either a missing assertion or a line
+# that does not matter.  Both are worth knowing.
+#
+#   make mutants
+#
+# It is slow, because it rebuilds once per mutation, so it runs on a schedule
+# rather than on every pull request.
+#
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# nextest, for the same per-test timeout that stops a mutant which turned a
+# loop condition into `true' from hanging the whole run.
+test_tool = "nextest"
+
+exclude_globs = [
+    # A measuring tool rather than the product, and uncovered on purpose.
+    "bench/**",
+    # The book's samples and the example site are compiled to prove the
+    # documentation is real.  Mutating them tests the documentation's tests.
+    "examples/**",
+    # Generated from a design system's tokens at build time.
+    "**/build.rs",
+]
+
+exclude_re = [
+    # A mutant that changes a message is a mutant nothing should fail on, and
+    # there are a great many of them.
+    "impl Display",
+    "impl fmt::Display",
+    # A constructor that only assigns fields has nothing to get wrong.
+    "Config::blank",
+]
+
+# A mutant that makes the build hang is a mutant, not a reason to wait.
+timeout_multiplier = 3.0
+minimum_test_timeout = 60

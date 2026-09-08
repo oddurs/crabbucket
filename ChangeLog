@@ -1,5 +1,37 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Test the claims, and fix the three things that found.
+
+	* crates/crabbucket/src/url.rs (squeeze): New.  No URL this type
+	builds contains `//'.  Reachable from site.toml: a feed over the
+	collection `notes//archive' put one in every feed URL.
+	(Url::new, Url::asset): Use it.
+	* crates/crabbucket/src/config.rs (normalize_base): Squeeze, and
+	trim slashes and spaces in any interleaving -- trimming spaces and
+	then slashes left the space in `"repo /"'.
+	* crates/crabbucket/tests/properties.rs: New.  Fourteen properties:
+	base normalisation is idempotent and total, no URL doubles a slash,
+	style expansion leaves no `&', a sheet holds each style once, the
+	parsers do not panic on arbitrary input, and line endings do not
+	change what a page says.
+	* crates/crabbucket-ui/tests/output.rs: New.  The same site built
+	twice is the same bytes; every page has balanced tags; the sitemap
+	and both feeds parse as XML; snapshots of a page and the stylesheet.
+	* crates/crabbucket-theme-plain/tests/snapshot.rs: New; the same two
+	snapshots for the second design system.
+	* crates/crabbucket-theme-plain/tests/guide.rs: Do not count
+	`[dev-dependencies]'.  What a design system needs to be one is the
+	guide's claim; what this crate tests itself with is not.
+	* fuzz/: New, outside the workspace because cargo-fuzz needs
+	nightly and a sanitizer.  Four targets and a committed seed corpus.
+	* .cargo/mutants.toml, Makefile (fuzz, mutants): New.
+	* .github/workflows/ci.yml: Scheduled fuzz and mutants jobs.
+	* crates/crabbucket/src/url.rs (tests): A `Render' test, after
+	cargo-mutants found that emptying it broke nothing.
+	* HACKING: The four kinds of test that are not example-based.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Run the doctests, measure the suite, and check the dependencies.
 
 	* Makefile (test): Run doctests too.  `--all-targets' excludes them

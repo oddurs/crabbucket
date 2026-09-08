@@ -116,6 +116,46 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
 
 ** Testing
 
+  Properties, not only examples.  The suite could say that four spellings
+  of a base path normalise the same way; it could not say that every
+  spelling does.  crates/crabbucket/tests/properties.rs holds fourteen
+  sentences from the documentation as things a machine tries to break.
+
+  Writing it found three real defects, all in the same place and all
+  reachable from a configuration file.  `Url::asset' could emit a doubled
+  slash -- a feed declared over the collection `notes//archive' would have
+  put one into every feed URL on the site.  So could `normalize_base', for
+  `base = "/my//repo/"'.  And trimming spaces and then slashes left the
+  space in `"repo /"' behind.  A doubled slash is a different URL to a
+  browser and the same one to a person, which is the worst combination
+  available.  `Url' now squeezes them, which is the right place: it is the
+  only spot where a URL is assembled.
+
+  A build is checked for being reproducible rather than said to be.  The
+  same site is built twice, into two directories so that nothing carries
+  over, and every byte compared.
+
+  What the build writes is parsed.  Every page's tags are checked for
+  balance, and the sitemap and both feeds are parsed as XML -- a feed that
+  does not parse is not a feed, it is a file with a `.xml' extension, and
+  the reader who finds out is somebody's.
+
+  Snapshots of a rendered page and of the stylesheet, for both design
+  systems.  `contains()' answers "is the thing I thought of still there?";
+  a snapshot answers "what changed?".
+
+  Fuzzing, in fuzz/, for the four parsers that run on whatever is in a
+  content file -- frontmatter, Markdown, directives and link resolution.
+  The CRLF bug passed review on three platforms, so "somebody would have
+  noticed" is not an argument that has held here.  A seed corpus is
+  committed; what the fuzzer grows from it is not.
+
+  Mutation testing, which asks whether the tests would notice.  Its first
+  run found that emptying `Url`'s `Render' implementation broke no test --
+  meaning nothing tested the mechanism by which every link in every page
+  gets the base path.
+
+
   Doctests now run.  `cargo test --workspace --all-targets' excludes them,
   quietly, and it is what both `make test' and CI used -- so every `///'
   example in the public API had been going unverified.

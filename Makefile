@@ -31,15 +31,15 @@ TARGETDIR = target/$(CARGO_PROFILE)
 
 DOCS = README NEWS AUTHORS THANKS ChangeLog COPYING doc/DESIGN doc/STABILITY
 
-.PHONY: all check fmt lint test doc-test cover audit api site roadmap \
-        install uninstall clean distclean dist help
+.PHONY: all check fmt lint test doc-test cover audit api fuzz mutants \
+        site roadmap install uninstall clean distclean dist help
 
 # `cargo test' is the fallback: nextest is better in every way that matters
 # here -- a process per test, a timeout, and a summary you can read -- but it
 # is a separate installation, and a contributor who has not installed it
 # should still be able to run the suite.
 NEXTEST := $(shell command -v cargo-nextest 2>/dev/null)
-COVER_FLOOR = 93
+COVER_FLOOR = 94
 
 # The crates that go to crates.io, in dependency order.  `bench' and the two
 # examples are `publish = false'.  crates/crabbucket/tests/packaging.rs asserts
@@ -88,6 +88,28 @@ cover-html:
 audit:
 	$(CARGO) deny --all-features check
 
+# The four parsers that run on whatever is in a content file, on arbitrary
+# bytes.  Nightly and a sanitizer, so `fuzz/' is not a workspace member.
+#
+#   make fuzz                 all four, briefly
+#   make fuzz FUZZ_TIME=600   one long run
+#   make fuzz FUZZ=markdown   just the one
+FUZZ_TIME = 60
+FUZZ = markdown frontmatter directives links
+
+fuzz:
+	@for target in $(FUZZ); do \
+	  echo "==> $$target"; \
+	  mkdir -p fuzz/corpus/$$target; \
+	  ( cd fuzz && cargo +nightly fuzz run $$target corpus/$$target seeds/$$target \
+	      -- -max_total_time=$(FUZZ_TIME) ) || exit 1; \
+	done
+
+# Whether the tests would notice.  Slow -- it rebuilds once per mutation --
+# so it is a scheduled job rather than part of `make check'.
+mutants:
+	$(CARGO) mutants --workspace --no-shuffle -j 4
+
 # What `doc/STABILITY' promises, checked against the branch this one came from
 # rather than against a release, because there is not one yet.
 api:
@@ -127,4 +149,4 @@ dist:
 help:
 	@echo 'Build:    all install uninstall clean distclean dist'
 	@echo 'Check:    check fmt lint test doc-test site roadmap'
-	@echo 'Measure:  cover cover-html audit api'
+	@echo 'Measure:  cover cover-html audit api fuzz mutants'

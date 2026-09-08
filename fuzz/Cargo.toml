@@ -1,0 +1,52 @@
+# Fuzzing the four parsers that run on whatever is in a content file.
+#
+# Not a workspace member: cargo-fuzz builds with a sanitizer and on nightly,
+# and a `cargo build' at the top of the tree should not try to do either.
+# `cargo fuzz run <target>' from here, or `make fuzz'.
+#
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+name = "crabbucket-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+crabbucket = { path = "../crates/crabbucket" }
+serde = { version = "1", features = ["derive"] }
+
+[[bin]]
+name = "frontmatter"
+path = "fuzz_targets/frontmatter.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "markdown"
+path = "fuzz_targets/markdown.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "directives"
+path = "fuzz_targets/directives.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "links"
+path = "fuzz_targets/links.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]

@@ -1442,3 +1442,94 @@ fn timings_stay_out_of_the_report_a_person_reads() {
     assert!(!report.to_string().contains("ns"));
     assert!(!report.to_string().to_lowercase().contains("timing"));
 }
+
+// -------------------------------------------------------- what is content
+
+#[test]
+fn only_markdown_files_are_content_and_a_directory_is_never_one() {
+    // `!is_file() || extension != "md"' -- a mutant turning that `||' into
+    // `&&' broke nothing, because no fixture had a directory whose name ends
+    // in `.md', nor a non-Markdown file beside the pages.  Both happen: the
+    // first is how somebody organises a section, the second is an editor's
+    // backup file.
+    let (result, out) = build("assorted");
+
+    let report = match result {
+        Ok(report) => report,
+        Err(err) => panic!("fixture `assorted` should build, but: {err}"),
+    };
+
+    let mut routes = report.routes.clone();
+    routes.sort();
+
+    // Two pages: `page.md', and the one inside the directory.  Not
+    // `page.md.bak', not `notes.txt', and not the directory itself.
+    assert_eq!(
+        routes,
+        vec!["archive.md/notes".to_string(), "page".to_string()]
+    );
+    assert!(out.join("page/index.html").is_file());
+    assert!(out.join("archive.md/notes/index.html").is_file());
+
+    // Only a file's own extension is stripped, so a directory keeps its
+    // name -- and the directory is not itself a page, which is the half a
+    // mutant could flip without any fixture noticing.
+    assert!(!out.join("archive.md/index.html").exists());
+    assert!(!out.join("archive/index.html").exists());
+}
+
+// ------------------------------------------------- what a trait default says
+
+/// A design system that implements only the two required methods.
+///
+/// `doc/DESIGN' and the book both say the four defaulted methods each mean
+/// "not this design system".  Four mutants survived in them -- `og_image'
+/// could have returned `Some(vec![])' and every site without social cards
+/// would have started writing empty PNGs, with nothing to say so.
+struct Barest;
+
+impl Theme for Barest {
+    type Layout = Layout;
+    type Extra = NoExtra;
+
+    fn render(&self, page: &Page<'_, Self>) -> String {
+        format!("<!doctype html><html><body>{}</body></html>", page.html)
+    }
+
+    fn stylesheet(&self) -> String {
+        String::new()
+    }
+}
+
+#[test]
+fn a_design_system_that_says_nothing_gets_nothing() {
+    let (report, out) = build_theme("ok", &Barest);
+
+    assert!(!report.routes.is_empty());
+
+    // No cards, because `og_image' defaults to `None'.  This is the one that
+    // matters: a default returning `Some' would write a PNG per page.
+    assert!(
+        !out.join("og").exists(),
+        "a theme that draws no cards drew some"
+    );
+    assert!(
+        !out.read_dir().expect("no output").any(|entry| {
+            entry
+                .expect("unreadable")
+                .path()
+                .extension()
+                .is_some_and(|extension| extension == "png")
+        }),
+        "a theme that draws no cards drew some"
+    );
+
+    // No router and no search client, because both default to `None'.
+    assert!(!out.join("router.js").exists());
+    assert!(!out.join("search.js").exists());
+
+    // And no directives, so a page using one would have failed -- which is
+    // asserted by `unknown-directive' rather than here.
+    let html = read(&out, "index.html");
+    assert!(html.starts_with("<!doctype html>"), "{html}");
+}

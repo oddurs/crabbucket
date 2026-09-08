@@ -1,0 +1,83 @@
+
+
+# 7. The dev loop
+
+There is no `crab dev`. There will not be one.
+
+```sh
+turborust up
+```
+
+## Why not
+
+Writing a dev server is easy. Writing a *good* one — file watching that knows
+about a Cargo path-dependency closure, caching that survives `git checkout`,
+live reload, and build errors shown where you are looking rather than in a
+terminal behind the browser — is a project, and it is not this project.
+
+[turborust](https://github.com/oddurs/turborust) is that project. It watches
+by asking `cargo metadata` for a crate's dependency closure, so editing your
+design system rebuilds the site without anyone having to remember to list the
+path. It caches on content hashes rather than modification times. It serves
+`dist/` with live reload. And it parses rustc diagnostics out of cargo's
+output and puts them in a browser overlay, with a code frame and an editor
+link, over a blur of the page you were reading.
+
+A second, worse version of that inside crabbucket would be the least
+defensible thing in the tree.
+
+## The config
+
+`crab new` writes this for you. It lives at the repository root:
+
+```toml
+[overlay]
+position = "bottom-right"
+emoji = "🦀"
+theme = "auto"
+errors = "overlay"
+
+[tasks.site]
+cargo = "crabbucket-cli"
+cmd = "crab build ."
+
+[services.web]
+depends_on = ["site"]
+serve = { dir = "dist", port = 8790 }
+```
+
+Three blocks. What to run, what to serve, and where to put the errors.
+
+For a site that is a crate — everything from [chapter
+5](../your-own-design-system/) onwards — the command is `cargo run` instead,
+and turborust picks up the design system as a watched path automatically
+because it is a dependency.
+
+## If you do not want turborust
+
+Nothing requires it. `crab build` produces a directory; serve it with
+whatever you like:
+
+```sh
+crab build . && python3 -m http.server -d dist 8000
+```
+
+You lose the watching and the error overlay. You keep everything else,
+because the output is a directory of static files with no server
+requirements — which is also why the [deploy](../deploying/) is boring.
+
+## The thing that will surprise you
+
+The build is fast, but it is not instantaneous, and the reason is
+[measured](~/docs/speed/): syntax highlighting is about sixty percent of it.
+A page with no code blocks rebuilds in a few milliseconds; a docs site full
+of Rust takes a few hundred.
+
+Social cards are the other one. Drawing them is the most expensive thing a
+crabbucket build does — about 1.4ms per page — so they are cached in
+`.crabbucket/`. Keep that directory between builds and you will not notice
+them. Delete it and you will.
+
+## Next
+
+[Chapter 8](../deploying/), which is short.

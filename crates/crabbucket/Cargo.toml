@@ -53,3 +53,9 @@ syntect = { version = "5.3.0", default-features = false, features = [
 thiserror = "2"
 toml = "0.9"
 walkdir = "2"
+
+[dev-dependencies]
+# Properties rather than examples.  Four spellings of a base path are tested
+# by hand; there are infinitely many, and the interesting ones are never the
+# four somebody thought of.
+proptest = { version = "1", default-features = false, features = ["std"] }

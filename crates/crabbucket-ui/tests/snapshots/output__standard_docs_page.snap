@@ -1,0 +1,152 @@
+---
+source: crates/crabbucket-ui/tests/output.rs
+expression: readable(&html)
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>First &amp; last — Fixture
+</title>
+<meta name="description" content="A site with one of everything.">
+<link rel="stylesheet" href="/fixture/site.css">
+<meta property="og:image" content="/fixture/og/notes/first.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:title" content="First &amp; last">
+<meta property="og:type" content="website">
+<link rel="alternate" type="application/atom+xml" title="Notes" href="/fixture/notes/atom.xml">
+<link rel="alternate" type="application/rss+xml" title="Notes" href="/fixture/notes/feed.xml">
+<script defer src="/fixture/router.js">
+</script>
+<script defer src="/fixture/search.js">
+</script>
+</head>
+<body class="cb-site cb-site--docs">
+<header class="cb-masthead">
+<a class="cb-masthead__home" href="/fixture/">Fixture
+</a>
+<nav class="cb-masthead__nav">
+<a href="/fixture/">Home
+</a>
+<a href="/fixture/notes/">Notes
+</a>
+</nav>
+<form class="cb-search" role="search" data-index="/fixture/search.json" hidden>
+<input class="cb-search__input" type="search" placeholder="Search…" aria-label="Search this site" autocomplete="off">
+<div class="cb-search__results" hidden>
+</div>
+</form>
+</header>
+<main class="cb-site__main">
+<div class="cb-docs">
+<nav class="cb-docs__side">
+<a href="/fixture/notes/first/" aria-current="page">First &amp; last
+</a>
+</nav>
+<div class="cb-docs__main">
+<div class="cb-prose">
+<h1 id="first-last">First &amp; last
+<a class="heading-anchor" href="#first-last" aria-label="Link to this section">#
+</a>
+</h1>
+
+<pre class="code" data-language="rust">
+<code>
+<span class="tok-source tok-rust">
+<span class="tok-meta tok-function tok-rust">
+<span class="tok-meta tok-function tok-rust">
+<span class="tok-storage tok-type tok-function tok-rust">fn
+</span> 
+</span>
+<span class="tok-entity tok-name tok-function tok-rust">main
+</span>
+</span>
+<span class="tok-meta tok-function tok-rust">
+<span class="tok-meta tok-function tok-parameters tok-rust">
+<span class="tok-punctuation tok-section tok-parameters tok-begin tok-rust">(
+</span>
+</span>
+<span class="tok-meta tok-function tok-rust">
+<span class="tok-meta tok-function tok-parameters tok-rust">
+<span class="tok-punctuation tok-section tok-parameters tok-end tok-rust">)
+</span>
+</span>
+</span>
+</span>
+<span class="tok-meta tok-function tok-rust"> 
+</span>
+<span class="tok-meta tok-function tok-rust">
+<span class="tok-meta tok-block tok-rust">
+<span class="tok-punctuation tok-section tok-block tok-begin tok-rust">{
+</span> 
+<span class="tok-support tok-macro tok-rust">println!
+</span>
+<span class="tok-meta tok-group tok-rust">
+<span class="tok-punctuation tok-section tok-group tok-begin tok-rust">(
+</span>
+</span>
+<span class="tok-meta tok-group tok-rust">
+<span class="tok-string tok-quoted tok-double tok-rust">
+<span class="tok-punctuation tok-definition tok-string tok-begin tok-rust">&quot;
+</span>&lt;hello&gt;
+<span class="tok-punctuation tok-definition tok-string tok-end tok-rust">&quot;
+</span>
+</span>
+</span>
+<span class="tok-meta tok-group tok-rust">
+<span class="tok-punctuation tok-section tok-group tok-end tok-rust">)
+</span>
+</span>
+<span class="tok-punctuation tok-terminator tok-rust">;
+</span> 
+</span>
+<span class="tok-meta tok-block tok-rust">
+<span class="tok-punctuation tok-section tok-block tok-end tok-rust">}
+</span>
+</span>
+</span>
+
+</span>
+</code>
+</pre>
+<table>
+<thead>
+<tr>
+<th>a
+</th>
+<th>b
+</th>
+</tr>
+</thead>
+<tbody>
+
+<tr>
+<td>c
+</td>
+<td>d
+</td>
+</tr>
+
+</tbody>
+</table>
+
+<p>Back 
+<a href="/fixture/">home
+</a>.
+</p>
+
+</div>
+</div>
+</div>
+</main>
+<footer class="cb-colophon">
+<p>Built with 
+<a href="https://github.com/oddurs/crabbucket">crabbucket
+</a>.
+</p>
+</footer>
+</body>
+</html>

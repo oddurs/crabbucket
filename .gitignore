@@ -6,6 +6,19 @@
 # What the CI budget job generates.
 /bench-site
 
+# What the fuzzer generates.  `fuzz/seeds/' is committed; this is not -- it
+# reached 34MB and five thousand files in three minutes, and none of it is
+# worth reviewing.  `fuzz/artifacts/' is where a crash lands: turn one into a
+# named unit test rather than committing the bytes.
+/fuzz/corpus
+/fuzz/artifacts
+/fuzz/target
+/fuzz/Cargo.lock
+
+# What cargo-mutants generates.
+/mutants.out
+/mutants.out.old
+
 **/*.rs.bk
 *.pdb
 .DS_Store

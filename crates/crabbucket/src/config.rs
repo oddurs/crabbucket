@@ -143,7 +143,15 @@ impl Config {
 
 /// Forces a base path into the `/…/` shape the rest of the crate assumes.
 fn normalize_base(base: &str) -> String {
-    let trimmed = base.trim().trim_matches('/');
+    // Squeezed as well as trimmed: `base = "/my//repo/"' is a plausible thing
+    // to type, and it would otherwise put a doubled slash into every URL on
+    // the site -- a different URL to a browser, the same one to a person.
+    // Slashes and spaces, in any interleaving: `" / repo / "' is a thing
+    // somebody types, and trimming spaces and then slashes leaves the space
+    // in `"repo /"' behind.
+    let trimmed = crate::url::squeeze(
+        base.trim_matches(|character: char| character == '/' || character.is_whitespace()),
+    );
     if trimmed.is_empty() {
         "/".to_string()
     } else {
@@ -153,7 +161,38 @@ fn normalize_base(base: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::normalize_base;
+    use super::{Config, normalize_base};
+
+    #[test]
+    fn a_site_that_names_no_base_is_served_from_the_root() {
+        // `root()' is the serde default for `base', and a mutant that made it
+        // return "" or "xyzzy" broke nothing: no test read a config without a
+        // base, which is what most sites have.
+        let config: Config = toml::from_str("title = \"t\"\ndescription = \"d\"\n")
+            .expect("a site.toml with only a title should parse");
+
+        assert_eq!(config.base, "/");
+        assert!(!config.search);
+        assert!(!config.router);
+        assert!(config.url.is_none());
+    }
+
+    #[test]
+    fn a_base_with_a_doubled_slash_does_not_put_one_in_every_url() {
+        // Found by the property test in tests/properties.rs, which is why
+        // there is a named one here: a property test says something is
+        // wrong, and a named example stops it coming back quietly.
+        assert_eq!(normalize_base("/my//repo/"), "/my/repo/");
+        assert_eq!(normalize_base("///"), "/");
+    }
+
+    #[test]
+    fn slashes_and_spaces_are_trimmed_in_any_order() {
+        // Trimming spaces and then slashes leaves the space in "repo /".
+        for given in [" / repo / ", "repo /", "/ repo", " //repo// "] {
+            assert_eq!(normalize_base(given), "/repo/", "for input {given:?}");
+        }
+    }
 
     #[test]
     fn every_spelling_of_a_base_path_normalizes_the_same_way() {

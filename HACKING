@@ -134,6 +134,8 @@ Testing
   make cover       how much of it is covered, with a floor
   make audit       licences and advisories
   make api         whether this branch breaks the public API
+  make fuzz        the four parsers, on arbitrary bytes
+  make mutants     whether the tests would notice
 
 `make test' runs two commands, because nothing runs both.  `cargo test
 --all-targets' silently excludes doctests, and it is the obvious thing to
@@ -159,6 +161,43 @@ Where a new test goes, in the order to prefer:
                          that the book's snippets are the sample crate's
                          source, that the second design system still
                          renders somebody else's content
+
+Four kinds of test that are not example-based, and what each is for:
+
+  properties     crates/crabbucket/tests/properties.rs.  A sentence from
+                 the documentation, turned into something a machine can
+                 try to break.  "Every spelling of a base path normalises
+                 to the same thing" cannot be held by four examples.
+                 Three bugs came out of writing that file.
+
+  snapshots      A rendered page and the stylesheet, per design system.
+                 `contains()' answers "is the thing I thought of still
+                 there?"; a snapshot answers "what changed?".
+
+                   cargo insta review
+
+                 A diff that is the change you meant is the point.
+                 Accepting one without reading it is the same as not
+                 having the test.
+
+  fuzzing        fuzz/, on nightly, outside the workspace because it
+                 builds with a sanitizer.  The four parsers all run on
+                 whatever is in a content file.  `fuzz/seeds/' is
+                 committed; `fuzz/corpus/' is what the fuzzer grows from
+                 it and is not.  A crash lands in `fuzz/artifacts/':
+                 turn it into a named unit test first, then add the input
+                 to the seeds.
+
+  mutants        cargo-mutants changes the code and runs the suite.  A
+                 mutant that survives is a change nothing objected to --
+                 a missing assertion, or a line that does not matter.
+                 The first run of it found that emptying `Url`'s `Render`
+                 implementation broke no test, which meant nothing tested
+                 the one thing that type exists to do.
+
+A property test tells you something is wrong; a named example test stops
+it coming back.  When one fails, fix the code, then add the input it
+failed on as an ordinary `#[test]' with a name.
 
 The gates are the product.  "The build either fails, or the site is
 correct" is a claim about failure, and a claim about failure that is not
@@ -186,6 +225,10 @@ which is fmt, clippy, the test suite, and a build of the example site.
 `make cover', `make audit' and `make api' are not in `make check'.  Each
 needs a tool that is a separate installation, and each runs as its own
 job in CI, which is where they are enforced.
+
+`make fuzz' and `make mutants' are not in either.  Both are slow enough
+that running them on a pull request would mean running them briefly,
+and both find nothing when run briefly.  They are Monday jobs.
 
 
 Style
