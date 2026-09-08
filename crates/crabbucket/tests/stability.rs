@@ -28,10 +28,17 @@ use std::path::Path;
 /// The document itself, so the tests can check they still match it.
 fn stability() -> String {
     let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../doc/STABILITY");
-    fs::read_to_string(&path).unwrap_or_else(|err| panic!("{}: {err}", path.display()))
+    fs::read_to_string(&path)
+        .unwrap_or_else(|err| panic!("{}: {err}", path.display()))
+        .replace("\r\n", "\n")
 }
 
-/// Every source file of this crate.
+/// Every source file of this crate, with line endings normalised.
+///
+/// A checkout on Windows has CRLF, and a multi-line pattern written with `\n`
+/// then matches nothing -- which is exactly the mistake the CRLF bug in
+/// `content::split` was, made again one file away from the test that caught
+/// it.
 fn source() -> String {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
     let mut all = String::new();
@@ -43,7 +50,7 @@ fn source() -> String {
         }
     }
 
-    all
+    all.replace("\r\n", "\n")
 }
 
 #[test]
