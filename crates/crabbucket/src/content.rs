@@ -22,6 +22,7 @@
 //! runtime; here it is the collection's type parameter, so a page missing a
 //! field fails the build with the file and the line.
 
+use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -47,6 +48,19 @@ pub struct Entry<T> {
     pub path: PathBuf,
     /// The body, rendered to HTML.
     pub html: String,
+    /// Every heading in the body, in document order.  This is what fragment
+    /// links are checked against, and what a table of contents is built from.
+    pub headings: Vec<markdown::Heading>,
+}
+
+impl<T> Entry<T> {
+    /// The ids of every heading in the body.
+    pub fn anchors(&self) -> BTreeSet<String> {
+        self.headings
+            .iter()
+            .map(|heading| heading.id.clone())
+            .collect()
+    }
 }
 
 /// Every entry in one content directory.
@@ -135,16 +149,19 @@ impl<T: DeserializeOwned> Entry<T> {
         let text = fs::read_to_string(path).map_err(|source| Error::io(path, source))?;
         let (frontmatter, body) = split(&text, path)?;
 
-        let meta: T = toml::from_str(frontmatter).map_err(|source| Error::Frontmatter {
-            path: path.to_path_buf(),
-            source,
-        })?;
+        // The opening `+++` is line 1 of the file, so frontmatter line 1 is
+        // line 2, and an editor jumping to the reported line lands on it.
+        let meta: T = toml::from_str(frontmatter)
+            .map_err(|error| Error::schema(path, &error, frontmatter, 1))?;
+
+        let body = markdown::render(body);
 
         Ok(Entry {
             meta,
             route: route_of(path, root),
             path: path.to_path_buf(),
-            html: markdown::to_html(body),
+            html: body.html,
+            headings: body.headings,
         })
     }
 }

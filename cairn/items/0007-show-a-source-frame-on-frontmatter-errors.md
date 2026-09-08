@@ -2,7 +2,7 @@
 id: 7
 title: Show a source frame on frontmatter errors
 type: feature
-status: backlog
+status: done
 milestone: v0.1
 created: 2026-09-08
 updated: 2026-09-08
@@ -43,8 +43,12 @@ in the `file:line:col: message` shape editors already know how to jump to.
 
 ## Acceptance criteria
 
-- [ ] Errors show the offending line with a caret span
-- [ ] Line numbers are file-absolute, not frontmatter-relative
-- [ ] `file:line:col:` prefix on the first line
-- [ ] Colour only when stderr is a terminal
-- [ ] A test asserts the line number against a page with a long body above
+- [x] Errors show the offending line with a caret span
+- [x] Line numbers are file-absolute, not frontmatter-relative
+- [x] `file:line:col:` prefix on the first line
+- [x] Colour only when stderr is a terminal
+- [x] A test asserts the line number against a page with a long body above
+
+## 2026-09-08
+
+Done. Dropped thiserror and wrote Display by hand so the library can expose render(color: bool) -- the decision about colour belongs to whoever knows if anything is watching, which is the executable. Error::Frontmatter and Error::Config merged into Error::Schema, since a layout that does not exist and a config that does not parse are the same failure. Snippet::new takes a line_offset so frontmatter line 1 reports as file line 2; that off-by-one is the bug every frontmatter parser ships with, so it has its own test.

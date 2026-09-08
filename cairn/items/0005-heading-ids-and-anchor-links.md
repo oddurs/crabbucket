@@ -2,7 +2,7 @@
 id: 5
 title: Heading ids and anchor links
 type: feature
-status: backlog
+status: done
 milestone: v0.1
 created: 2026-09-08
 updated: 2026-09-08
@@ -38,8 +38,12 @@ the fragment checker can both consume it without parsing HTML back.
 
 ## Acceptance criteria
 
-- [ ] Every `h2`–`h4` gets a stable id
-- [ ] Explicit `{#id}` overrides the derived one
-- [ ] Duplicate headings on one page get distinct ids
-- [ ] Ids are stable across builds — no content hashing
-- [ ] `markdown::to_html` returns the headings alongside the HTML
+- [x] Every `h2`–`h4` gets a stable id
+- [x] Explicit `{#id}` overrides the derived one
+- [x] Duplicate headings on one page get distinct ids
+- [x] Ids are stable across builds — no content hashing
+- [x] `markdown::to_html` returns the headings alongside the HTML
+
+## 2026-09-08
+
+Done. Slugs are pure functions of heading text; explicit {#id} wins via ENABLE_HEADING_ATTRIBUTES. The permalink is a real <a> in the document with an aria-label, not script-added, so it is keyboard reachable. markdown::render now returns Body { html, headings } so nothing downstream has to parse HTML back into a heading list.

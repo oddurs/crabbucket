@@ -2,7 +2,7 @@
 id: 11
 title: '`crab build --out` and `--base` overrides'
 type: feature
-status: backlog
+status: done
 milestone: v0.1
 created: 2026-09-08
 updated: 2026-09-08
@@ -31,8 +31,12 @@ a derive macro to save those forty lines is a bad trade for a tool this size.
 
 ## Acceptance criteria
 
-- [ ] `--out` writes elsewhere and leaves `dist/` alone
-- [ ] `--base` overrides config and normalises identically
-- [ ] `--` ends option processing
-- [ ] An unknown option exits 2 with `Try 'crab --help'`
-- [ ] `--help` documents both
+- [x] `--out` writes elsewhere and leaves `dist/` alone
+- [x] `--base` overrides config and normalises identically
+- [x] `--` ends option processing
+- [x] An unknown option exits 2 with `Try 'crab --help'`
+- [x] `--help` documents both
+
+## 2026-09-08
+
+Done. build_with(dir, theme, Options) is the general form; build() is the two-argument convenience. --base goes through Config::set_base so a command-line override and a config file normalise identically. Argument parsing stayed hand-rolled: it is one screen, it handles -- correctly, and nine tests cover it.

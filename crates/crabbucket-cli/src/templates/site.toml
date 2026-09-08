@@ -1,0 +1,18 @@
+# The whole configuration for this site.
+
+title = "@NAME@"
+description = "One line about @NAME@, used as the meta description."
+
+# The site's absolute URL.  Only the things that cannot be relative need it --
+# the sitemap, robots.txt, and og: metadata.  Without it they are not emitted,
+# rather than emitted wrong.
+# url = "https://you.github.io/@NAME@/"
+
+# The path this site is served from.  A GitHub Pages project site lives under
+# /repo/; a user site or a custom domain lives at /.  This is the only place
+# that fact is recorded, and no page ever knows about it.
+base = "@BASE@"
+
+# Ship the client-side router: about a kilobyte that swaps <main> instead of
+# reloading the page, and degrades to ordinary navigation without it.
+router = @ROUTER@

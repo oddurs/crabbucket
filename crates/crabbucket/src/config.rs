@@ -71,9 +71,19 @@ impl Config {
         let path: PathBuf = site_dir.join("site.toml");
         let text = fs::read_to_string(&path).map_err(|source| Error::io(&path, source))?;
         let mut config: Config =
-            toml::from_str(&text).map_err(|source| Error::Config { path, source })?;
+            toml::from_str(&text).map_err(|error| Error::schema(&path, &error, &text, 0))?;
         config.base = normalize_base(&config.base);
         Ok(config)
+    }
+}
+
+impl Config {
+    /// Overrides the base path, normalising it the same way the file does.
+    ///
+    /// Every spelling reaches the same place, so a command-line override and a
+    /// configuration file cannot disagree about what `repo` means.
+    pub fn set_base(&mut self, base: &str) {
+        self.base = normalize_base(base);
     }
 }
 

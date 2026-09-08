@@ -27,11 +27,17 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::config::Config;
-use crate::content::Collection;
+use crate::content::{Collection, Entry};
 use crate::error::{Error, Result};
 use crate::links::{self, Rendered};
 use crate::theme::{Page, PageMeta, PageRef, SiteIndex, Theme};
 use crate::url::Url;
+
+/// The route reserved for the error page.
+///
+/// GitHub Pages, and most static hosts, serve `404.html` from the site root in
+/// place of anything they cannot find.
+const ERROR_ROUTE: &str = "404";
 
 /// What a build produced, for the benefit of whoever asked for it.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -46,6 +52,16 @@ pub struct Report {
     pub links: usize,
 }
 
+/// Overrides for one invocation, which the configuration file does not know
+/// about and should not be edited to express.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Options {
+    /// Write somewhere other than `dist/`.
+    pub out_dir: Option<PathBuf>,
+    /// Serve from somewhere other than the configured base path.
+    pub base: Option<String>,
+}
+
 /// Builds the site rooted at `site_dir` into `site_dir/dist`.
 ///
 /// # Errors
@@ -54,20 +70,46 @@ pub struct Report {
 /// any page links somewhere that does not exist, or if the output cannot be
 /// written.
 pub fn build<T: Theme>(site_dir: &Path, theme: &T) -> Result<Report> {
-    let config = Config::load(site_dir)?;
+    build_with(site_dir, theme, &Options::default())
+}
+
+/// Builds the site, with overrides.
+///
+/// # Errors
+///
+/// As [`build`].
+pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Result<Report> {
+    let mut config = Config::load(site_dir)?;
+    if let Some(base) = &options.base {
+        config.set_base(base);
+    }
+
     let content = Collection::<PageMeta<T::Layout>>::load(&site_dir.join("content"))?;
-    let out_dir = site_dir.join("dist");
+    let out_dir = match &options.out_dir {
+        Some(dir) => dir.clone(),
+        None => site_dir.join("dist"),
+    };
 
     if out_dir.exists() {
         fs::remove_dir_all(&out_dir).map_err(|source| Error::io(&out_dir, source))?;
     }
 
-    let live: Vec<_> = content
+    let published: Vec<&Entry<PageMeta<T::Layout>>> = content
         .entries()
         .iter()
         .filter(|entry| !entry.meta.draft)
         .collect();
-    let drafts = content.len() - live.len();
+    let drafts = content.len() - published.len();
+
+    // The error page is a page, but it is not a route: nothing may link to it,
+    // it is not in the navigation, and it is written as a file rather than as
+    // a directory, because that is what a static host looks for.
+    let (error_page, live): (
+        Vec<&Entry<PageMeta<T::Layout>>>,
+        Vec<&Entry<PageMeta<T::Layout>>>,
+    ) = published
+        .into_iter()
+        .partition(|entry| entry.route == ERROR_ROUTE);
 
     let index = SiteIndex::new(
         live.iter()
@@ -82,8 +124,8 @@ pub fn build<T: Theme>(site_dir: &Path, theme: &T) -> Result<Report> {
     // Rendering and checking are separate passes: a link is only dead relative
     // to the finished set of routes, so nothing can be judged until every page
     // is known.
-    let mut rendered = Vec::with_capacity(live.len());
-    for entry in &live {
+    let mut rendered = Vec::with_capacity(live.len() + error_page.len());
+    for entry in live.iter().chain(error_page.iter()) {
         let page = Page {
             config: &config,
             meta: &entry.meta,
@@ -92,7 +134,15 @@ pub fn build<T: Theme>(site_dir: &Path, theme: &T) -> Result<Report> {
             site: &index,
         };
 
-        rendered.push((entry, Url::new(&config, &entry.route), theme.render(&page)));
+        // The error page is served in place of any path, so it is checked as
+        // though it sat at the site root.
+        let url = if entry.route == ERROR_ROUTE {
+            Url::new(&config, "")
+        } else {
+            Url::new(&config, &entry.route)
+        };
+
+        rendered.push((*entry, url, theme.render(&page)));
     }
 
     let mut assets: BTreeSet<String> = BTreeSet::new();
@@ -100,18 +150,32 @@ pub fn build<T: Theme>(site_dir: &Path, theme: &T) -> Result<Report> {
     if config.router {
         assets.insert("router.js".to_string());
     }
+    if config.url.is_some() {
+        assets.insert("sitemap.xml".to_string());
+        assets.insert("robots.txt".to_string());
+    }
     assets.extend(tree(&site_dir.join("static"))?);
 
-    let routes: BTreeSet<String> = live
+    // Route to heading ids, so a fragment link can be checked against the page
+    // it points at rather than merely against that page existing.
+    let routes: links::Routes = live
         .iter()
-        .map(|entry| entry.route.trim_matches('/').to_string())
+        .map(|entry| (entry.route.trim_matches('/').to_string(), entry.anchors()))
+        .collect();
+
+    let anchors: Vec<BTreeSet<String>> = rendered
+        .iter()
+        .map(|(entry, _, _)| entry.anchors())
         .collect();
 
     let pages: Vec<Rendered<'_>> = rendered
         .iter()
-        .map(|(entry, url, html)| Rendered {
+        .zip(&anchors)
+        .map(|((entry, url, html), anchors)| Rendered {
             source: &entry.path,
             url: url.as_str(),
+            anchors,
+            error_page: entry.route == ERROR_ROUTE,
             html,
         })
         .collect();
@@ -130,6 +194,11 @@ pub fn build<T: Theme>(site_dir: &Path, theme: &T) -> Result<Report> {
         write(&out_dir.join("router.js"), theme.router_js())?;
     }
 
+    if let Some(url) = &config.url {
+        write(&out_dir.join("sitemap.xml"), &sitemap(url, &config, &live))?;
+        write(&out_dir.join("robots.txt"), &robots(url, &config))?;
+    }
+
     // GitHub Pages otherwise runs the output through Jekyll, which drops any
     // file or directory whose name begins with an underscore.
     write(&out_dir.join(".nojekyll"), "")?;
@@ -137,22 +206,74 @@ pub fn build<T: Theme>(site_dir: &Path, theme: &T) -> Result<Report> {
     copy_tree(&site_dir.join("static"), &out_dir)?;
 
     Ok(Report {
-        routes: rendered
-            .iter()
-            .map(|(entry, _, _)| entry.route.clone())
-            .collect(),
+        routes: live.iter().map(|entry| entry.route.clone()).collect(),
         out_dir,
         drafts,
         links: checked.examined,
     })
 }
 
-/// Where a route's `index.html` goes.
+/// The site's absolute root, without a trailing slash.
+///
+/// `url` is the absolute URL of the site root, base path included, so a
+/// project site's is `https://you.github.io/repo/`.  Everything absolute is
+/// built by appending a site-relative path to it, which is why the base must
+/// not be added a second time.
+fn origin(url: &str) -> &str {
+    url.trim_end_matches('/')
+}
+
+/// A site-relative path, with the base stripped off.
+fn relative(config: &Config, route: &str) -> String {
+    let url = Url::new(config, route);
+    let base = config.base.trim_end_matches('/');
+    url.as_str()
+        .strip_prefix(base)
+        .unwrap_or(url.as_str())
+        .to_string()
+}
+
+/// Every live route, as absolute URLs.
+///
+/// No `lastmod`: there is no honest source for one yet, and a fabricated
+/// timestamp is worse than an absent field.
+fn sitemap<T>(url: &str, config: &Config, live: &[&Entry<PageMeta<T>>]) -> String {
+    let origin = origin(url);
+    let mut out = String::new();
+
+    out.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    out.push_str("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
+
+    for entry in live {
+        out.push_str(&format!(
+            "  <url><loc>{origin}{}</loc></url>\n",
+            relative(config, &entry.route)
+        ));
+    }
+
+    out.push_str("</urlset>\n");
+    out
+}
+
+/// Allow everything, and say where the sitemap is.
+fn robots(url: &str, config: &Config) -> String {
+    let _ = config;
+    format!(
+        "User-agent: *\nAllow: /\n\nSitemap: {}/sitemap.xml\n",
+        origin(url)
+    )
+}
+
+/// Where a route's output goes.
+///
+/// Every route is a directory holding an `index.html`, so every URL ends in a
+/// slash.  The error page is the one exception, because a static host looks
+/// for `404.html` by that name.
 fn page_path(out_dir: &Path, route: &str) -> PathBuf {
-    if route.is_empty() {
-        out_dir.join("index.html")
-    } else {
-        out_dir.join(route).join("index.html")
+    match route {
+        "" => out_dir.join("index.html"),
+        ERROR_ROUTE => out_dir.join("404.html"),
+        route => out_dir.join(route).join("index.html"),
     }
 }
 
@@ -219,7 +340,18 @@ fn copy_tree(from: &Path, into: &Path) -> Result<()> {
 mod tests {
     use std::path::Path;
 
-    use super::page_path;
+    use super::{page_path, relative, robots};
+    use crate::config::Config;
+
+    fn config(base: &str) -> Config {
+        Config {
+            title: "t".into(),
+            description: String::new(),
+            url: Some("https://example.com/".into()),
+            base: base.into(),
+            router: false,
+        }
+    }
 
     #[test]
     fn every_route_becomes_a_directory_with_an_index() {
@@ -230,5 +362,31 @@ mod tests {
             page_path(out, "docs/intro"),
             Path::new("dist/docs/intro/index.html")
         );
+    }
+
+    #[test]
+    fn the_error_page_is_a_file_because_that_is_what_hosts_look_for() {
+        assert_eq!(
+            page_path(Path::new("dist"), "404"),
+            Path::new("dist/404.html")
+        );
+    }
+
+    #[test]
+    fn robots_points_at_the_sitemap_beside_the_site_root() {
+        let text = robots("https://example.com/repo/", &config("/repo/"));
+        assert!(
+            text.contains("Sitemap: https://example.com/repo/sitemap.xml"),
+            "got {text}"
+        );
+    }
+
+    #[test]
+    fn absolute_paths_do_not_repeat_the_base() {
+        // `url` already contains the base, so appending it again is the bug
+        // this test exists to prevent.
+        let config = config("/repo/");
+        assert_eq!(relative(&config, ""), "/");
+        assert_eq!(relative(&config, "docs/intro"), "/docs/intro/");
     }
 }

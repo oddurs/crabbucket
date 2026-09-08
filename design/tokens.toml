@@ -18,6 +18,19 @@ accent         = "#e8623c"
 accent-quiet   = "#f0a58c"
 link           = "#7db3ff"
 
+# Syntax highlighting.  The build emits scope classes; these are the only
+# place the colours behind them are written down.
+[syntax]
+comment     = "#6b7684"
+keyword     = "#f0855f"
+string      = "#8ecf9a"
+constant    = "#d8a657"
+entity      = "#7db3ff"
+support     = "#74c7c7"
+variable    = "#e7eaf0"
+punctuation = "#98a2b3"
+invalid     = "#ff6b6b"
+
 [space]
 xs = "4px"
 sm = "8px"

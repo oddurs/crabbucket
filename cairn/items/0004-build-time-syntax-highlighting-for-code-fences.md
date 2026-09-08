@@ -2,7 +2,7 @@
 id: 4
 title: Build-time syntax highlighting for code fences
 type: feature
-status: backlog
+status: done
 milestone: v0.1
 labels:
 - docs-quality
@@ -45,8 +45,16 @@ once per build, not once per fence, and consider `onig`-free features.
 
 ## Acceptance criteria
 
-- [ ] Fenced blocks with a known language are highlighted
-- [ ] An unknown or absent language renders as plain, not as an error
-- [ ] Highlight colours come from tokens, not from a hard-coded theme
-- [ ] Zero client-side JavaScript is added
-- [ ] Building `examples/site` stays under a second
+- [x] Fenced blocks with a known language are highlighted
+- [x] An unknown or absent language renders as plain, not as an error
+- [x] Highlight colours come from tokens, not from a hard-coded theme
+- [x] Zero client-side JavaScript is added
+- [x] Building `examples/site` stays under a second
+
+## 2026-09-08
+
+Done with syntect, default-features off plus default-fancy, so no C dependency. ClassedHTMLGenerator with SpacedPrefixed prefix 'tok-' emits scope classes; colours live in design/tokens.toml under [syntax] and nowhere else. Only top-level scope atoms are styled (comment, keyword, storage, string, constant, entity, support, variable, punctuation, invalid) because syntect emits every atom as a class and styling second-level atoms would collide at equal specificity. SyntaxSet loads once per process via OnceLock.
+
+## 2026-09-08
+
+Measured: 0.09s to build the ten-page site in release, cold run 0.31s including the SyntaxSet load. Well inside the one-second budget.

@@ -1,0 +1,21 @@
+# The dev loop.  Run `turborust up'.
+#
+# crabbucket ships no dev server: turborust already watches, caches, serves
+# dist/ with live reload, and puts build errors in a browser overlay.
+# See <https://github.com/oddurs/turborust>.
+
+[overlay]
+position = "bottom-right"
+emoji = "🦀"
+theme = "auto"
+errors = "overlay"
+
+[tasks.site]
+cmd = "crab build"
+inputs = ["site.toml", "content/**", "static/**"]
+outputs = ["dist"]
+
+[services.web]
+depends_on = ["site"]
+watch = ["site.toml", "content/**", "static/**"]
+serve = { dir = "dist", port = 8790 }

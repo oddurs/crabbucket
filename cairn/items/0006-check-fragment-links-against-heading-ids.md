@@ -2,7 +2,7 @@
 id: 6
 title: Check fragment links against heading ids
 type: feature
-status: backlog
+status: done
 milestone: v0.1
 depends_on:
 - 5
@@ -37,8 +37,16 @@ convention for "no destination", not a broken link.
 
 ## Acceptance criteria
 
-- [ ] A fragment naming a missing heading fails the build
-- [ ] Same-page fragments are checked
-- [ ] Bare `#` is ignored
-- [ ] Fragments on external links are ignored
+- [x] A fragment naming a missing heading fails the build
+- [x] Same-page fragments are checked
+- [x] Bare `#` is ignored
+- [x] Fragments on external links are ignored
 - [ ] Fixture coverage in the integration suite
+
+## 2026-09-08
+
+Done. resolve() now returns Link { path, fragment } and the route set became links::Routes = BTreeMap<route, BTreeSet<anchor>>. Reason enum distinguishes NoSuchRoute / NoSuchAsset / NoSuchAnchor so the diagnostic says which. Bare '#' is ignored; a bare '#frag' resolves against its own page.
+
+## 2026-09-08
+
+Fixture coverage deferred to 0002, which builds the harness. Six unit tests cover the behaviour meanwhile.

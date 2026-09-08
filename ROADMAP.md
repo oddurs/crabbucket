@@ -20,23 +20,26 @@ Done: content in, a deployed site out, with the three gates that make the centra
 
 ## v0.1 — A site you would actually ship
 
-`··········` 0% · 0 of 11 done
+`########··` 73% · 8 of 11 done
 
 The smallest set of work that makes crabbucket usable for a real repository site.
 
 ### backlog
 
 - [ ] [`0002`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0002-test-the-build-gates-end-to-end.md) Test the build gates end to end <sup>chore · p0 · correctness</sup>
-- [ ] [`0003`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0003-crab-new-scaffolds-a-working-site.md) `crab new` scaffolds a working site <sup>feature · p0</sup>
-- [ ] [`0004`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0004-build-time-syntax-highlighting-for-code-fences.md) Build-time syntax highlighting for code fences <sup>feature · p0 · docs-quality</sup>
-- [ ] [`0005`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0005-heading-ids-and-anchor-links.md) Heading ids and anchor links <sup>feature · p1</sup>
-- [ ] [`0006`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0006-check-fragment-links-against-heading-ids.md) Check fragment links against heading ids <sup>feature · p1</sup>
-- [ ] [`0007`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0007-show-a-source-frame-on-frontmatter-errors.md) Show a source frame on frontmatter errors <sup>feature · p1</sup>
 - [ ] [`0008`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0008-component-style-locality-with-crate-prefixed-classes.md) Component style locality with crate-prefixed classes <sup>feature · p1 · design</sup>
-- [ ] [`0009`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0009-a-404-page.md) A 404 page <sup>feature · p1</sup>
-- [ ] [`0010`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0010-sitemap-xml-and-robots-txt.md) sitemap.xml and robots.txt <sup>feature · p2</sup>
-- [ ] [`0011`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0011-crab-build-out-and-base-overrides.md) `crab build --out` and `--base` overrides <sup>feature · p2</sup>
 - [ ] [`0012`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0012-ship-a-man-page.md) Ship a man page <sup>docs · p2</sup>
+
+### done
+
+- [x] [`0003`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0003-crab-new-scaffolds-a-working-site.md) `crab new` scaffolds a working site <sup>feature · p0</sup>
+- [x] [`0004`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0004-build-time-syntax-highlighting-for-code-fences.md) Build-time syntax highlighting for code fences <sup>feature · p0 · docs-quality</sup>
+- [x] [`0005`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0005-heading-ids-and-anchor-links.md) Heading ids and anchor links <sup>feature · p1</sup>
+- [x] [`0006`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0006-check-fragment-links-against-heading-ids.md) Check fragment links against heading ids <sup>feature · p1</sup>
+- [x] [`0007`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0007-show-a-source-frame-on-frontmatter-errors.md) Show a source frame on frontmatter errors <sup>feature · p1</sup>
+- [x] [`0009`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0009-a-404-page.md) A 404 page <sup>feature · p1</sup>
+- [x] [`0010`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0010-sitemap-xml-and-robots-txt.md) sitemap.xml and robots.txt <sup>feature · p2</sup>
+- [x] [`0011`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0011-crab-build-out-and-base-overrides.md) `crab build --out` and `--base` overrides <sup>feature · p2</sup>
 
 ## v0.2 — A docs site you would want to read
 

@@ -2,7 +2,7 @@
 id: 10
 title: sitemap.xml and robots.txt
 type: feature
-status: backlog
+status: done
 milestone: v0.1
 created: 2026-09-08
 updated: 2026-09-08
@@ -31,8 +31,12 @@ Add both to the asset set so link checking knows they exist.
 
 ## Acceptance criteria
 
-- [ ] `sitemap.xml` lists every live route, absolute
-- [ ] Neither file is emitted when `url` is unset
-- [ ] `robots.txt` references the sitemap
-- [ ] Drafts and the 404 page are excluded
-- [ ] Both are registered as assets
+- [x] `sitemap.xml` lists every live route, absolute
+- [x] Neither file is emitted when `url` is unset
+- [x] `robots.txt` references the sitemap
+- [x] Drafts and the 404 page are excluded
+- [x] Both are registered as assets
+
+## 2026-09-08
+
+Done. Both skipped entirely when site.toml has no url, rather than emitted with guessed absolute URLs. No lastmod: there is no honest source for one. Caught a double-base-path bug in review -- url already contains the base, so appending it again produced /newsite/newsite/. There is now a test named after that bug.

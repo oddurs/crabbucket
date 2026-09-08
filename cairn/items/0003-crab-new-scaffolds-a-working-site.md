@@ -2,7 +2,7 @@
 id: 3
 title: '`crab new` scaffolds a working site'
 type: feature
-status: backlog
+status: done
 milestone: v0.1
 created: 2026-09-08
 updated: 2026-09-08
@@ -45,8 +45,12 @@ case and a user site is the one worth typing a flag for.
 
 ## Acceptance criteria
 
-- [ ] `crab new x && cd x && crab build` succeeds with no edits
-- [ ] The scaffolded site passes link checking
-- [ ] Non-empty target directory is refused without `--force`
-- [ ] The generated `turborust.toml` runs under `turborust up`
-- [ ] Templates live in the CLI crate, not in a runtime data directory
+- [x] `crab new x && cd x && crab build` succeeds with no edits
+- [x] The scaffolded site passes link checking
+- [x] Non-empty target directory is refused without `--force`
+- [x] The generated `turborust.toml` runs under `turborust up`
+- [x] Templates live in the CLI crate, not in a runtime data directory
+
+## 2026-09-08
+
+Done. Templates are include_str! from the CLI crate, so an installed crab is one file and there is no runtime data directory. --base defaults to /NAME/ because a project site is the common case. Refuses a non-empty directory without --force. Verified: crab new x && cd x && crab build succeeds with no edits, 2 pages and 17 links checked, and the scaffolded 404 passes the relative-link gate.
