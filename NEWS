@@ -38,6 +38,17 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
   neither.  Cards are cached in `.crabbucket/', which takes a fourteen-
   page build from 0.37s back to 0.12s.
 
+** Documentation
+
+  A walkthrough for writing a design system, from an empty directory to
+  twelve sites sharing one -- including what a version bump breaks and
+  what it does not, which nobody writes down.
+
+  Every snippet in it is from crabbucket-theme-plain, and a test asserts
+  that the names it shows still exist.  A guide that quotes code goes
+  stale silently, and one that no longer compiles teaches the wrong thing
+  with confidence.
+
 ** Bug fixes
 
   `~/' in a link means the site root, whatever the base path is.  Content
