@@ -33,7 +33,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use crabbucket::directive::Directives;
 use crabbucket::error::Error;
 use crabbucket::links::Reason;
-use crabbucket::theme::{Page, Theme};
+use crabbucket::theme::{NoExtra, Page, Theme};
 use crabbucket::{Options, Report};
 use serde::Deserialize;
 
@@ -59,8 +59,9 @@ struct Plain;
 
 impl Theme for Plain {
     type Layout = Layout;
+    type Extra = NoExtra;
 
-    fn render(&self, page: &Page<'_, Layout>) -> String {
+    fn render(&self, page: &Page<'_, Self>) -> String {
         let nav = page
             .nav()
             .iter()
@@ -125,8 +126,9 @@ struct Forgetful;
 
 impl Theme for Forgetful {
     type Layout = Layout;
+    type Extra = NoExtra;
 
-    fn render(&self, page: &Page<'_, Layout>) -> String {
+    fn render(&self, page: &Page<'_, Self>) -> String {
         format!(
             "<!doctype html><html><head><title>{}</title>\
              <link rel=\"stylesheet\" href=\"{}\"></head><body><main>{}</main></body></html>",
@@ -154,8 +156,9 @@ struct Illustrated;
 
 impl Theme for Illustrated {
     type Layout = Layout;
+    type Extra = NoExtra;
 
-    fn render(&self, page: &Page<'_, Layout>) -> String {
+    fn render(&self, page: &Page<'_, Self>) -> String {
         let card = page
             .card
             .map(|url| format!("<meta property=\"og:image\" content=\"{url}\">"))
@@ -174,7 +177,7 @@ impl Theme for Illustrated {
         String::new()
     }
 
-    fn og_image(&self, page: &Page<'_, Layout>) -> Option<Vec<u8>> {
+    fn og_image(&self, page: &Page<'_, Self>) -> Option<Vec<u8>> {
         // Proof that the design system is given somewhere to keep things.
         assert!(
             page.cache.ends_with(".crabbucket"),
@@ -186,14 +189,48 @@ impl Theme for Illustrated {
     }
 }
 
+/// The frontmatter a design system can ask a site for.
+///
+/// Required, deliberately: the interesting case is not reading a field, it is
+/// what happens to a page that does not have one.
+#[derive(Debug, Default, Deserialize)]
+struct Summary {
+    summary: String,
+}
+
+/// A design system that reads a field of its own.
+struct Demanding;
+
+impl Theme for Demanding {
+    type Layout = Layout;
+    type Extra = Summary;
+
+    fn render(&self, page: &Page<'_, Self>) -> String {
+        format!(
+            "<!doctype html><html><head><title>{}</title>\
+             <link rel=\"stylesheet\" href=\"{}\"></head>\
+             <body><p id=\"summary\">{}</p><main>{}</main></body></html>",
+            page.meta.title,
+            crabbucket::Url::asset(page.config, "site.css"),
+            page.meta.extra.summary,
+            page.html
+        )
+    }
+
+    fn stylesheet(&self) -> String {
+        String::new()
+    }
+}
+
 /// A design system with no router and no search, for the fixtures that ask
 /// for one anyway.
 struct Bare;
 
 impl Theme for Bare {
     type Layout = Layout;
+    type Extra = NoExtra;
 
-    fn render(&self, page: &Page<'_, Layout>) -> String {
+    fn render(&self, page: &Page<'_, Self>) -> String {
         format!(
             "<!doctype html><html><head><title>{}</title><link rel=\"stylesheet\" href=\"{}\"></head><body><main>{}</main></body></html>",
             page.meta.title,
@@ -653,6 +690,60 @@ fn a_site_that_did_not_ask_for_search_gets_none() {
     let (_, out) = ok("ok");
     assert!(!out.join("search.json").exists());
     assert!(!out.join("search.js").exists());
+}
+
+// -------------------------------------------------- frontmatter a site adds
+
+#[test]
+fn a_design_system_reads_the_frontmatter_it_declares() {
+    let (_, out) = build_theme("extra", &Demanding);
+    let html = read(&out, "index.html");
+
+    assert!(
+        html.contains("A sentence the design system asked for."),
+        "the field did not reach the page: {html}"
+    );
+}
+
+#[test]
+fn a_page_missing_a_field_the_design_system_requires_fails() {
+    // The whole point.  Before this, a site could carry a field and the
+    // framework would drop it without a word.
+    let site = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/sites/missing-extra");
+    let out = std::env::temp_dir().join(format!("crabbucket-extra-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&out);
+
+    let options = Options {
+        out_dir: Some(out),
+        base: None,
+    };
+    let err = crabbucket::build_with(&site, &Demanding, &options).expect_err("should fail");
+
+    let message = err.render(false);
+    assert!(
+        message.contains("missing-extra/content/index.md"),
+        "got {message}"
+    );
+    assert!(message.contains("missing field `summary`"), "got {message}");
+}
+
+#[test]
+fn a_design_system_that_declares_nothing_is_unaffected() {
+    // `Plain` reads no extra frontmatter, and the fixture has two fields it
+    // has never heard of.  It builds.
+    let (_, out) = build_theme("extra", &Plain);
+    assert!(out.join("index.html").is_file());
+}
+
+#[test]
+fn a_key_nothing_declares_is_still_ignored_silently() {
+    // Honest limitation.  serde cannot combine `flatten` with
+    // `deny_unknown_fields`, so a misspelled frontmatter key still vanishes
+    // rather than failing.  Asserted so the day it changes is deliberate.
+    let (_, out) = build_theme("extra", &Demanding);
+    let html = read(&out, "index.html");
+
+    assert!(!html.contains("a key nothing declares"), "got {html}");
 }
 
 // ------------------------------------------------------------------- cards

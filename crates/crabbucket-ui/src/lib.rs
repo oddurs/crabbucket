@@ -33,7 +33,7 @@
 
 use crabbucket::directive::Directives;
 use crabbucket::style::{Style, StyleSheet};
-use crabbucket::theme::{FeedLink, NavItem, Page, Theme};
+use crabbucket::theme::{FeedLink, NavItem, NoExtra, Page, Theme};
 use crabbucket::{Config, Heading, PageMeta, Url};
 use maud::{DOCTYPE, Markup, PreEscaped, html};
 use serde::Deserialize;
@@ -91,8 +91,9 @@ pub struct Standard;
 
 impl Theme for Standard {
     type Layout = Layout;
+    type Extra = NoExtra;
 
-    fn render(&self, page: &Page<'_, Layout>) -> String {
+    fn render(&self, page: &Page<'_, Self>) -> String {
         let nav = page.nav();
 
         let content = match page.meta.layout {
@@ -128,7 +129,7 @@ impl Theme for Standard {
         components::directives()
     }
 
-    fn og_image(&self, page: &Page<'_, Layout>) -> Option<Vec<u8>> {
+    fn og_image(&self, page: &Page<'_, Self>) -> Option<Vec<u8>> {
         // The card is drawn from this design system's own tokens, so it looks
         // like the site it belongs to without anybody restating the palette.
         let card = crabbucket_og::Card {
@@ -319,7 +320,7 @@ pub fn prose(html_fragment: &str) -> Markup {
 /// The whole document: head, navigation, content, footer.
 pub fn document(
     config: &Config,
-    meta: &PageMeta<Layout>,
+    meta: &PageMeta<Layout, NoExtra>,
     nav: &[NavItem],
     feeds: &[FeedLink],
     card: Option<&Url>,

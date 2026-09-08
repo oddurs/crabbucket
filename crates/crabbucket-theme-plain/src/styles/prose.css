@@ -4,6 +4,8 @@
  * framework rather than to any design system, so they are not namespaced.
  * See crabbucket::style::FRAMEWORK_CLASSES. */
 
+.&__summary { font-style: italic; color: var(--color-faded); margin: 0 0 var(--space-line); }
+
 .& h1 { font-size: var(--size-title); line-height: 1.2; margin: 0 0 var(--space-line); font-weight: 400; }
 .& h2 { font-size: var(--size-body); margin: var(--space-line) 0 var(--space-third); font-weight: 700; }
 .& h3 { font-size: var(--size-body); margin: var(--space-line) 0 var(--space-third); font-weight: 400; font-style: italic; }

@@ -37,13 +37,17 @@ use crate::directive::Directives;
 use crate::markdown::Heading;
 use crate::url::Url;
 
-/// The frontmatter every page has, whatever else it has.
+/// No frontmatter beyond what every page has.
 ///
-/// `L` is the theme's layout type.  A site with richer frontmatter loads its
-/// own type through [`crate::Collection`]; this is the shape the built-in
-/// pipeline needs in order to render a page without the site writing any Rust.
+/// The conventional [`Theme::Extra`] for a design system that reads nothing
+/// site-specific.  It is a struct rather than `()` because it is flattened
+/// into the frontmatter, and serde cannot flatten into a unit type.
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct NoExtra {}
+
+/// The frontmatter every page has, whatever else it has.
 #[derive(Debug, Clone, Deserialize)]
-pub struct PageMeta<L> {
+pub struct PageMeta<L, E = NoExtra> {
     /// The page title.
     pub title: String,
 
@@ -90,9 +94,22 @@ pub struct PageMeta<L> {
     /// Whether to skip the page entirely.
     #[serde(default)]
     pub draft: bool,
+
+    /// Whatever else this design system reads.
+    ///
+    /// Declared by the theme as [`Theme::Extra`], and deserialized with the
+    /// rest of the frontmatter -- so a page missing a field the design system
+    /// requires fails when the file is read, naming it, rather than rendering
+    /// without it.
+    ///
+    /// A site using a design system that declares nothing cannot add a field,
+    /// which is the same bargain as layouts: both are the design system's
+    /// surface, and a site works within it.
+    #[serde(flatten)]
+    pub extra: E,
 }
 
-impl<L> PageMeta<L> {
+impl<L, E> PageMeta<L, E> {
     /// The label this page should carry in navigation.
     pub fn label(&self) -> &str {
         self.nav_label.as_deref().unwrap_or(&self.title)
@@ -211,11 +228,12 @@ impl SiteIndex {
 }
 
 /// Everything a theme is given in order to render one page.
-pub struct Page<'a, L> {
+pub struct Page<'a, T: Theme> {
     /// The site's configuration, which carries the base path.
     pub config: &'a Config,
-    /// The page's frontmatter, including its layout.
-    pub meta: &'a PageMeta<L>,
+    /// The page's frontmatter, including its layout and whatever else this
+    /// design system reads.
+    pub meta: &'a PageMeta<T::Layout, T::Extra>,
     /// The page's route.  The empty string is the site root.
     pub route: &'a str,
     /// The page body, already rendered from Markdown to HTML.
@@ -251,7 +269,7 @@ pub struct FeedLink {
     pub atom: Url,
 }
 
-impl<L> Page<'_, L> {
+impl<T: Theme> Page<'_, T> {
     /// The primary navigation, with this page marked as current.
     pub fn nav(&self) -> Vec<NavItem> {
         self.site.nav(self.config, self.route)
@@ -288,8 +306,21 @@ pub trait Theme {
     /// the page's frontmatter is being read.
     type Layout: DeserializeOwned + Default;
 
+    /// Whatever else this design system reads from a page's frontmatter.
+    ///
+    /// [`NoExtra`] for a design system that reads nothing site-specific, which
+    /// is most of them.  Declaring a type here is how a design system says
+    /// "my pages carry a `summary`", and a page without one then fails the
+    /// build naming itself.
+    ///
+    /// There is no default because associated type defaults are not stable;
+    /// one line saying `type Extra = NoExtra;` is the price.
+    type Extra: DeserializeOwned + Default;
+
     /// Renders a complete HTML document.
-    fn render(&self, page: &Page<'_, Self::Layout>) -> String;
+    fn render(&self, page: &Page<'_, Self>) -> String
+    where
+        Self: Sized;
 
     /// The stylesheet written to `site.css`.
     fn stylesheet(&self) -> String;
@@ -310,7 +341,10 @@ pub trait Theme {
     ///
     /// Only called when the site has an absolute URL, because a card that
     /// cannot be linked to absolutely is a card nothing will ever fetch.
-    fn og_image(&self, page: &Page<'_, Self::Layout>) -> Option<Vec<u8>> {
+    fn og_image(&self, page: &Page<'_, Self>) -> Option<Vec<u8>>
+    where
+        Self: Sized,
+    {
         let _ = page;
         None
     }
@@ -340,7 +374,7 @@ pub trait Theme {
 mod tests {
     use std::path::Path;
 
-    use super::{NavItem, Page, PageMeta, PageRef, SiteIndex};
+    use super::{NavItem, NoExtra, Page, PageMeta, PageRef, SiteIndex, Theme};
     use crate::config::Config;
 
     fn config() -> Config {
@@ -409,7 +443,23 @@ mod tests {
         assert_eq!(items[0].href.as_str(), "/repo/docs/zebra/");
     }
 
-    fn meta() -> PageMeta<()> {
+    /// The smallest design system there is, so that a `Page` can be built.
+    struct Blank;
+
+    impl Theme for Blank {
+        type Layout = ();
+        type Extra = NoExtra;
+
+        fn render(&self, _: &Page<'_, Self>) -> String {
+            String::new()
+        }
+
+        fn stylesheet(&self) -> String {
+            String::new()
+        }
+    }
+
+    fn meta() -> PageMeta<(), NoExtra> {
         PageMeta {
             title: "T".into(),
             description: None,
@@ -419,12 +469,13 @@ mod tests {
             nav_label: None,
             date: None,
             draft: false,
+            extra: NoExtra::default(),
         }
     }
 
     fn at(route: &str, site: &SiteIndex, config: &Config) -> (Option<NavItem>, Option<NavItem>) {
         let meta = meta();
-        let page = Page {
+        let page: Page<'_, Blank> = Page {
             config,
             meta: &meta,
             route,

@@ -61,11 +61,15 @@ pub fn card_path(route: &str) -> String {
 const ERROR_ROUTE: &str = "404";
 
 /// The pages of a site, borrowed from the collection that owns them.
-type Pages<'a, T> = Vec<&'a Entry<PageMeta<T>>>;
+type Pages<'a, T> = Vec<&'a Entry<PageMeta<<T as Theme>::Layout, <T as Theme>::Extra>>>;
 
 /// A page that has been rendered but not yet written: the entry it came from,
 /// the URL it will be served at, and its HTML.
-type Rendering<'a, T> = (&'a Entry<PageMeta<T>>, Url, String);
+type Rendering<'a, T> = (
+    &'a Entry<PageMeta<<T as Theme>::Layout, <T as Theme>::Extra>>,
+    Url,
+    String,
+);
 
 /// What a build produced, for the benefit of whoever asked for it.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -169,7 +173,8 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
     }
 
     let directives = theme.directives();
-    let content = Collection::<PageMeta<T::Layout>>::load(&site_dir.join("content"), &directives)?;
+    let content =
+        Collection::<PageMeta<T::Layout, T::Extra>>::load(&site_dir.join("content"), &directives)?;
     let out_dir = match &options.out_dir {
         Some(dir) => dir.clone(),
         None => site_dir.join("dist"),
@@ -179,7 +184,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
         fs::remove_dir_all(&out_dir).map_err(|source| Error::io(&out_dir, source))?;
     }
 
-    let published: Pages<'_, T::Layout> = content
+    let published: Pages<'_, T> = content
         .entries()
         .iter()
         .filter(|entry| !entry.meta.draft)
@@ -189,7 +194,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
     // The error page is a page, but it is not a route: nothing may link to it,
     // it is not in the navigation, and it is written as a file rather than as
     // a directory, because that is what a static host looks for.
-    let (error_page, live): (Pages<'_, T::Layout>, Pages<'_, T::Layout>) = published
+    let (error_page, live): (Pages<'_, T>, Pages<'_, T>) = published
         .into_iter()
         .partition(|entry| entry.route == ERROR_ROUTE);
 
@@ -255,8 +260,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
 
     let cache = site_dir.join(CACHE);
     let mut cards: Vec<(String, Vec<u8>)> = Vec::new();
-    let mut rendered: Vec<Rendering<'_, T::Layout>> =
-        Vec::with_capacity(live.len() + error_page.len());
+    let mut rendered: Vec<Rendering<'_, T>> = Vec::with_capacity(live.len() + error_page.len());
     for entry in live.iter().chain(error_page.iter()) {
         // A card is only ever referenced from an absolute URL, so a site
         // without one is not asked for any.
@@ -547,7 +551,7 @@ fn relative(config: &Config, route: &str) -> String {
 ///
 /// No `lastmod`: there is no honest source for one yet, and a fabricated
 /// timestamp is worse than an absent field.
-fn sitemap<T>(url: &str, config: &Config, live: &[&Entry<PageMeta<T>>]) -> String {
+fn sitemap<L, E>(url: &str, config: &Config, live: &[&Entry<PageMeta<L, E>>]) -> String {
     let origin = origin(url);
     let mut out = String::new();
 

@@ -2,6 +2,7 @@
 title = "Content"
 layout = "docs"
 order = 2
+summary = "Markdown with typed frontmatter. Writing a page needs no Rust."
 +++
 
 # Content
@@ -68,6 +69,50 @@ written is exactly the trade this project exists to refuse.
 
 A fence with no language, or with one nothing is known about, renders as
 plain code. A build that failed over a language tag would be absurd.
+
+## Frontmatter your design system adds
+
+The fields above are what *every* page has. A design system can ask for more:
+
+```rust
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct Extra {
+    #[serde(default)]
+    pub summary: Option<String>,
+}
+
+impl Theme for Plain {
+    type Layout = Layout;
+    type Extra = Extra;
+    …
+}
+```
+
+```markdown
++++
+title = "Durability"
+summary = "What happens on a crash, a merge, or two people writing at once."
++++
+```
+
+`page.meta.extra.summary` — typed, and deserialized with the rest of the
+frontmatter, so a page missing a field the design system *requires* fails when
+the file is read rather than rendering without it:
+
+```
+crab: content/docs/durability.md:2:1: missing field `summary`
+```
+
+A design system that declares nothing gets `NoExtra` and is unaffected. A site
+using one that declares nothing cannot add a field — the same bargain as
+layouts: both are the design system's surface, and a site works within it.
+
+:::callout{kind = "warn", title = "A key nothing declares still vanishes"}
+serde cannot combine `flatten` with `deny_unknown_fields`, so a *misspelled*
+frontmatter key is still ignored silently rather than failing. That is the one
+place this design does not hold, and it is asserted by a test so the day it
+changes is a deliberate one.
+:::
 
 ## Typed collections
 
