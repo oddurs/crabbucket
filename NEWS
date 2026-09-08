@@ -101,6 +101,11 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
 
 ** Bug fixes
 
+  A content file with CRLF line endings failed to parse at all.  The
+  opening `+++' had always accepted them; the closing one left a carriage
+  return on the frontmatter's last line, and TOML rejects a bare one.
+  Found the first time CI ran on Windows.
+
   A link to a route without a trailing slash -- `/docs/agents' rather than
   `/docs/agents/' -- was reported as a missing file.  It is a route, and
   every static host serves it.  Astro and Next both write links that way,

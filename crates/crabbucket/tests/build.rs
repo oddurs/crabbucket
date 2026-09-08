@@ -372,6 +372,23 @@ fn a_url_gets_a_sitemap_and_robots_and_nothing_else_does() {
 }
 
 #[test]
+fn a_content_file_with_windows_line_endings_builds() {
+    // Git hands a checkout CRLF on Windows, so this is what a content file
+    // looks like to half the world.  It did not parse at all until the
+    // platform matrix said so.
+    let (report, out) = ok("crlf");
+
+    assert_eq!(report.routes, [""]);
+
+    let html = read(&out, "index.html");
+    assert!(html.contains("Written on Windows"), "got {html}");
+    assert!(
+        html.contains("carriage return"),
+        "the body did not survive: {html}"
+    );
+}
+
+#[test]
 fn nested_content_keeps_its_shape_on_any_platform() {
     // Routes are built from forward slashes and paths from the platform's
     // separator.  Nothing on a Unix machine notices the difference, which is

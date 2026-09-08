@@ -200,7 +200,11 @@ fn split<'a>(text: &'a str, path: &Path) -> Result<(&'a str, &'a str, usize)> {
             path: path.to_path_buf(),
         })?;
 
-    let frontmatter = &rest[..end];
+    // The closing fence is found by its newline, so on a file with CRLF line
+    // endings the frontmatter keeps the carriage return of its last line --
+    // and TOML rejects a bare one.  The opening fence has always accepted
+    // CRLF; this is the other half of that.
+    let frontmatter = rest[..end].strip_suffix('\r').unwrap_or(&rest[..end]);
     let after = &rest[end + 1 + FENCE.len()..];
     let body = after.trim_start_matches(['\r', '\n']);
 
@@ -224,6 +228,21 @@ mod tests {
         assert_eq!(frontmatter, "title = \"Hi\"");
         assert_eq!(body, "# Heading\n");
         assert_eq!(line, 5, "the body starts on file line 5");
+    }
+
+    #[test]
+    fn a_file_with_windows_line_endings_parses() {
+        // Git hands a checkout CRLF on Windows, so this is what a content
+        // file looks like to half the world.
+        let text = "+++\r\ntitle = \"Hi\"\r\n+++\r\n\r\n# Heading\r\n";
+        let (frontmatter, body, line) = split(text, Path::new("t.md")).unwrap();
+
+        assert_eq!(
+            frontmatter, "title = \"Hi\"",
+            "a carriage return reached the parser"
+        );
+        assert_eq!(body, "# Heading\r\n");
+        assert_eq!(line, 5);
     }
 
     #[test]
