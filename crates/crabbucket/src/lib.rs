@@ -46,7 +46,7 @@ pub use error::{Error, Result, Snippet};
 pub use feed::Feed;
 pub use links::{DeadLink, Reason};
 pub use markdown::{Body, Heading};
-pub use site::{Options, Report, build, build_with};
+pub use site::{Options, Report, Timings, build, build_with};
 pub use style::{Style, StyleSheet};
 pub use theme::{FeedLink, NavItem, NoExtra, Page, PageMeta, PageRef, SiteIndex, Theme};
 pub use url::Url;

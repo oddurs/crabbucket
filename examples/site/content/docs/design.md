@@ -15,9 +15,11 @@ the repository, which is the document this framework is being built against.
 **A site is a typed value.**
 
 Rust's advantage here is not speed. Any generator is fast enough for a
-forty-page docs site; Hugo builds it in 30ms and nobody is unhappy. The
-advantage is that Rust can make the whole site a typed value, so an entire
-class of bug stops being a runtime surprise:
+forty-page docs site; Hugo builds it in 30ms and nobody is unhappy. On 521
+pages Hugo is still about twice as fast as crabbucket, which is
+[measured and published](/docs/speed/) rather than argued with. The advantage
+is that Rust can make the whole site a typed value, so an entire class of bug
+stops being a runtime surprise:
 
 - frontmatter is a struct, not a map
 - a layout is an enum variant, not a name

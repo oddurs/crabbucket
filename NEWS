@@ -40,6 +40,19 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
 
 ** Documentation
 
+  What the build costs, measured rather than asserted.  `bench/' generates
+  the same site three ways and times crabbucket, Hugo and Zola on it.  On
+  521 pages: Hugo 145ms, crabbucket 250ms, Zola 314ms.  Hugo is about
+  twice as fast, which is now written on the site rather than argued with.
+
+  Nearly all of crabbucket's time is upstream of anything it invented.
+  Rendering 521 pages costs 7ms and checking every link on them costs
+  2ms; syntax highlighting alone costs about 150ms, sixty percent of the
+  build.  The same site without code blocks builds in 94ms.
+
+  Social cards are the expensive feature: 521 of them take a build from
+  340ms to 1.06s cold, and back to 340ms warm.  Keep `.crabbucket/'.
+
   A walkthrough for writing a design system, from an empty directory to
   twelve sites sharing one -- including what a version bump breaks and
   what it does not, which nobody writes down.
@@ -87,6 +100,12 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
   Error, Reason, Config, Options and Report are `#[non_exhaustive]'.  All
   five have gained members in every release so far, and deciding this
   after 1.0 would itself be the breaking change.
+
+  `Report' gained `timings', a `Timings' of the four passes a build makes.
+  A build budget belongs in the caller's CI rather than behind a flag on
+  this crate, so the durations are returned and `Display' stays quiet
+  about them.  CI uses it: every pull request builds 500 pages and fails
+  if it takes longer than two seconds.
 
   `Options' is built with `Options::new()' and its methods rather than as
   a literal.  `Config::blank()' replaces `Config::for_tests'.

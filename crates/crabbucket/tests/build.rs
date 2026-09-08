@@ -29,6 +29,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Duration;
 
 use crabbucket::directive::Directives;
 use crabbucket::error::Error;
@@ -1409,4 +1410,35 @@ fn every_failure_names_a_file() {
             "`{fixture}` produced an error with no file"
         );
     }
+}
+
+// ------------------------------------------------------------------ timings
+
+#[test]
+fn a_report_says_where_the_build_spent_its_time() {
+    let (report, _) = ok("ok");
+
+    // Asserting on durations is asserting on the machine, so this asserts only
+    // what cannot be false: every pass ran, so every pass took some time, and
+    // the parts add up to the total.
+    let timings = report.timings;
+    assert!(timings.read > Duration::ZERO, "read was not measured");
+    assert!(timings.render > Duration::ZERO, "render was not measured");
+    assert!(timings.check > Duration::ZERO, "check was not measured");
+    assert!(timings.write > Duration::ZERO, "write was not measured");
+
+    assert_eq!(
+        timings.total(),
+        timings.read + timings.render + timings.check + timings.write
+    );
+}
+
+#[test]
+fn timings_stay_out_of_the_report_a_person_reads() {
+    let (report, _) = ok("ok");
+
+    // A build budget is the caller's business.  Nobody running `crab build`
+    // asked for four durations, so `Display` does not offer them.
+    assert!(!report.to_string().contains("ns"));
+    assert!(!report.to_string().to_lowercase().contains("timing"));
 }

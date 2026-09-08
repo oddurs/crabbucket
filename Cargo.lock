@@ -151,6 +151,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "crabbucket-bench"
+version = "0.1.0"
+dependencies = [
+ "crabbucket",
+ "crabbucket-ui",
+]
+
+[[package]]
 name = "crabbucket-cli"
 version = "0.1.0"
 dependencies = [

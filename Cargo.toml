@@ -12,6 +12,7 @@ members = [
     "crates/crabbucket-tokens",
     "crates/crabbucket-ui",
     "examples/site-crate",
+    "bench",
 ]
 
 [workspace.package]

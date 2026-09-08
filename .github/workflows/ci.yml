@@ -64,6 +64,26 @@ jobs:
       - name: the example site crate builds itself
         run: cargo run -q -p crabbucket-example-site
 
+  # The build has a ceiling.  Not a tight one: a shared runner's timings vary
+  # by more than any change worth making, and a budget that fails on noise is
+  # a budget everybody learns to pass with a rerun.  This catches the thing
+  # worth catching -- a change that makes the build several times slower --
+  # and lets everything smaller through.
+  budget:
+    name: the build stays within budget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: budget
+
+      # Release, because a debug build measures rustc rather than crabbucket.
+      - run: cargo build --release -p crabbucket-bench
+      - run: ./target/release/crabbucket-bench generate 500 bench-site
+      - run: ./target/release/crabbucket-bench budget bench-site 2000
+
   # A regression in a future compiler should arrive as a notification rather
   # than as a surprise during a release.
   beta:
