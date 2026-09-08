@@ -2,7 +2,7 @@
 #
 # crabbucket deliberately ships no dev server of its own; see section 8 of
 # doc/DESIGN.  turborust derives the watch globs from the crate's
-# path-dependency closure, so editing crates/crabbucket or design/tokens.toml
+# path-dependency closure, so editing crates/crabbucket or a theme's tokens
 # rebuilds the site without anyone having to remember to list them.
 #
 # Copyright (C) 2026 Oddur Sigurdsson

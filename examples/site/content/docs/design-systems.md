@@ -12,7 +12,9 @@ you build a house style with.
 
 ## One token file, two outputs
 
-`design/tokens.toml` is the source of truth:
+A design system's `design/tokens.toml` is its source of truth — each one has
+its own, which is what keeps a second design system from being a fork of the
+first:
 
 ```toml
 [color]
