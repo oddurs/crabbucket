@@ -122,4 +122,5 @@ Files
   ROADMAP.md   what is planned, generated from cairn/items
   THANKS       people who have helped
   doc/DESIGN   the design, and the reasoning behind it
+  doc/STABILITY what 1.0 promises, and what it does not
   doc/crab.1   the man page

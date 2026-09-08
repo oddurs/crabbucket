@@ -102,6 +102,7 @@ impl Snippet {
 }
 
 /// A build failure, always attributed to a file.
+#[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {
     /// The file could not be read or written.

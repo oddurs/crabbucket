@@ -187,7 +187,7 @@ mod tests {
     /// A context for a directive that reads neither the configuration nor any
     /// data, which is all of these.
     fn render(source: &str) -> String {
-        let config = crabbucket::Config::for_tests();
+        let config = crabbucket::Config::blank();
         let data = crabbucket::directive::Data::default();
         let context = crabbucket::directive::Context::new(&config, &data);
 
@@ -258,7 +258,7 @@ mod tests {
 
     #[test]
     fn an_attribute_neither_design_system_has_still_fails() {
-        let config = crabbucket::Config::for_tests();
+        let config = crabbucket::Config::blank();
         let data = crabbucket::directive::Data::default();
         let context = crabbucket::directive::Context::new(&config, &data);
 

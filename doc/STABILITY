@@ -1,0 +1,136 @@
+crabbucket -- what is stable, and what is not
+=============================================
+
+A version number without a written policy is not a promise.  This is the
+policy.  It takes effect at 1.0; before then everything here is subject to
+change, which is what 0.x is for.
+
+
+1.  What is covered
+-------------------
+
+Breaking any of these requires a major version.
+
+**The site's own files.**  The `site.toml' schema, the `+++' frontmatter
+schema, the `data/*.toml' convention, and how a path under `content/'
+becomes a route.  A site that builds on 1.0 builds on every 1.x.
+
+**The design system seam.**  The `Theme' trait: its methods, their
+signatures, and its associated `Layout' and `Extra' types.  Everything a
+theme crate touches in order to be one -- `Page', `PageMeta', `NavItem',
+`SiteIndex', `PageRef', `FeedLink', `Style', `StyleSheet', `Directives',
+`Context', `Data'.
+
+**The library surface.**  `build', `build_with', `Options', `Report',
+`Config', `Url', `Collection', `Entry', `Error', `Result', `Heading',
+`Body', `DeadLink', `Reason', `Snippet', `Feed', and the modules they
+live in.
+
+**The executable.**  `crab' commands, options, the shape of what it
+prints, and its exit statuses: 0 for success, 1 for a site that is wrong,
+2 for a command line that is.
+
+**The framework's own class names.**  `heading-anchor', `code', and the
+`tok-' prefix, which a design system styles and may not rename.  They are
+listed in `crabbucket::style::FRAMEWORK_CLASSES' so the rule is checkable
+rather than remembered.
+
+
+2.  What is not covered
+-----------------------
+
+These change in any release, without notice.
+
+**The generated HTML.**  Element structure, attribute order, whitespace.
+Anything scraping the output is on its own.
+
+**The default design system's class names and markup.**  `crabbucket-ui'
+is a design system, not an interface.  A site that writes CSS against
+`.cb-callout__body' is depending on something that will move.
+
+**Token values.**  The names in `design/tokens.toml' are the surface; the
+colours behind them are not.  A palette that fails a contrast check will
+be changed.
+
+**Anything documented as unstable**, and anything reachable only through
+a module that says so.
+
+
+3.  The awkward one
+-------------------
+
+A design system's own class names are its public surface, and nothing in
+this project checks them.  A site's stylesheet is not something the build
+sees, so renaming `.cb-callout' breaks that site silently.
+
+This is the one place the central claim does not hold, and saying so is
+better than hoping nobody notices.  Treat a design system's class names
+as public; if you own the design system, treat renaming one as breaking.
+
+
+4.  Compiler version
+--------------------
+
+`rust-version' in `Cargo.toml' is the minimum, and it is tested.
+
+Raising it is a minor version, not a major one.  The alternative -- a
+major version for every toolchain bump -- makes the major number about
+Rust rather than about crabbucket.  It will not be raised without a
+reason that is written in NEWS.
+
+
+5.  Growing without breaking
+----------------------------
+
+Adding a variant to an enum callers match on, or a field to a struct
+callers construct, is breaking unless the type says otherwise in advance.
+Deciding that later is itself the breaking change, so it is decided now.
+
+`#[non_exhaustive]' on:
+
+  Error, Reason            enums that have grown four times between
+                           0.1 and 0.3, and will grow again
+  Config, Options, Report  read or built by callers, and each has gained
+                           fields in every release so far
+
+`Options' is therefore built with `Options::new()' and its methods rather
+than as a literal, which is nicer to read and cannot break.  `Config' is
+deserialized in real use; `Config::blank()' exists for the rare caller
+that needs one without a file, and its fields are assigned rather than
+listed.
+
+Not marked, deliberately: `PageMeta' and the small data types a theme
+receives.  `PageMeta' is deserialized rather than constructed, and its
+shape is the frontmatter schema, which section 1 already covers.
+
+
+6.  Deprecation
+---------------
+
+Nothing is removed in the release that deprecates it.
+
+A thing being removed is marked `#[deprecated]' with a note saying what
+to use instead, and stays for at least one minor version.  NEWS says so
+under a `** Deprecated' heading.  The removal is then a major version.
+
+
+7.  Three rules for the surface
+-------------------------------
+
+Learned from a review that found all three broken on the same day, and
+written down so the next addition does not repeat them.
+
+  1.  Every type a caller must construct or receive is re-exported at the
+      crate root.  `crabbucket::build' compiling while
+      `crabbucket::build_with' did not is how this rule was discovered.
+
+  2.  Every type a caller receives prints usefully.  `Display', not
+      `Debug', for anything a person will read.
+
+  3.  Anything easy to have and easy to forget to print is in that
+      output.  `Report' carries warnings and a draft count; printing a
+      `Report' says all of it, because the first thing anybody writes has
+      to be the correct thing.
+
+An addition that fails one of these is not ready, whatever else is true
+of it.

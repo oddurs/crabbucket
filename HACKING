@@ -71,6 +71,11 @@ Rust code is formatted by rustfmt; see rustfmt.toml.  Beyond that:
     colour or a length.
   - Every user-visible change gets a NEWS entry, and every change gets a
     ChangeLog entry.
+  - A change to anything doc/STABILITY section 1 covers is a major
+    version.  Read it before changing a public signature.
+  - Three rules for anything added to the public surface, from section 7:
+    it is re-exported at the crate root, it prints usefully, and what is
+    easy to forget to print is in that output.
   - A change that closes a roadmap item closes it in the same commit.
 
 ChangeLog entries use the customary GNU format: a header line with the

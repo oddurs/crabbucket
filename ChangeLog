@@ -1,5 +1,25 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Write down what 1.0 will promise.
+
+	* doc/STABILITY: New file.
+	* crates/crabbucket/src/lib.rs: Re-export Context, Data, Snippet,
+	DeadLink, Reason, Body, FeedLink and NoExtra, which an audit
+	against the document's own rule found missing.
+	* crates/crabbucket/src/links.rs (DeadLink): Gains a Display.
+	(Reason): non_exhaustive.
+	* crates/crabbucket/src/error.rs (Error): non_exhaustive.
+	* crates/crabbucket/src/site.rs (Options, Report): non_exhaustive.
+	(Options::new and friends): A builder, since a non_exhaustive struct
+	cannot be a literal from another crate.
+	* crates/crabbucket/src/config.rs (Config): non_exhaustive.
+	(Config::blank): Renamed from for_tests.
+	* crates/crabbucket/tests/stability.rs: New file; the three surface
+	rules, and the section 5 decisions.
+	* HACKING, README, Makefile: Point at it.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Let a site own directives, and let a directive read site data.
 
 	* crates/crabbucket/src/directive.rs (Context, Data): New.  A

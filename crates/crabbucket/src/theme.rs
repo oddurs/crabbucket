@@ -378,15 +378,13 @@ mod tests {
     use crate::config::Config;
 
     fn config() -> Config {
-        Config {
-            title: "t".into(),
-            description: String::new(),
-            url: None,
-            base: "/repo/".into(),
-            search: false,
-            feeds: Vec::new(),
-            pages: Vec::new(),
-            router: false,
+        {
+            let mut config = Config::blank();
+            config.title = "t".into();
+            config.description = String::new();
+            config.url = None;
+            config.base = "/repo/".into();
+            config
         }
     }
 

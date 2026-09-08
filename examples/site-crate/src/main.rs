@@ -129,11 +129,9 @@ fn main() -> ExitCode {
         }
     };
 
-    let options = Options {
-        pages: BTreeMap::from([(String::new(), landing(&config).into_string())]),
-        directives: directives(),
-        ..Options::default()
-    };
+    let options = Options::new()
+        .page("", landing(&config).into_string())
+        .directives(directives());
 
     match crabbucket::build_with(dir, &Plain, options) {
         Ok(report) => {
@@ -156,15 +154,13 @@ mod tests {
     use crabbucket::Config;
 
     fn config() -> Config {
-        Config {
-            title: "t".into(),
-            description: String::new(),
-            url: None,
-            base: "/repo/".into(),
-            search: false,
-            feeds: Vec::new(),
-            pages: Vec::new(),
-            router: false,
+        {
+            let mut config = Config::blank();
+            config.title = "t".into();
+            config.description = String::new();
+            config.url = None;
+            config.base = "/repo/".into();
+            config
         }
     }
 

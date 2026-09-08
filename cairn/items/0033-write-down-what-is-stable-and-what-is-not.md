@@ -2,7 +2,7 @@
 id: 33
 title: Write down what is stable and what is not
 type: docs
-status: backlog
+status: done
 milestone: v1.0
 created: 2026-09-08
 updated: 2026-09-08
@@ -40,8 +40,39 @@ deciding later is itself the breaking change.
 
 ## Acceptance criteria
 
-- [ ] `doc/STABILITY` covering both lists
-- [ ] MSRV policy stated
-- [ ] Deprecation path stated
-- [ ] `#[non_exhaustive]` decided and applied
-- [ ] Referenced from `README` and `HACKING`
+- [x] `doc/STABILITY` covering both lists
+- [x] MSRV policy stated
+- [x] Deprecation path stated
+- [x] `#[non_exhaustive]` decided and applied
+- [x] Referenced from `README` and `HACKING`
+
+## 2026-09-08
+
+Done. `doc/STABILITY`, seven sections and 136 lines.
+
+The section worth having is 3, "The awkward one": a design system's class
+names are its public surface and nothing in this project checks them,
+because a site's stylesheet is not something the build sees. That is the
+one place the central claim does not hold, and a stability document that
+listed only the things it gets right would be worth less than none.
+
+Section 5 makes the decision the item said could not wait. Error, Reason,
+Config, Options and Report are non_exhaustive: all five have gained
+members in every release so far, and deciding this after 1.0 would itself
+be the breaking change. PageMeta deliberately is not -- it is deserialized
+rather than constructed, and its shape is the frontmatter schema, which
+section 1 already covers.
+
+That decision had a cost worth recording: non_exhaustive forbids struct
+expressions from other crates entirely, `..Default::default()` included.
+So Options gained a builder, which reads better than the literal did, and
+Config::blank() replaced Config::for_tests with fields assigned rather
+than listed.
+
+MSRV: raising it is a minor version. A major version for every toolchain
+bump would make the major number about Rust rather than about crabbucket.
+
+Seven tests hold what a test can hold. Most of the document is a
+commitment rather than a property -- nothing can stop somebody renaming a
+method -- but the three surface rules and the section 5 decisions are
+checkable, and now checked.

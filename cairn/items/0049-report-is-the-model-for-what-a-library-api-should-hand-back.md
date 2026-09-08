@@ -2,7 +2,7 @@
 id: 49
 title: Report is the model for what a library API should hand back
 type: chore
-status: backlog
+status: done
 milestone: v1.0
 labels:
 - api
@@ -41,6 +41,25 @@ Fold it into the stability document (0033) rather than leaving it here.
 
 ## Acceptance criteria
 
-- [ ] The three rules above are in `doc/STABILITY`
-- [ ] The root re-exports are audited once against them
-- [ ] Anything that fails the audit is fixed or written down as deliberate
+- [x] The three rules above are in `doc/STABILITY`
+- [x] The root re-exports are audited once against them
+- [x] Anything that fails the audit is fixed or written down as deliberate
+
+## 2026-09-08
+
+Folded into 0033 as section 7, and the audit it asked for is done.
+
+The audit found eight types a caller must construct or receive that were
+not re-exported at the root: NoExtra -- which every single design system
+has to name -- FeedLink, Context, Data, DeadLink, Reason, Snippet and
+Body. Exactly the shape of the original finding, three PRs later, which is
+the argument for writing the rule down rather than remembering it.
+
+Rule 2 found one more: DeadLink had a `describe()` and no Display, so a
+caller pulling one out of Error::DeadLinks and printing it got the struct.
+
+Rule 3 was already satisfied by Report, which is where the rule came from.
+
+crates/crabbucket/tests/stability.rs holds all three by naming the types
+rather than deriving them, so adding a public type a caller must touch
+requires saying so there.

@@ -26,7 +26,6 @@
 //! because it keeps `Theme` honest: if the trait cannot be implemented from
 //! outside in thirty lines, that is worth finding out here.
 
-use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -268,11 +267,7 @@ fn build_theme<T: Theme>(fixture: &str, theme: &T) -> (Report, PathBuf) {
     ));
 
     let _ = fs::remove_dir_all(&out);
-    let options = Options {
-        out_dir: Some(out.clone()),
-        base: None,
-        ..Options::default()
-    };
+    let options = Options::new().out_dir(out.clone());
 
     let report = crabbucket::build_with(&site, theme, options)
         .unwrap_or_else(|err| panic!("`{fixture}` should build, but: {err}"));
@@ -298,11 +293,7 @@ fn build_with(fixture: &str, base: Option<&str>) -> (Result<Report, Error>, Path
     ));
 
     let _ = fs::remove_dir_all(&out);
-    let options = Options {
-        out_dir: Some(out.clone()),
-        base: base.map(|base| base.to_string()),
-        ..Options::default()
-    };
+    let options = Options::new().out_dir(out.clone()).maybe_base(base);
 
     (crabbucket::build_with(&site, &Plain, options), out)
 }
@@ -492,11 +483,7 @@ fn a_theme_without_a_router_gets_a_warning_and_a_working_site() {
     let out = std::env::temp_dir().join(format!("crabbucket-bare-{}", std::process::id()));
     let _ = fs::remove_dir_all(&out);
 
-    let options = Options {
-        out_dir: Some(out.clone()),
-        base: None,
-        ..Options::default()
-    };
+    let options = Options::new().out_dir(out.clone());
     let report = crabbucket::build_with(&site, &Bare, options).expect("should still build");
 
     assert!(
@@ -524,11 +511,7 @@ fn a_theme_without_search_writes_no_index_either() {
     let out = std::env::temp_dir().join(format!("crabbucket-bare-search-{}", std::process::id()));
     let _ = fs::remove_dir_all(&out);
 
-    let options = Options {
-        out_dir: Some(out.clone()),
-        base: None,
-        ..Options::default()
-    };
+    let options = Options::new().out_dir(out.clone());
     let report = crabbucket::build_with(&site, &Bare, options).expect("should still build");
 
     assert!(
@@ -551,11 +534,7 @@ fn a_client_nobody_loads_is_reported() {
     let out = std::env::temp_dir().join(format!("crabbucket-forgot-{}", std::process::id()));
     let _ = fs::remove_dir_all(&out);
 
-    let options = Options {
-        out_dir: Some(out.clone()),
-        base: None,
-        ..Options::default()
-    };
+    let options = Options::new().out_dir(out.clone());
     let report = crabbucket::build_with(&site, &Forgetful, options).expect("should still build");
 
     assert!(out.join("router.js").is_file(), "the client was written");
@@ -795,11 +774,7 @@ fn build_owning(fixture: &str, directives: Directives) -> (Result<Report, Error>
 
     let _ = fs::remove_dir_all(&out);
 
-    let options = Options {
-        out_dir: Some(out.clone()),
-        directives,
-        ..Options::default()
-    };
+    let options = Options::new().out_dir(out.clone()).directives(directives);
 
     (crabbucket::build_with(&site, &Plain, options), out)
 }
@@ -819,14 +794,12 @@ fn build_declaring(fixture: &str, pages: &[(&str, &str)]) -> (Result<Report, Err
 
     let _ = fs::remove_dir_all(&out);
 
-    let options = Options {
-        out_dir: Some(out.clone()),
-        pages: pages
+    let options = Options::new().out_dir(out.clone()).pages(
+        pages
             .iter()
             .map(|(route, body)| (route.to_string(), body.to_string()))
             .collect(),
-        ..Options::default()
-    };
+    );
 
     (crabbucket::build_with(&site, &Plain, options), out)
 }
@@ -927,11 +900,7 @@ fn a_declared_page_gets_the_same_frontmatter_checking() {
     let out = std::env::temp_dir().join(format!("crabbucket-declared-meta-{}", std::process::id()));
     let _ = fs::remove_dir_all(&out);
 
-    let options = Options {
-        out_dir: Some(out),
-        pages: BTreeMap::from([("made-up".to_string(), "<p>x</p>".to_string())]),
-        ..Options::default()
-    };
+    let options = Options::new().out_dir(out).page("made-up", "<p>x</p>");
 
     // `Demanding` requires a `summary`, and the declaration has none.
     let err = crabbucket::build_with(&site, &Demanding, options).expect_err("should fail");
@@ -965,11 +934,7 @@ fn a_page_missing_a_field_the_design_system_requires_fails() {
     let out = std::env::temp_dir().join(format!("crabbucket-extra-{}", std::process::id()));
     let _ = fs::remove_dir_all(&out);
 
-    let options = Options {
-        out_dir: Some(out),
-        base: None,
-        ..Options::default()
-    };
+    let options = Options::new().out_dir(out);
     let err = crabbucket::build_with(&site, &Demanding, options).expect_err("should fail");
 
     let message = err.render(false);

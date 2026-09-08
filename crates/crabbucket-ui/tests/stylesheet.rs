@@ -34,15 +34,13 @@ use crabbucket_ui::{Layout, NS, Standard};
 const HOOKS: &[&str] = &["cb-site--page", "cb-site--docs", "cb-docs__main"];
 
 fn config() -> Config {
-    Config {
-        title: "Fixture".into(),
-        description: "A fixture site.".into(),
-        url: None,
-        base: "/repo/".into(),
-        search: false,
-        feeds: Vec::new(),
-        pages: Vec::new(),
-        router: false,
+    {
+        let mut config = Config::blank();
+        config.title = "Fixture".into();
+        config.description = "A fixture site.".into();
+        config.url = None;
+        config.base = "/repo/".into();
+        config
     }
 }
 
