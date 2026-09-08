@@ -151,21 +151,69 @@ fn every_registered_directive_is_documented_by_being_usable() {
 
 #[test]
 fn the_router_stays_small() {
-    // Around 5.7KB raw, which is about 2.2KB over the wire once a server has
+    // Around 7KB raw, which is about 2.6KB over the wire once a server has
     // gzipped it.  The budget is on the raw file because that is the number
     // that grows without anyone noticing, and it is deliberately close to the
     // current size: this file is meant to stay small enough to read.
     let size = Standard.router_js().len();
-    assert!(size < 6500, "the router has grown to {size} bytes");
+    assert!(size < 7800, "the router has grown to {size} bytes");
 }
 
 #[test]
-fn the_router_carries_no_unresolved_placeholders() {
-    let js = Standard.router_js();
-    assert!(!js.contains('@'), "a placeholder reached the router: {js}");
+fn neither_client_carries_an_unresolved_placeholder() {
+    let router = Standard.router_js();
     assert!(
-        js.contains("cb-toc__link"),
+        !router.contains('@'),
+        "a placeholder reached the router: {router}"
+    );
+    assert!(
+        router.contains("cb-toc__link"),
         "the router does not know the contents class"
+    );
+
+    let search = Standard.search_js();
+    assert!(
+        !search.contains('@'),
+        "a placeholder reached the search client: {search}"
+    );
+    assert!(
+        search.contains("cb-search__result"),
+        "the client does not know the result class"
+    );
+}
+
+#[test]
+fn the_search_client_is_syntactically_valid_javascript() {
+    use std::io::Write;
+    use std::process::Command;
+
+    let Ok(probe) = Command::new("node").arg("--version").output() else {
+        eprintln!("skipping: node is not installed");
+        return;
+    };
+
+    if !probe.status.success() {
+        eprintln!("skipping: node is not usable");
+        return;
+    }
+
+    let path = std::env::temp_dir().join("crabbucket-search-check.js");
+    let mut file = std::fs::File::create(&path).expect("cannot write the client out");
+    file.write_all(Standard.search_js().as_bytes())
+        .expect("cannot write the client out");
+    drop(file);
+
+    let checked = Command::new("node")
+        .arg("--check")
+        .arg(&path)
+        .output()
+        .expect("node failed");
+    let _ = std::fs::remove_file(&path);
+
+    assert!(
+        checked.status.success(),
+        "the search client is not valid JavaScript:\n{}",
+        String::from_utf8_lossy(&checked.stderr)
     );
 }
 
@@ -301,4 +349,41 @@ fn every_contents_link_is_a_fragment_the_page_actually_has() {
             heading.id
         );
     }
+}
+
+#[test]
+fn the_router_is_syntactically_valid_javascript() {
+    use std::io::Write;
+    use std::process::Command;
+
+    // Everything else about this file is checked by reading it, which is not a
+    // check.  `node --check` is, where node exists.
+    let Ok(probe) = Command::new("node").arg("--version").output() else {
+        eprintln!("skipping: node is not installed");
+        return;
+    };
+
+    if !probe.status.success() {
+        eprintln!("skipping: node is not usable");
+        return;
+    }
+
+    let path = std::env::temp_dir().join("crabbucket-router-check.js");
+    let mut file = std::fs::File::create(&path).expect("cannot write the router out");
+    file.write_all(Standard.router_js().as_bytes())
+        .expect("cannot write the router out");
+    drop(file);
+
+    let checked = Command::new("node")
+        .arg("--check")
+        .arg(&path)
+        .output()
+        .expect("node failed");
+    let _ = std::fs::remove_file(&path);
+
+    assert!(
+        checked.status.success(),
+        "the router is not valid JavaScript:\n{}",
+        String::from_utf8_lossy(&checked.stderr)
+    );
 }

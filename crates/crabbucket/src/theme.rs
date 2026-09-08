@@ -266,6 +266,12 @@ pub trait Theme {
         Directives::new()
     }
 
+    /// The search client, written to `search.js` when the site asks for
+    /// search.  An empty string means this design system has no search.
+    fn search_js(&self) -> String {
+        String::new()
+    }
+
     /// The client router written to `router.js`, when the site asks for one.
     ///
     /// A `String` rather than a `&str` because a theme's own class names go
@@ -284,6 +290,7 @@ mod tests {
             description: String::new(),
             url: None,
             base: "/repo/".into(),
+            search: false,
             router: false,
         }
     }

@@ -303,6 +303,73 @@ fn an_unterminated_directive_fails_at_the_line_it_opened_on() {
     assert!(message.contains(":7:1:"), "got {message}");
 }
 
+// ------------------------------------------------------------------ search
+
+#[test]
+fn asking_for_search_writes_an_index_and_a_client() {
+    let (report, out) = ok("search");
+
+    assert!(out.join("search.js").is_file(), "no client");
+    assert!(
+        report.warnings.is_empty(),
+        "unexpected warnings: {:?}",
+        report.warnings
+    );
+
+    let index = read(&out, "search.json");
+    assert!(index.starts_with('['), "got {index}");
+    assert!(
+        index.contains("\"u\":\"/repo/\""),
+        "the url carries the base path: {index}"
+    );
+    assert!(index.contains("\"t\":\"Home\""), "got {index}");
+    assert!(index.contains("a-heading"), "headings are indexed: {index}");
+    assert!(
+        index.contains("searchable words"),
+        "body text is indexed: {index}"
+    );
+}
+
+#[test]
+fn the_index_is_valid_json_including_the_awkward_characters() {
+    let (_, out) = ok("search");
+    let index = read(&out, "search.json");
+
+    // The fixture contains a quote and a backslash on purpose.
+    assert!(index.contains("\\\""), "the quote was not escaped: {index}");
+    assert!(
+        index.contains("\\\\"),
+        "the backslash was not escaped: {index}"
+    );
+
+    // Parsing it as TOML's JSON-compatible value is not available, so check
+    // the one property that hand-written JSON gets wrong: balanced quoting.
+    let unescaped = index.replace("\\\\", "").replace("\\\"", "");
+    assert_eq!(
+        unescaped.matches('"').count() % 2,
+        0,
+        "unbalanced quotes: {index}"
+    );
+}
+
+#[test]
+fn the_error_page_is_not_in_the_search_index() {
+    let (_, out) = ok("search");
+    let index = read(&out, "search.json");
+
+    assert!(
+        !index.contains("Not found"),
+        "the 404 is searchable: {index}"
+    );
+}
+
+#[test]
+fn a_site_that_did_not_ask_for_search_gets_none() {
+    let (_, out) = ok("ok");
+    assert!(!out.join("search.json").exists());
+    assert!(!out.join("search.js").exists());
+}
+
 // ------------------------------------------------------------- the base path
 
 #[test]

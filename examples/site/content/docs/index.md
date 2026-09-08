@@ -22,6 +22,7 @@ behaviour that exists today, and says so plainly where it does not.
 - [Components](components/) — callouts, cards, tabs and steps
 - [Layouts](layouts/) — why a layout is a type and not a string
 - [Design systems](design-systems/) — tokens, components, and themes as crates
+- [Search](search/) — a static index and a small client
 - [The dev loop](dev-loop/) — why there is no `crab dev`
 - [Deploying](deploying/) — GitHub Pages, and what makes it work
 - [Design](design/) — the reasoning behind all of the above

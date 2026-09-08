@@ -18,6 +18,8 @@ dist/
   404.html             a file, because that is what hosts look for
   site.css
   router.js            only if the site asked for it
+  search.json          only if site.toml asks for search
+  search.js            only if site.toml asks for search
   sitemap.xml          only if site.toml has a url
   robots.txt           only if site.toml has a url
   .nojekyll

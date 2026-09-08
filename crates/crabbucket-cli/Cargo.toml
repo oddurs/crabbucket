@@ -19,3 +19,6 @@ path = "src/main.rs"
 [dependencies]
 crabbucket.workspace = true
 crabbucket-ui.workspace = true
+
+[dev-dependencies]
+toml = "0.9"

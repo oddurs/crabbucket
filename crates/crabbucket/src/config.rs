@@ -51,6 +51,13 @@ pub struct Config {
     #[serde(default = "root")]
     pub base: String,
 
+    /// Whether to build a search index and ship the client that reads it.
+    ///
+    /// Opt-in, like the router, and for the same reason: search needs script,
+    /// and a page that ships none is the thing worth defaulting to.
+    #[serde(default)]
+    pub search: bool,
+
     /// Whether to emit the client-side router.  Off by default: a site that
     /// ships no JavaScript is the thing worth defaulting to.
     #[serde(default)]

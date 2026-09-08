@@ -12,4 +12,5 @@ description = "A static site framework in Rust, where the site is a typed value.
 url = "https://oddurs.github.io/crabbucket/"
 base = "/crabbucket/"
 
+search = true
 router = true

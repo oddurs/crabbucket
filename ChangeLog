@@ -1,5 +1,38 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Finish the v0.2 milestone: all ten items.
+
+	* crates/crabbucket/src/directive.rs: New file.  A line-based,
+	fence-aware scanner and a registry that types a directive's
+	attributes before its handler sees them.
+	* crates/crabbucket/src/search.rs: New file.  The index, the JSON,
+	and the markup stripping, which keeps inline runs whole so that
+	`serde::Deserialize' is one word rather than three.
+	* crates/crabbucket/src/markdown.rs (Pass): Render directives and
+	Markdown in one pass, sharing the heading id counter across both.
+	* crates/crabbucket/src/theme.rs (Theme::directives, search_js):
+	New.  (PageMeta::order, SiteIndex::under, Page::neighbours): Reading
+	order within a section, and the links either side of a page.
+	(Page::headings): New; what a table of contents is built from.
+	* crates/crabbucket/src/config.rs (Config::search): New.
+	* crates/crabbucket/src/site.rs (Report::warnings): New.
+	* crates/crabbucket-ui/src/components.rs: New file; seven
+	directives.
+	* crates/crabbucket-ui/src/search.js: New file.
+	* crates/crabbucket-ui/src/router.js: Focus, announcement, fragment
+	targets, scroll restoration, contents highlighting, copy buttons,
+	tab memory, and prefetching.
+	* crates/crabbucket-ui/build.rs: Generate the light-scheme blocks
+	and the token tables the contrast test reads.
+	* crates/crabbucket-ui/tests/contrast.rs: New file.
+	* crates/crabbucket-cli/tests/scaffold.rs: New file; the scaffold
+	builds, and turborust accepts the config it writes.
+	* doc/DESIGN: Revise section 7 for what the router became, and
+	correct a size claim it had repeated without measuring.
+	* examples/site: Components and Search pages; docs read in order.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Finish the v0.1 milestone: all eleven items.
 
 	* crates/crabbucket/src/markdown.rs: Return Body { html, headings }.

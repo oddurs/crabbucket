@@ -30,6 +30,7 @@ use crate::config::Config;
 use crate::content::{Collection, Entry};
 use crate::error::{Error, Result};
 use crate::links::{self, Rendered};
+use crate::search;
 use crate::theme::{Page, PageMeta, PageRef, SiteIndex, Theme};
 use crate::url::Url;
 
@@ -57,6 +58,8 @@ pub struct Report {
     pub drafts: usize,
     /// How many internal links were resolved and found to exist.
     pub links: usize,
+    /// Anything the build wants the reader to know but not to stop for.
+    pub warnings: Vec<String>,
 }
 
 /// Overrides for one invocation, which the configuration file does not know
@@ -162,6 +165,10 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
         assets.insert("sitemap.xml".to_string());
         assets.insert("robots.txt".to_string());
     }
+    if config.search {
+        assets.insert("search.json".to_string());
+        assets.insert("search.js".to_string());
+    }
     assets.extend(tree(&site_dir.join("static"))?);
 
     // Route to heading ids, so a fragment link can be checked against the page
@@ -202,6 +209,28 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
         write(&out_dir.join("router.js"), &theme.router_js())?;
     }
 
+    let mut warnings = Vec::new();
+
+    if config.search {
+        let documents: Vec<search::Document<'_>> = rendered
+            .iter()
+            .filter(|(entry, _, _)| entry.route != ERROR_ROUTE)
+            .map(|(entry, url, _)| search::Document {
+                url: url.as_str(),
+                title: entry.meta.title.as_str(),
+                headings: &entry.headings,
+                text: search::plain(&entry.html),
+            })
+            .collect();
+
+        let index = search::index(&documents);
+
+        warnings.extend(search::outgrown(index.len()));
+
+        write(&out_dir.join("search.json"), &index)?;
+        write(&out_dir.join("search.js"), &theme.search_js())?;
+    }
+
     if let Some(url) = &config.url {
         write(&out_dir.join("sitemap.xml"), &sitemap(url, &config, &live))?;
         write(&out_dir.join("robots.txt"), &robots(url, &config))?;
@@ -218,6 +247,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
         out_dir,
         drafts,
         links: checked.examined,
+        warnings,
     })
 }
 
@@ -357,6 +387,7 @@ mod tests {
             description: String::new(),
             url: Some("https://example.com/".into()),
             base: base.into(),
+            search: false,
             router: false,
         }
     }

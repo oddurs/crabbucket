@@ -32,6 +32,7 @@ pub mod directive;
 pub mod error;
 pub mod links;
 pub mod markdown;
+pub mod search;
 pub mod site;
 pub mod style;
 pub mod theme;

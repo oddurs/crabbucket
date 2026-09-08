@@ -173,6 +173,9 @@ fn build(site_dir: &Path, options: &Options) -> ExitCode {
                 plural(report.links, "link", "links"),
                 display(&report.out_dir)
             );
+            for warning in &report.warnings {
+                eprintln!("{PACKAGE}: warning: {warning}");
+            }
             if report.drafts > 0 {
                 println!("{PACKAGE}: {} draft(s) skipped", report.drafts);
             }

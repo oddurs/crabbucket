@@ -181,26 +181,39 @@ restyling all of them is a version bump -- which is the actual reason to
 want first-class design systems on a fleet of small sites.
 
 
-7.  Fast by construction, no-refresh by choice
-----------------------------------------------
+7.  Fast by construction, enhanced by choice
+--------------------------------------------
 
-The output is plain static HTML and CSS.  Zero JavaScript, perfect
-Lighthouse, works in a text browser.
+The output is plain static HTML and CSS.  Zero JavaScript, works in a
+text browser, perfect Lighthouse without trying.
 
-Opt in, per site, to a router of about a kilobyte and a half over the
-wire: intercept same-origin clicks, fetch, swap `<main>', push history,
-and drive the native View Transitions API for the cross-fade.  It also
-moves focus into the new content, announces the new title through a
-polite live region, and restores scroll position on Back, because a
-client-side navigation that does none of those is a downgrade on the
-full page load it replaced.  That is the Next.js feel -- no full
-repaint, no flash -- with no hydration, no virtual DOM and no framework.
-With JavaScript off it degrades to ordinary navigation, because it is
-ordinary navigation with a click handler in front of it.
+Two things are opt-in, per site, and each ships nothing at all when it is
+not asked for:
 
-Wasm islands are a later escape hatch, deliberately not in v0.  A
-landing page and a docs site do not need them, and adding them early
-would warp every other decision.
+  router = true    a client-side navigation, tab memory, contents
+                   highlighting, copy buttons and prefetching
+  search = true    a search index and the client that reads it
+
+The router intercepts same-origin clicks, fetches, swaps `<main>', pushes
+history, and drives the native View Transitions API for the cross-fade.
+It also moves focus into the new content, announces the new title through
+a polite live region, honours fragments, and restores scroll position on
+Back -- because a client-side navigation that does none of those is a
+downgrade on the full page load it replaced.  It prefetches on hover
+after 65ms, which measurement says is worth 110 to 260ms of a 230ms page
+fetch from a CDN.
+
+That is 2.9KB gzipped, not the "about a kilobyte" this section claimed
+for its first three revisions.  The claim has been corrected rather than
+the features quietly dropped, and there is a size budget in the test
+suite so the number cannot grow again unnoticed.  It is still an order of
+magnitude below any framework, and everything in it degrades to ordinary
+navigation with scripting off, because it is ordinary navigation with
+handlers in front of it.
+
+Wasm islands are a later escape hatch, deliberately not in v0.  A landing
+page and a docs site do not need them, and adding them early would warp
+every other decision.
 
 
 8.  The dev loop is turborust
@@ -309,8 +322,7 @@ to look at what went wrong upstream of the stylesheet.
   wasm islands, i18n, image optimisation, a plugin system, incremental
   builds, MDX-style arbitrary expressions in Markdown.
 
-In v1, in roughly this order: a static search index with a small client,
-RSS, sitemap and OpenGraph image generation.
+In v1, in roughly this order: RSS, and OpenGraph image generation.
 
 
 12.  The command surface
@@ -328,9 +340,12 @@ switched on.  `crab new' is not built yet.
 13.  A note on this document
 ----------------------------
 
-Sections 3, 6 and 12 have all been revised since the first draft, in
-each case because building the thing showed the first answer to be
-wrong.  Two of those revisions removed work rather than adding it.
+Sections 3, 6, 7, 10 and 12 have all been revised since the first draft,
+in each case because building the thing showed the first answer to be
+wrong.  Two of those revisions removed work rather than adding it, one
+corrected a number the document had been repeating without measuring, and
+one -- section 10 -- replaced a macro that turned out not to be needed
+with fifteen lines that were.
 
 The document is meant to be argued with, including by whoever is
 implementing it, and a design note that has never been overruled by

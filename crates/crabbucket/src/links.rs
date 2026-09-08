@@ -333,6 +333,7 @@ mod tests {
             description: String::new(),
             url: None,
             base: base.into(),
+            search: false,
             router: false,
         }
     }

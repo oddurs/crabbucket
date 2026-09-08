@@ -55,7 +55,10 @@ url = "https://me.github.io/my-project/"
 # under /repo/; a user site or a custom domain lives at /.
 base = "/my-project/"
 
-# Ship the client router: ~1.6KB gzipped. Off by default.
+# Build a search index and ship the client that reads it. Off by default.
+search = true
+
+# Ship the client router. Off by default.
 router = true
 ```
 

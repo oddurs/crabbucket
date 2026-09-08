@@ -36,6 +36,13 @@ defensible thing in the tree.
 
 ## The config
 
+Everything below describes turborust as of **2026-09-08**. It is a separate
+project under active development, and it is not a dependency of crabbucket —
+so the scaffolded config is checked two ways rather than assumed. A test
+asserts its structure always, and runs `turborust plan` against it wherever
+turborust is installed.
+
+
 `turborust.toml`, at the repository root:
 
 ```toml
@@ -60,6 +67,34 @@ Note what is not there: watch globs. `cargo = "crabbucket-cli"` derives them.
 thing — print a one-line diagnostic pointing at `turborust up` and exit 2.
 A missing command that says where the command went is better than a missing
 command.
+
+## The commands
+
+As of 2026-09-08:
+
+```
+turborust up [targets…]     start services and keep them running (TUI)
+turborust run <task>…       run tasks once, in order, honouring the cache
+turborust why <task>        why would this run — or not — right now
+turborust doctor            what is costing you seconds on every rebuild
+turborust plan              the resolved graph, with derived globs
+turborust connect <node>    attach this terminal to a running process
+turborust init              scaffold a config from your Cargo workspace
+turborust schema            JSON Schema for turborust.toml
+turborust completions <sh>  shell completion script
+turborust man               the man page
+turborust clean             drop cached task results
+```
+
+`turborust schema` is the one worth knowing about from here: it emits a JSON
+Schema for `turborust.toml`, which is a better long-term answer than the
+structural test crabbucket currently keeps.
+
+## A note on licences
+
+turborust is MIT OR Apache-2.0 and crabbucket is GPL-3.0-or-later, so code
+may move from turborust into crabbucket but not the other way. Worth knowing
+before anything useful gets written in the wrong repository.
 
 ## Dogfooding, structurally
 

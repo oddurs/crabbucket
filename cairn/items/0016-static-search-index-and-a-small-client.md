@@ -2,7 +2,7 @@
 id: 16
 title: Static search index and a small client
 type: feature
-status: backlog
+status: done
 milestone: v0.2
 created: 2026-09-08
 updated: 2026-09-08
@@ -38,9 +38,38 @@ the honest thing is to say so rather than to ship a slow page.
 
 ## Acceptance criteria
 
-- [ ] `search.json` emitted with route, title, headings, and text
-- [ ] Index fetched lazily, not on page load
-- [ ] Title and heading matches rank above body matches
-- [ ] Full keyboard operation
-- [ ] Absent JavaScript, the search UI is simply not shown
-- [ ] Build warns when the index grows past the size this design suits
+- [x] `search.json` emitted with route, title, headings, and text
+- [x] Index fetched lazily, not on page load
+- [x] Title and heading matches rank above body matches
+- [x] Full keyboard operation
+- [x] Absent JavaScript, the search UI is simply not shown
+- [x] Build warns when the index grows past the size this design suits
+
+## 2026-09-08
+
+Done. The index is the pages, scanned linearly: for tens of pages that is
+faster than parsing an inverted index would be, and a tenth of the code.
+33KB for this site, 12KB over the wire. Past 300KB the build warns rather
+than quietly shipping a slow page, and that threshold is a function that
+can be tested rather than a comparison buried in the build.
+
+Two extraction bugs, both found by reading the built index rather than by
+a test, and both now tested:
+
+Every tag was treated as a word boundary. Syntax highlighting wraps every
+token in a span, so `serde::Deserialize` was being indexed as three words
+and was unfindable. Inline tags no longer separate; block tags still do.
+
+Heading permalinks were in the index. The `#` beside every heading landed
+between the heading and the paragraph after it.
+
+The JSON is written by hand -- three string fields and an array -- with
+escaping that covers what the specification requires and leaves UTF-8
+alone. The integration test parses the built index to confirm it is real
+JSON rather than merely plausible.
+
+The index URL comes from a data attribute on the form rather than being
+substituted into the client, because it carries the site's base path and
+the client should not know there is one. The first version substituted a
+placeholder that was never replaced; the test that now checks both
+clients for leftover placeholders would have caught it.

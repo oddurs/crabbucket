@@ -1,0 +1,49 @@
+/* The search box in the masthead.
+ *
+ * It ships hidden and the client unhides it, so a reader without script sees
+ * no search box rather than one that does nothing. */
+
+.& { position: relative; }
+
+.&__input {
+  font: inherit;
+  font-size: var(--size-step--1);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem var(--space-sm);
+  width: 12rem;
+  max-width: 40vw;
+}
+
+.&__input:focus-visible { outline: 2px solid var(--color-link); outline-offset: 1px; }
+.&__input::placeholder { color: var(--color-text-muted); }
+
+.&__results {
+  position: absolute;
+  top: calc(100% + var(--space-xs));
+  right: 0;
+  z-index: 10;
+  min-width: 18rem;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.&__result {
+  padding: var(--space-xs) var(--space-md);
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: var(--size-step--1);
+}
+
+.&__result:hover, .&__result[aria-selected="true"] {
+  background: var(--color-surface);
+  color: var(--color-accent);
+  outline: none;
+}

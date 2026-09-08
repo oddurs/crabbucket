@@ -1,5 +1,49 @@
 GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
 
+* Noteworthy changes in release 0.2.0 (unreleased) [alpha]
+
+** New features
+
+  Markdown reaches typed components through directives:
+
+    :::callout{kind = "warn", title = "Careful"}
+    crabbucket needs Rust 1.85 or newer.
+    :::
+
+  Attributes are a TOML inline table and deserialize into the component's
+  own props type, so a misspelled one fails the build with the file and
+  the line.  A directive written inside a fenced code block is left alone.
+
+  Seven components ship with the default design system: callout, cards,
+  card, tabs, tab, steps and step.  The tabs use no JavaScript at all.
+
+  A table of contents, built from the same heading list that fragment
+  links are checked against.  Pages with fewer than three headings get
+  none.
+
+  A light palette, declared in design/tokens.toml under `[color.light]'
+  and `[syntax.light]'.  No component changed to gain it.  Contrast is
+  asserted by a test rather than judged by eye.
+
+  Pages gained an `order' field, which sets reading order within a
+  section: the sidebar, and the new previous and next links.  It is
+  separate from `nav_order', which decides membership of the masthead.
+
+  `search = true' builds a search index and ships the client that reads
+  it.  The index is the pages, scanned linearly, which for tens of pages
+  beats parsing an inverted index.  Past 300KB the build says so.
+
+  With `router = true', the router now also moves focus into the new
+  content, announces the new title, honours fragments, restores scroll
+  position on Back, highlights the contents entry in view, adds copy
+  buttons to code blocks, remembers a chosen tab, and prefetches on hover.
+
+** Corrections
+
+  The router is 2.9KB gzipped, not the "about a kilobyte" claimed since
+  the first commit.  The number is corrected in README, doc/DESIGN and on
+  the site, and a test now holds it to a budget.
+
 * Noteworthy changes in release 0.1.0 (unreleased) [alpha]
 
 ** New features

@@ -117,13 +117,19 @@ impl Theme for Standard {
 
     fn stylesheet(&self) -> String {
         let mut sheet = StyleSheet::new();
-        sheet.extend([SITE, MASTHEAD, PROSE, DOCS, TOC, NEIGHBOURS, COPY, COLOPHON]);
+        sheet.extend([
+            SITE, MASTHEAD, PROSE, DOCS, TOC, NEIGHBOURS, COPY, SEARCH, COLOPHON,
+        ]);
         sheet.extend(components::STYLES.iter().copied());
         format!("{}\n{}", tok::CSS, sheet.render())
     }
 
     fn directives(&self) -> Directives {
         components::directives()
+    }
+
+    fn search_js(&self) -> String {
+        search_js()
     }
 
     fn router_js(&self) -> String {
@@ -323,6 +329,7 @@ pub fn document(
                         (config.title)
                     }
                     nav class=(MASTHEAD.element("nav")) { (nav_list(nav)) }
+                    @if config.search { (search_form(config)) }
                 }
                 main class=(SITE.element("main")) { (content) }
                 footer class=(COLOPHON.class()) {
@@ -333,6 +340,28 @@ pub fn document(
                     }
                 }
             }
+        }
+    }
+}
+
+/// The search box.
+///
+/// It ships `hidden` and the client unhides it, so a reader without script
+/// sees no search box rather than one that does nothing.  The index URL is
+/// built through [`Url::asset`] like every other, so search works under a base
+/// path without knowing there is one.
+pub fn search_form(config: &Config) -> Markup {
+    html! {
+        form class=(SEARCH.class())
+             role="search"
+             data-index=(Url::asset(config, "search.json"))
+             hidden {
+            input class=(SEARCH.element("input"))
+                  type="search"
+                  placeholder="Search…"
+                  aria-label="Search this site"
+                  autocomplete="off";
+            div class=(SEARCH.element("results")) hidden {}
         }
     }
 }
@@ -372,6 +401,9 @@ pub const DOCS: Style = Style::new(NS, "docs", include_str!("styles/docs.css"));
 /// The table of contents.
 pub const TOC: Style = Style::new(NS, "toc", include_str!("styles/toc.css"));
 
+/// The search box, and the results under it.
+pub const SEARCH: Style = Style::new(NS, "search", include_str!("styles/search.css"));
+
 /// The copy button the router adds to code blocks.
 pub const COPY: Style = Style::new(NS, "copy", include_str!("styles/copy.css"));
 
@@ -381,7 +413,16 @@ pub const NEIGHBOURS: Style = Style::new(NS, "neighbours", include_str!("styles/
 /// The footer.
 pub const COLOPHON: Style = Style::new(NS, "colophon", include_str!("styles/colophon.css"));
 
+/// The search client, with this design system's own class names in it.
+pub fn search_js() -> String {
+    SEARCH_CLIENT
+        .replace("@FORM@", &format!(".{}", SEARCH.class()))
+        .replace("@RESULTS@", &format!(".{}", SEARCH.element("results")))
+        .replace("@RESULT@", &SEARCH.element("result"))
+}
+
 const ROUTER: &str = include_str!("router.js");
+const SEARCH_CLIENT: &str = include_str!("search.js");
 
 #[cfg(test)]
 mod tests {

@@ -51,8 +51,9 @@ At a glance
               system is a crate you depend on.
   Layouts     An associated type on the theme, so a layout that does
               not exist fails the build listing the ones that do.
-  Client      Zero JavaScript by default; opt in to a ~1.6KB router (gzipped) that
-              swaps <main> and drives View Transitions.
+  Client      Zero JavaScript by default.  Opt in to a 2.9KB gzipped
+              router -- navigation, prefetching, copy buttons -- and to
+              search.  Each ships nothing when it is not asked for.
   Dev loop    turborust.  crabbucket ships no dev server of its own.
 
 

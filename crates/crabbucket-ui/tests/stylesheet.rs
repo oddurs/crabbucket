@@ -39,6 +39,7 @@ fn config() -> Config {
         description: "A fixture site.".into(),
         url: None,
         base: "/repo/".into(),
+        search: false,
         router: false,
     }
 }
