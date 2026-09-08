@@ -1,5 +1,33 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Measure the build against Hugo and Zola, and publish the result.
+
+	* bench/: New crate.  `generate' writes the same synthetic site three
+	ways; `time' reports the fastest of three runs for each; `budget'
+	fails if crabbucket is slower than a given ceiling.  The frontmatter
+	is the intersection of what the three accept, so the input is
+	byte-for-byte identical.
+	* crates/crabbucket/src/site.rs (Timings): New; the four passes a
+	build makes.
+	(Report): New member `timings'.  `Display' does not print it: a build
+	budget is the caller's business, not something `crab build' should
+	recite.
+	(build_with): Measure the four passes.
+	* crates/crabbucket/src/lib.rs: Re-export `Timings'.
+	* crates/crabbucket/tests/build.rs: Assert every pass is measured and
+	that the parts sum to the total, which is all that can be asserted
+	about a duration without asserting about the machine.
+	* .github/workflows/ci.yml (budget): New job.  A loose ceiling on
+	purpose; a budget that fails on a shared runner's noise is a budget
+	nobody reads.
+	* examples/site/content/docs/speed.md: New; the numbers, including
+	that Hugo is about twice as fast.
+	* examples/site/content/docs/index.md,
+	examples/site/content/docs/design.md, doc/DESIGN: Link and cite it.
+	* doc/STABILITY: `Timings' is covered, and `#[non_exhaustive]'.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Validate the scaffolded turborust.toml against turborust's schema.
 
 	* crates/crabbucket-cli/schema/turborust.json: New; vendored from

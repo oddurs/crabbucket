@@ -26,6 +26,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::{Duration, Instant};
 
 use toml::value::Datetime;
 
@@ -146,6 +147,38 @@ type Rendering<'a, T> = (
     String,
 );
 
+/// Where a build spent its time.
+///
+/// Four passes, measured on a monotonic clock, that between them account for
+/// nearly all of a build: everything else is a handful of `String`s.  They are
+/// reported rather than logged because a build budget belongs in the caller's
+/// CI, not in a flag on this crate.
+///
+/// The four do not sum exactly to wall-clock time -- the small amount of work
+/// between them is not attributed to anything -- so [`total`](Timings::total)
+/// is the sum of the parts and not a measurement of the whole.
+#[non_exhaustive]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct Timings {
+    /// Reading the configuration, the data files and the content, including
+    /// parsing every page's Markdown and highlighting its code.
+    pub read: Duration,
+    /// Handing each page to the design system, and drawing any social cards.
+    pub render: Duration,
+    /// Resolving every internal link against the finished set of routes.
+    pub check: Duration,
+    /// Writing the pages, the assets, the feeds and the static tree.
+    pub write: Duration,
+}
+
+impl Timings {
+    /// The sum of the four passes.
+    #[must_use]
+    pub fn total(&self) -> Duration {
+        self.read + self.render + self.check + self.write
+    }
+}
+
 /// What a build produced, for the benefit of whoever asked for it.
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -160,6 +193,8 @@ pub struct Report {
     pub links: usize,
     /// Anything the build wants the reader to know but not to stop for.
     pub warnings: Vec<String>,
+    /// Where the build spent its time.
+    pub timings: Timings,
 }
 
 impl Report {
@@ -308,6 +343,9 @@ pub fn build<T: Theme>(site_dir: &Path, theme: &T) -> Result<Report> {
 ///
 /// As [`build`].
 pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: Options) -> Result<Report> {
+    let mut timings = Timings::default();
+    let clock = Instant::now();
+
     let mut config = Config::load(site_dir)?;
     if let Some(base) = &options.base {
         config.set_base(base);
@@ -344,6 +382,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: Options) -> Res
     // Pages the site rendered itself, checked against what it declared and
     // then treated exactly like content.
     let declared = declared_pages::<T>(site_dir, &config, &options.pages)?;
+    timings.read = clock.elapsed();
 
     // A route claimed twice is one of them silently winning, which is exactly
     // the class of failure this project exists to refuse.
@@ -437,6 +476,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: Options) -> Res
     }
 
     let cache = site_dir.join(CACHE);
+    let clock = Instant::now();
     let mut cards: Vec<(String, Vec<u8>)> = Vec::new();
     let mut rendered: Vec<Rendering<'_, T>> = Vec::with_capacity(live.len() + error_page.len());
     for entry in live.iter().chain(error_page.iter()) {
@@ -482,6 +522,8 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: Options) -> Res
             links::absolutize(&theme.render(&page), &config),
         ));
     }
+
+    timings.render = clock.elapsed();
 
     // What the site asked for, and what the design system actually has.  A
     // mismatch is worth saying and not worth stopping for: the page still
@@ -540,7 +582,10 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: Options) -> Res
         })
         .collect();
 
+    let clock = Instant::now();
     let checked = links::check(&config, &pages, &routes, &assets);
+    timings.check = clock.elapsed();
+
     if !checked.dead.is_empty() {
         return Err(Error::DeadLinks(checked.dead));
     }
@@ -553,6 +598,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: Options) -> Res
     warnings.extend(unloaded("router.js", router.is_some(), &checked.referenced));
     warnings.extend(unloaded("search.js", search.is_some(), &checked.referenced));
 
+    let clock = Instant::now();
     for (entry, _, html) in &rendered {
         write(&page_path(&out_dir, &entry.route), html)?;
     }
@@ -649,6 +695,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: Options) -> Res
     write(&out_dir.join(".nojekyll"), "")?;
 
     copy_tree(&site_dir.join("static"), &out_dir)?;
+    timings.write = clock.elapsed();
 
     Ok(Report {
         routes: live.iter().map(|entry| entry.route.clone()).collect(),
@@ -656,6 +703,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: Options) -> Res
         drafts,
         links: checked.examined,
         warnings,
+        timings,
     })
 }
 

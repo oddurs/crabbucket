@@ -13,8 +13,20 @@ Layout
   crates/crabbucket-cli  the `crab' executable, a thin front end
   crates/crabbucket-ui   the default design system; its build.rs
                          generates the token module
+  crates/crabbucket-theme-plain
+                         a second design system, which exists so the
+                         seam is a seam and not a habit
+  crates/crabbucket-tokens
+                         the token generator, and the contrast maths
+  crates/crabbucket-routes
+                         route derivation, and the `Route' enum a site
+                         crate generates
+  crates/crabbucket-og   social cards
   design/tokens.toml     the token source of truth
   examples/site          crabbucket's own site
+  examples/site-crate    a site that is a crate: typed routes, its own
+                         theme and its own directive
+  bench                  a synthetic site, and the clock
 
 
 The dev loop
@@ -44,6 +56,30 @@ generated from them and should not be edited by hand.
 Do not open a TODO file.  An item that is not in `cairn/items' is not on
 the roadmap, and a roadmap that drifts from the work is the rot the tool
 exists to prevent.  AGENTS.md says the same thing to coding agents.
+
+
+Measuring
+---------
+
+  cargo run --release -p crabbucket-bench -- generate 500 /tmp/bench
+  cargo run --release -p crabbucket-bench -- time /tmp/bench
+
+`generate' writes the same pages three ways -- crabbucket, Hugo and Zola
+-- and `time' reports the fastest of three runs for each, plus a
+breakdown of crabbucket's four passes.  Hugo and Zola are skipped if they
+are not installed.  Release mode, always: a debug build measures rustc.
+
+The numbers, and what they say, are on the Speed page of the site.  They
+are not all flattering, and that is the point of having them.
+
+CI runs the third subcommand:
+
+  cargo run --release -p crabbucket-bench -- budget bench-site 2000
+
+which fails if the build is slower than the ceiling.  The ceiling is
+loose on purpose.  A shared runner varies by more than any change worth
+making, and a budget that fails on noise is a budget people rerun until
+it passes.
 
 
 Before sending a patch

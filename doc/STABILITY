@@ -22,9 +22,9 @@ theme crate touches in order to be one -- `Page', `PageMeta', `NavItem',
 `Context', `Data'.
 
 **The library surface.**  `build', `build_with', `Options', `Report',
-`Config', `Url', `Collection', `Entry', `Error', `Result', `Heading',
-`Body', `DeadLink', `Reason', `Snippet', `Feed', and the modules they
-live in.
+`Timings', `Config', `Url', `Collection', `Entry', `Error', `Result',
+`Heading', `Body', `DeadLink', `Reason', `Snippet', `Feed', and the
+modules they live in.
 
 **The executable.**  `crab' commands, options, the shape of what it
 prints, and its exit statuses: 0 for success, 1 for a site that is wrong,
@@ -94,6 +94,8 @@ Deciding that later is itself the breaking change, so it is decided now.
                            0.1 and 0.3, and will grow again
   Config, Options, Report  read or built by callers, and each has gained
                            fields in every release so far
+  Timings                  a pass is an implementation detail; splitting
+                           one in two must not be a breaking change
 
 `Options' is therefore built with `Options::new()' and its methods rather
 than as a literal, which is nicer to read and cannot break.  `Config' is

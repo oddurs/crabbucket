@@ -18,10 +18,12 @@ ago, a stylesheet 404ing because the site is served from /repo/ and not
 from /.
 
 Rust's advantage here is not speed.  Any generator is fast enough for a
-forty-page docs site; Hugo builds it in 30ms and nobody is unhappy.  The
-advantage is that Rust can make the whole site a *typed value*, so that
-entire class of bug stops being a runtime surprise and becomes a compile
-error.
+forty-page docs site; Hugo builds it in 30ms and nobody is unhappy.  This
+is not a hedge: on 521 generated pages crabbucket takes 250ms, Hugo 145ms
+and Zola 314ms, so Hugo is about twice as fast and that is simply the
+result (`bench/`, and the Speed page on the site).  The advantage is that
+Rust can make the whole site a *typed value*, so that entire class of bug
+stops being a runtime surprise and becomes a compile error.
 
   The build either fails, or the site is correct.
 

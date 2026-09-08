@@ -3,6 +3,9 @@
 /examples/site/.crabbucket
 /examples/site-crate/.crabbucket
 /examples/site-crate/dist
+# What the CI budget job generates.
+/bench-site
+
 **/*.rs.bk
 *.pdb
 .DS_Store
