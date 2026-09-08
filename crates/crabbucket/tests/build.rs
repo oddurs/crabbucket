@@ -26,6 +26,7 @@
 //! because it keeps `Theme` honest: if the trait cannot be implemented from
 //! outside in thirty lines, that is worth finding out here.
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -270,6 +271,7 @@ fn build_theme<T: Theme>(fixture: &str, theme: &T) -> (Report, PathBuf) {
     let options = Options {
         out_dir: Some(out.clone()),
         base: None,
+        ..Options::default()
     };
 
     let report = crabbucket::build_with(&site, theme, &options)
@@ -299,6 +301,7 @@ fn build_with(fixture: &str, base: Option<&str>) -> (Result<Report, Error>, Path
     let options = Options {
         out_dir: Some(out.clone()),
         base: base.map(|base| base.to_string()),
+        ..Options::default()
     };
 
     (crabbucket::build_with(&site, &Plain, &options), out)
@@ -492,6 +495,7 @@ fn a_theme_without_a_router_gets_a_warning_and_a_working_site() {
     let options = Options {
         out_dir: Some(out.clone()),
         base: None,
+        ..Options::default()
     };
     let report = crabbucket::build_with(&site, &Bare, &options).expect("should still build");
 
@@ -523,6 +527,7 @@ fn a_theme_without_search_writes_no_index_either() {
     let options = Options {
         out_dir: Some(out.clone()),
         base: None,
+        ..Options::default()
     };
     let report = crabbucket::build_with(&site, &Bare, &options).expect("should still build");
 
@@ -549,6 +554,7 @@ fn a_client_nobody_loads_is_reported() {
     let options = Options {
         out_dir: Some(out.clone()),
         base: None,
+        ..Options::default()
     };
     let report = crabbucket::build_with(&site, &Forgetful, &options).expect("should still build");
 
@@ -692,6 +698,148 @@ fn a_site_that_did_not_ask_for_search_gets_none() {
     assert!(!out.join("search.js").exists());
 }
 
+// ---------------------------------------------- pages the site renders itself
+
+/// Builds a fixture with bodies for the pages it declares.
+fn build_declaring(fixture: &str, pages: &[(&str, &str)]) -> (Result<Report, Error>, PathBuf) {
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+
+    let site = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/sites")
+        .join(fixture);
+    let out = std::env::temp_dir().join(format!(
+        "crabbucket-declared-{}-{}-{fixture}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+
+    let _ = fs::remove_dir_all(&out);
+
+    let options = Options {
+        out_dir: Some(out.clone()),
+        pages: pages
+            .iter()
+            .map(|(route, body)| (route.to_string(), body.to_string()))
+            .collect(),
+        ..Options::default()
+    };
+
+    (crabbucket::build_with(&site, &Plain, &options), out)
+}
+
+#[test]
+fn a_page_the_site_rendered_is_a_page_like_any_other() {
+    let (result, out) = build_declaring("declared", &[("made-up", "<p>from Rust</p>")]);
+    let report = result.expect("should build");
+
+    assert!(
+        report.routes.contains(&"made-up".to_string()),
+        "got {:?}",
+        report.routes
+    );
+
+    let html = read(&out, "made-up/index.html");
+    assert!(
+        html.contains("<p>from Rust</p>"),
+        "the body did not reach the page: {html}"
+    );
+    assert!(
+        html.contains("<title>Made up"),
+        "the declared title was not used: {html}"
+    );
+
+    // In the navigation, because it declared a nav_order.
+    let other = read(&out, "other/index.html");
+    assert!(other.contains("made-up/"), "not in the navigation: {other}");
+}
+
+#[test]
+fn a_declared_page_is_link_checked_like_any_other() {
+    let (result, _) = build_declaring("declared", &[("made-up", r#"<a href="/nowhere/">x</a>"#)]);
+
+    let Err(Error::DeadLinks(dead)) = result else {
+        panic!("a dead link in a rendered page should fail");
+    };
+
+    assert_eq!(dead.len(), 1);
+    assert!(
+        dead[0].source.ends_with("site.toml"),
+        "it names where the page was declared"
+    );
+}
+
+#[test]
+fn declaring_a_page_and_not_rendering_it_fails() {
+    let (result, _) = build_declaring("unrendered", &[]);
+    let err = result.expect_err("should fail");
+
+    assert!(matches!(err, Error::Unrendered { .. }));
+    assert!(
+        err.render(false).contains("`promised` is declared"),
+        "got {}",
+        err.render(false)
+    );
+}
+
+#[test]
+fn rendering_a_page_and_not_declaring_it_fails() {
+    // The reverse, and just as important: a page with a body and no title,
+    // no layout and no place in the navigation is not a page.
+    let (result, _) = build_declaring(
+        "declared",
+        &[
+            ("made-up", "<p>fine</p>"),
+            ("surprise", "<p>not declared</p>"),
+        ],
+    );
+
+    let err = result.expect_err("should fail");
+    assert!(matches!(err, Error::Undeclared { .. }));
+    assert!(
+        err.render(false).contains("`surprise`"),
+        "got {}",
+        err.render(false)
+    );
+}
+
+#[test]
+fn declaring_a_page_at_a_route_the_content_already_has_fails() {
+    let (result, _) = build_declaring("collides", &[("other", "<p>x</p>")]);
+    let err = result.expect_err("should fail");
+
+    assert!(matches!(err, Error::Collides { .. }));
+    assert!(
+        err.render(false).contains("`other`"),
+        "got {}",
+        err.render(false)
+    );
+}
+
+#[test]
+fn a_declared_page_gets_the_same_frontmatter_checking() {
+    // `layout` and any extra fields are the design system's types, so a
+    // declared page is checked exactly as a written one is.
+    let site = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/sites/declared");
+    let out = std::env::temp_dir().join(format!("crabbucket-declared-meta-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&out);
+
+    let options = Options {
+        out_dir: Some(out),
+        pages: BTreeMap::from([("made-up".to_string(), "<p>x</p>".to_string())]),
+        ..Options::default()
+    };
+
+    // `Demanding` requires a `summary`, and the declaration has none.
+    let err = crabbucket::build_with(&site, &Demanding, &options).expect_err("should fail");
+    let message = err.render(false);
+
+    assert!(
+        message.contains("site.toml"),
+        "it names where the page was declared: {message}"
+    );
+    assert!(message.contains("missing field `summary`"), "got {message}");
+}
+
 // -------------------------------------------------- frontmatter a site adds
 
 #[test]
@@ -716,6 +864,7 @@ fn a_page_missing_a_field_the_design_system_requires_fails() {
     let options = Options {
         out_dir: Some(out),
         base: None,
+        ..Options::default()
     };
     let err = crabbucket::build_with(&site, &Demanding, &options).expect_err("should fail");
 

@@ -80,6 +80,39 @@ pub fn route_of(path: &Path, root: &Path) -> String {
     route
 }
 
+/// The routes a site declares in `site.toml` under `[[page]]`.
+///
+/// A site that renders some of its own pages needs them in the generated
+/// enum too, and only the configuration file knows about them -- the content
+/// directory does not.
+///
+/// # Errors
+///
+/// Fails if the file cannot be read or is not valid TOML.
+pub fn declared(site_toml: &Path) -> Result<Vec<String>, Error> {
+    let source = fs::read_to_string(site_toml)
+        .map_err(|err| Error(format!("{}: {err}", site_toml.display())))?;
+
+    let config: toml::Table = source
+        .parse()
+        .map_err(|err| Error(format!("{}: {err}", site_toml.display())))?;
+
+    let mut found: Vec<String> = config
+        .get("page")
+        .and_then(|pages| pages.as_array())
+        .map(|pages| {
+            pages
+                .iter()
+                .filter_map(|page| page.get("route")?.as_str())
+                .map(|route| route.trim_matches('/').to_string())
+                .collect()
+        })
+        .unwrap_or_default();
+
+    found.sort();
+    Ok(found)
+}
+
 /// Every route below `root`, sorted, with the files they came from.
 ///
 /// # Errors
@@ -233,6 +266,39 @@ mod tests {
     use std::path::Path;
 
     use super::{generate, route_of, variant, watch};
+
+    #[test]
+    fn declared_routes_come_out_of_the_configuration() {
+        use std::io::Write;
+
+        let path =
+            std::env::temp_dir().join(format!("crabbucket-declared-{}.toml", std::process::id()));
+        let mut file = std::fs::File::create(&path).expect("cannot write");
+
+        write!(
+            file,
+            "title = \"t\"\n\n[[page]]\nroute = \"\"\ntitle = \"Home\"\n\n[[page]]\nroute = \"about\"\ntitle = \"About\"\n"
+        )
+        .expect("cannot write");
+        drop(file);
+
+        assert_eq!(super::declared(&path).unwrap(), ["", "about"]);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn a_configuration_with_no_declared_pages_declares_none() {
+        use std::io::Write;
+
+        let path =
+            std::env::temp_dir().join(format!("crabbucket-none-{}.toml", std::process::id()));
+        let mut file = std::fs::File::create(&path).expect("cannot write");
+        writeln!(file, "title = \"t\"").expect("cannot write");
+        drop(file);
+
+        assert!(super::declared(&path).unwrap().is_empty());
+        let _ = std::fs::remove_file(&path);
+    }
 
     #[test]
     fn a_path_below_the_root_is_a_route() {

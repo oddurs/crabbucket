@@ -1,0 +1,6 @@
+title = "Fixture"
+base = "/"
+
+[[page]]
+route = "other"
+title = "Other, again"

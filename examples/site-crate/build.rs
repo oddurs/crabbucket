@@ -17,7 +17,16 @@ fn main() {
     print!("{}", crabbucket_routes::watch(&content, &found));
     println!("cargo::rerun-if-changed=build.rs");
 
-    let routes: Vec<String> = found.into_iter().map(|(route, _)| route).collect();
+    // The site renders some of its own pages.  They are in the enum too, or a
+    // link to one would be the only untyped link on the site.
+    let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("site.toml");
+    println!("cargo::rerun-if-changed={}", manifest.display());
+
+    let mut routes: Vec<String> = found.into_iter().map(|(route, _)| route).collect();
+    routes.extend(
+        crabbucket_routes::declared(&manifest)
+            .unwrap_or_else(|err| panic!("{}: {err}", manifest.display())),
+    );
     let module = crabbucket_routes::generate(&routes)
         .unwrap_or_else(|err| panic!("{}: {err}", content.display()));
 

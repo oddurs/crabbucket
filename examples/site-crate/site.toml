@@ -3,6 +3,16 @@ description = "A crabbucket site built as a crate, with routes it cannot get wro
 url = "https://example.com/"
 base = "/"
 
+# The landing page is rendered by src/main.rs rather than written as
+# Markdown, because it is a composition rather than prose.  Declaring it here
+# is what gives it a title and a place in the navigation, and what lets
+# build.rs put it in the generated Route enum.
+[[page]]
+route = ""
+title = "Typed routes"
+nav_order = 1
+nav_label = "Home"
+
 # A dated collection, and the feeds that carry it.  Configuring one is how a
 # site says its pages are dated: an undated page under `notes/` now fails the
 # build naming itself.

@@ -4,9 +4,11 @@
 //! compiler, which is the half of link safety that content -- having no
 //! compiler -- cannot have.
 
+use std::collections::BTreeMap;
 use std::path::Path;
 use std::process::ExitCode;
 
+use crabbucket::site::Options;
 use crabbucket::{Config, Url};
 use crabbucket_theme_plain::Plain;
 use maud::{Markup, html};
@@ -43,8 +45,40 @@ pub fn read_more(config: &Config) -> Markup {
     link(config, Route::DocsRouting, "The route table")
 }
 
+/// The landing page, which is a composition rather than prose.
+///
+/// This is what `[[page]]` in `site.toml` is for: a page whose body is Rust.
+/// It is declared there, rendered here, and from then on it is a page like
+/// any other -- in the navigation, in the sitemap, link-checked, and in the
+/// `Route` enum.
+pub fn landing(config: &Config) -> Markup {
+    html! {
+        h1 { "Typed routes" }
+        p {
+            "This page has no Markdown file. Its body is the function you are "
+            "reading, and it is still a route the compiler knows about."
+        }
+        (sitemap(config))
+    }
+}
+
 fn main() -> ExitCode {
-    match crabbucket::build(Path::new(env!("CARGO_MANIFEST_DIR")), &Plain) {
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+
+    let config = match Config::load(dir) {
+        Ok(config) => config,
+        Err(err) => {
+            eprintln!("crabbucket-example-site: {err}");
+            return ExitCode::FAILURE;
+        }
+    };
+
+    let options = Options {
+        pages: BTreeMap::from([(String::new(), landing(&config).into_string())]),
+        ..Options::default()
+    };
+
+    match crabbucket::build_with(dir, &Plain, &options) {
         Ok(report) => {
             println!("{report}");
             ExitCode::SUCCESS
@@ -72,6 +106,7 @@ mod tests {
             base: "/repo/".into(),
             search: false,
             feeds: Vec::new(),
+            pages: Vec::new(),
             router: false,
         }
     }

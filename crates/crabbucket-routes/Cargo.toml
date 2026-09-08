@@ -12,5 +12,9 @@ license.workspace = true
 repository.workspace = true
 readme.workspace = true
 
-# No dependencies, deliberately.  This is compiled during a site's build phase,
-# before anything else, and a Markdown parser has no business being there.
+# One dependency.  This is compiled during a site's build phase, before
+# anything else, so `toml` -- needed to read the pages a site declares in
+# site.toml -- is the most that belongs here.  A Markdown parser does not.
+
+[dependencies]
+toml = "0.9"

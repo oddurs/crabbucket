@@ -1,5 +1,21 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Let a site add a page that is not a Markdown file.
+
+	* crates/crabbucket/src/config.rs (Config::pages): New; the pages a
+	site renders itself, held raw because their layout and extra fields
+	are the design system's types.
+	* crates/crabbucket/src/site.rs (Options::pages, declared_pages):
+	New.  Deserialize each declaration into the design system's types
+	and pair it with the body the site supplied.
+	* crates/crabbucket/src/error.rs (Unrendered, Undeclared, Collides):
+	New.  Half-adding a page, and claiming a route twice.
+	* crates/crabbucket-routes/src/lib.rs (declared): New, so build.rs
+	puts those routes in the enum.  Gains a dependency on toml.
+	* examples/site-crate: The landing page is now rendered from Rust.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Let a design system declare the frontmatter it reads.
 
 	* crates/crabbucket/src/theme.rs (Theme::Extra, NoExtra): New.

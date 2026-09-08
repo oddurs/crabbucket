@@ -58,6 +58,13 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
   `Page' is now generic over the theme rather than over its layout, so
   signatures gained nothing despite the frontmatter gaining a type.
 
+  A site can add a page whose body it rendered itself.  It declares the
+  page in site.toml under `[[page]]' and supplies the body through
+  `Options::pages'; from there it is a page like any other -- navigation,
+  sitemap, search, link checking, a social card, and the generated Route
+  enum.  Declaring without rendering, rendering without declaring, and
+  claiming a route the content already has are all errors.
+
 ** Bug fixes
 
   A link to a route without a trailing slash -- `/docs/agents' rather than

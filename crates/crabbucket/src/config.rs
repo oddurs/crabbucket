@@ -65,6 +65,23 @@ pub struct Config {
     #[serde(default, rename = "feed")]
     pub feeds: Vec<crate::feed::Feed>,
 
+    /// Pages the site renders itself, rather than writing as Markdown.
+    ///
+    /// Held raw because their `layout` and any extra fields are the design
+    /// system's types, which this struct cannot name.  [`crate::build_with`]
+    /// deserializes them, so a declared page gets the same frontmatter
+    /// checking as a written one.
+    ///
+    /// ```toml
+    /// [[page]]
+    /// route = ""
+    /// title = "A site is a typed value"
+    /// layout = "landing"
+    /// nav_order = 1
+    /// ```
+    #[serde(default, rename = "page")]
+    pub pages: Vec<toml::Table>,
+
     /// Whether to emit the client-side router.  Off by default: a site that
     /// ships no JavaScript is the thing worth defaulting to.
     #[serde(default)]

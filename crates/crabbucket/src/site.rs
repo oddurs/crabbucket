@@ -22,7 +22,7 @@
 //! result as directories of `index.html`, and refuse to finish if any page
 //! links somewhere that does not exist.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -37,6 +37,76 @@ use crate::links::{self, Rendered};
 use crate::search;
 use crate::theme::{FeedLink, Page, PageMeta, PageRef, SiteIndex, Theme};
 use crate::url::Url;
+
+/// Reads the pages a site declared, pairs each with the body the site
+/// rendered, and turns them into entries indistinguishable from content.
+///
+/// The metadata is deserialized into the design system's own types, so a
+/// declared page gets the same frontmatter checking a written one does: an
+/// unknown layout fails, a missing required field fails, and both name
+/// `site.toml`.
+fn declared_pages<T: Theme>(
+    site_dir: &Path,
+    config: &Config,
+    options: &Options,
+) -> Result<Vec<Written<T>>> {
+    let manifest = site_dir.join("site.toml");
+    let mut entries = Vec::new();
+    let mut routes = BTreeSet::new();
+
+    for table in &config.pages {
+        let route = table
+            .get("route")
+            .and_then(|route| route.as_str())
+            .unwrap_or_default()
+            .trim_matches('/')
+            .to_string();
+
+        let mut table = table.clone();
+        table.remove("route");
+
+        let meta: PageMeta<T::Layout, T::Extra> =
+            toml::Value::Table(table)
+                .try_into()
+                .map_err(|err: toml::de::Error| Error::Schema {
+                    path: manifest.clone(),
+                    message: err.message().to_string(),
+                    snippet: None,
+                })?;
+
+        let Some(html) = options.pages.get(&route) else {
+            return Err(Error::Unrendered {
+                path: manifest,
+                route,
+            });
+        };
+
+        routes.insert(route.clone());
+        entries.push(Entry {
+            meta,
+            route,
+            // Diagnostics about a declared page point at the file that
+            // declared it, since there is no other file to point at.
+            path: manifest.clone(),
+            html: html.clone(),
+            // A rendered body is not Markdown, so nothing collected headings
+            // from it.  A declared page gets no table of contents, and no
+            // fragment of it can be linked to and checked.
+            headings: Vec::new(),
+        });
+    }
+
+    for route in options.pages.keys() {
+        if !routes.contains(route.trim_matches('/')) {
+            return Err(Error::Undeclared {
+                path: manifest,
+                route: route.clone(),
+            });
+        }
+    }
+
+    Ok(entries)
+}
 
 /// Where a design system may keep expensive things between builds.
 ///
@@ -61,7 +131,11 @@ pub fn card_path(route: &str) -> String {
 const ERROR_ROUTE: &str = "404";
 
 /// The pages of a site, borrowed from the collection that owns them.
-type Pages<'a, T> = Vec<&'a Entry<PageMeta<<T as Theme>::Layout, <T as Theme>::Extra>>>;
+type Written<T> = Entry<PageMeta<<T as Theme>::Layout, <T as Theme>::Extra>>;
+
+/// One page of a site, however it came to be: read from `content/` or
+/// declared in `site.toml` and rendered by the site itself.
+type Pages<'a, T> = Vec<&'a Written<T>>;
 
 /// A page that has been rendered but not yet written: the entry it came from,
 /// the URL it will be served at, and its HTML.
@@ -148,6 +222,16 @@ pub struct Options {
     pub out_dir: Option<PathBuf>,
     /// Serve from somewhere other than the configured base path.
     pub base: Option<String>,
+    /// Bodies for the pages the site renders itself, by route.
+    ///
+    /// A site declares such a page in `site.toml` under `[[page]]` -- which is
+    /// what gives it a title, a layout and a place in the navigation, and what
+    /// lets `build.rs` put it in the generated `Route` enum -- and supplies
+    /// its body here.
+    ///
+    /// Declared and not supplied is an error, and so is the reverse: a page
+    /// half-added is worse than one not added.
+    pub pages: BTreeMap<String, String>,
 }
 
 /// Builds the site rooted at `site_dir` into `site_dir/dist`.
@@ -184,12 +268,33 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
         fs::remove_dir_all(&out_dir).map_err(|source| Error::io(&out_dir, source))?;
     }
 
+    // Pages the site rendered itself, checked against what it declared and
+    // then treated exactly like content.
+    let declared = declared_pages::<T>(site_dir, &config, options)?;
+
+    // A route claimed twice is one of them silently winning, which is exactly
+    // the class of failure this project exists to refuse.
+    for page in &declared {
+        if content
+            .entries()
+            .iter()
+            .any(|entry| entry.route == page.route)
+        {
+            return Err(Error::Collides {
+                path: site_dir.join("site.toml"),
+                route: page.route.clone(),
+            });
+        }
+    }
+
     let published: Pages<'_, T> = content
         .entries()
         .iter()
+        .chain(declared.iter())
         .filter(|entry| !entry.meta.draft)
         .collect();
-    let drafts = content.len() - published.len();
+
+    let drafts = content.len() + declared.len() - published.len();
 
     // The error page is a page, but it is not a route: nothing may link to it,
     // it is not in the navigation, and it is written as a file rather than as
@@ -673,6 +778,7 @@ mod tests {
             base: base.into(),
             search: false,
             feeds: Vec::new(),
+            pages: Vec::new(),
             router: false,
         }
     }

@@ -147,6 +147,30 @@ pub enum Error {
         collection: String,
     },
 
+    /// A page the site declared, and then did not render.
+    Unrendered {
+        /// The configuration file that declared it.
+        path: PathBuf,
+        /// The route with nothing behind it.
+        route: String,
+    },
+
+    /// A page the site rendered, and did not declare.
+    Undeclared {
+        /// The configuration file it should have been declared in.
+        path: PathBuf,
+        /// The route nothing asked for.
+        route: String,
+    },
+
+    /// A page the site declared at a route its content already has.
+    Collides {
+        /// The configuration file that declared it.
+        path: PathBuf,
+        /// The route claimed twice.
+        route: String,
+    },
+
     /// One or more pages link somewhere that does not exist.
     ///
     /// Every dead link is reported at once, because fixing them one build at a
@@ -200,7 +224,10 @@ impl Error {
             | Error::MissingFrontmatter { path }
             | Error::UnterminatedFrontmatter { path }
             | Error::Schema { path, .. }
-            | Error::Undated { path, .. } => Some(path),
+            | Error::Undated { path, .. }
+            | Error::Unrendered { path, .. }
+            | Error::Undeclared { path, .. }
+            | Error::Collides { path, .. } => Some(path),
             Error::DeadLinks(links) => links.first().map(|link| link.source.as_path()),
         }
     }
@@ -249,6 +276,24 @@ impl Error {
                 path.display()
             ),
 
+            Error::Unrendered { path, route } => format!(
+                "{}: `{}` is declared but the site rendered nothing for it",
+                path.display(),
+                display_route(route)
+            ),
+
+            Error::Undeclared { path, route } => format!(
+                "{}: the site rendered `{}`, which is not declared here",
+                path.display(),
+                display_route(route)
+            ),
+
+            Error::Collides { path, route } => format!(
+                "{}: `{}` is declared here and is also a content file",
+                path.display(),
+                display_route(route)
+            ),
+
             Error::DeadLinks(links) => {
                 let mut out = format!(
                     "{red}{} dead internal link{}{off}:",
@@ -268,6 +313,11 @@ impl Error {
             }
         }
     }
+}
+
+/// The site root reads as an empty string, which is not a name.
+fn display_route(route: &str) -> &str {
+    if route.is_empty() { "/" } else { route }
 }
 
 /// The escape sequences, or nothing at all.

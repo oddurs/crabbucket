@@ -1,0 +1,6 @@
+title = "Fixture"
+base = "/"
+
+[[page]]
+route = "promised"
+title = "Promised"
