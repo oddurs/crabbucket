@@ -59,7 +59,7 @@ The first milestone makes crabbucket correct; this one makes it pleasant.
 
 ## v0.3 — A fleet, not a site
 
-`#####·····` 50% · 4 of 8 done
+`#######···` 63% · 5 of 8 done
 
 Prove the theme seam by implementing it twice, and give components the guarantee content already has.
 
@@ -67,7 +67,6 @@ Prove the theme seam by implementing it twice, and give components the guarantee
 
 - [ ] [`0026`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0026-document-building-a-design-system-from-scratch.md) Document building a design system from scratch <sup>docs · p1</sup>
 - [ ] [`0028`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0028-generated-opengraph-images.md) Generated OpenGraph images <sup>feature · p2</sup>
-- [ ] [`0029`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0029-rss-and-atom-for-dated-collections.md) RSS and Atom for dated collections <sup>feature · p2</sup>
 - [ ] [`0030`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0030-move-one-real-repository-site-onto-crabbucket.md) Move one real repository site onto crabbucket <sup>chore · p1</sup>
 
 ### done
@@ -75,6 +74,7 @@ Prove the theme seam by implementing it twice, and give components the guarantee
 - [x] [`0024`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0024-generate-a-route-enum-for-site-crates.md) Generate a Route enum for site crates <sup>feature · p0 · design</sup>
 - [x] [`0025`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0025-a-second-theme-to-prove-the-seam.md) A second theme, to prove the seam <sup>feature · p1</sup>
 - [x] [`0027`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0027-crab-new-theme.md) `crab new --theme` <sup>feature · p2</sup>
+- [x] [`0029`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0029-rss-and-atom-for-dated-collections.md) RSS and Atom for dated collections <sup>feature · p2</sup>
 - [x] [`0050`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0050-content-cannot-write-a-site-absolute-link-that-survives-the-base.md) Content cannot write a site-absolute link that survives the base <sup>bug · p2</sup>
 
 ## v1.0 — Stable enough to depend on

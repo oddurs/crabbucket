@@ -58,6 +58,13 @@ pub struct Config {
     #[serde(default)]
     pub search: bool,
 
+    /// The feeds to generate.
+    ///
+    /// Each needs absolute URLs, so a site with no `url` gets none, and is
+    /// told rather than handed a feed full of relative links.
+    #[serde(default, rename = "feed")]
+    pub feeds: Vec<crate::feed::Feed>,
+
     /// Whether to emit the client-side router.  Off by default: a site that
     /// ships no JavaScript is the thing worth defaulting to.
     #[serde(default)]

@@ -1,5 +1,23 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Generate RSS and Atom for a dated collection.
+
+	* crates/crabbucket/src/feed.rs: New file.  Both formats, and the
+	date maths RSS needs -- Sakamoto's method for the weekday, with
+	known dates as anchors.
+	* crates/crabbucket/src/theme.rs (PageMeta::date): New, optional,
+	and a real TOML date.  (Page::feeds, FeedLink): New.
+	* crates/crabbucket/src/config.rs (Config::feeds): New.
+	* crates/crabbucket/src/site.rs (build_with): Write the feeds, and
+	refuse an undated page in a collection a feed carries.
+	* crates/crabbucket/src/error.rs (Error::Undated): New.
+	* crates/crabbucket-ui, crates/crabbucket-theme-plain: Emit the
+	`link rel="alternate"' tags.
+	* examples/site-crate/content/notes: A dated collection.
+	* examples/site/content/docs/feeds.md: New page.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Give content a way to say "the site root".
 
 	* crates/crabbucket/src/links.rs (SITE_ROOT, absolutize): New.  A

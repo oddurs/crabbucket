@@ -1,0 +1,6 @@
+title = "Fixture"
+url = "https://example.com/"
+base = "/"
+
+[[feed]]
+collection = "notes"

@@ -73,6 +73,18 @@ pub struct PageMeta<L> {
     #[serde(default)]
     pub nav_label: Option<String>,
 
+    /// When the page is dated, if it is.
+    ///
+    /// Optional because most pages are not dated, and required of any page in
+    /// a collection a feed is configured for -- a dated collection with an
+    /// undated page in it fails the build naming the page.
+    ///
+    /// TOML has real dates, so `date = 2026-09-08` is a date rather than a
+    /// string that looks like one, and a malformed one fails at the file and
+    /// the line without anything here doing the checking.
+    #[serde(default)]
+    pub date: Option<toml::value::Datetime>,
+
     /// Whether to skip the page entirely.
     #[serde(default)]
     pub draft: bool,
@@ -213,6 +225,19 @@ pub struct Page<'a, L> {
     pub headings: &'a [Heading],
     /// Every page in the site, for building navigation.
     pub site: &'a SiteIndex,
+    /// The site's feeds, for the `<link rel="alternate">` tags in the head.
+    pub feeds: &'a [FeedLink],
+}
+
+/// A feed, as a page's head needs it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FeedLink {
+    /// The feed's title.
+    pub title: String,
+    /// Where the RSS is.
+    pub rss: Url,
+    /// Where the Atom is.
+    pub atom: Url,
 }
 
 impl<L> Page<'_, L> {
@@ -299,6 +324,7 @@ mod tests {
             url: None,
             base: "/repo/".into(),
             search: false,
+            feeds: Vec::new(),
             router: false,
         }
     }
@@ -365,6 +391,7 @@ mod tests {
             nav_order: None,
             order: None,
             nav_label: None,
+            date: None,
             draft: false,
         }
     }
@@ -378,6 +405,7 @@ mod tests {
             html: "",
             headings: &[],
             site,
+            feeds: &[],
         };
         page.neighbours("docs")
     }

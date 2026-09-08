@@ -1,0 +1,9 @@
+title = "Fixture"
+description = "A dated collection."
+url = "https://example.com/repo/"
+base = "/repo/"
+
+[[feed]]
+collection = "notes"
+title = "Notes"
+limit = 2

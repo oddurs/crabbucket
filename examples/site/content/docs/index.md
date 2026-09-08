@@ -24,5 +24,6 @@ behaviour that exists today, and says so plainly where it does not.
 - [Design systems](design-systems/) — tokens, components, and themes as crates
 - [Search](search/) — a static index and a small client
 - [The dev loop](dev-loop/) — why there is no `crab dev`
+- [Feeds](feeds/) — RSS and Atom for a dated collection
 - [Deploying](deploying/) — GitHub Pages, and what makes it work
 - [Design](design/) — the reasoning behind all of the above

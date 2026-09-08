@@ -401,6 +401,7 @@ mod tests {
             url: None,
             base: base.into(),
             search: false,
+            feeds: Vec::new(),
             router: false,
         }
     }

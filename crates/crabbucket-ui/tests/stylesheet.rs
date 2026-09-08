@@ -40,6 +40,7 @@ fn config() -> Config {
         url: None,
         base: "/repo/".into(),
         search: false,
+        feeds: Vec::new(),
         router: false,
     }
 }
@@ -52,6 +53,7 @@ fn meta(layout: Layout) -> PageMeta<Layout> {
         nav_order: Some(1),
         order: None,
         nav_label: None,
+        date: None,
         draft: false,
     }
 }
@@ -108,6 +110,7 @@ fn classes_in_markup() -> BTreeSet<String> {
             html: body,
             headings: &headings,
             site: &site,
+            feeds: &[],
         };
 
         let html = Standard.render(&page);

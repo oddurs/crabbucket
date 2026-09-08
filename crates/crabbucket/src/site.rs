@@ -27,12 +27,15 @@ use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use toml::value::Datetime;
+
 use crate::config::Config;
 use crate::content::{Collection, Entry};
 use crate::error::{Error, Result};
+use crate::feed::{self, Item};
 use crate::links::{self, Rendered};
 use crate::search;
-use crate::theme::{Page, PageMeta, PageRef, SiteIndex, Theme};
+use crate::theme::{FeedLink, Page, PageMeta, PageRef, SiteIndex, Theme};
 use crate::url::Url;
 
 /// The route reserved for the error page.
@@ -188,6 +191,52 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
     // Rendering and checking are separate passes: a link is only dead relative
     // to the finished set of routes, so nothing can be judged until every page
     // is known.
+    let mut warnings = Vec::new();
+
+    // Feeds need absolute URLs, so a site with no `url` gets none and is told
+    // rather than handed a feed full of relative links.
+    let feeds: Vec<FeedLink> = match &config.url {
+        Some(_) => config
+            .feeds
+            .iter()
+            .map(|feed| {
+                let (rss, atom) = feed.paths();
+                FeedLink {
+                    title: feed.title.clone().unwrap_or_else(|| config.title.clone()),
+                    rss: Url::asset(&config, &rss),
+                    atom: Url::asset(&config, &atom),
+                }
+            })
+            .collect(),
+        None => {
+            if !config.feeds.is_empty() {
+                warnings.push(
+                    "site.toml configures a feed but has no url; \
+                     a feed needs absolute URLs, so none was written"
+                        .to_string(),
+                );
+            }
+            Vec::new()
+        }
+    };
+
+    // Configuring a feed is how a site says a collection is dated.  This is
+    // the build holding it to that, before anything is written.
+    if !feeds.is_empty() {
+        for entry in &live {
+            let covered = config.feeds.iter().find(|feed| feed.covers(&entry.route));
+
+            if let Some(feed) = covered
+                && entry.meta.date.is_none()
+            {
+                return Err(Error::Undated {
+                    path: entry.path.clone(),
+                    collection: feed.collection.clone(),
+                });
+            }
+        }
+    }
+
     let mut rendered: Vec<Rendering<'_, T::Layout>> =
         Vec::with_capacity(live.len() + error_page.len());
     for entry in live.iter().chain(error_page.iter()) {
@@ -198,6 +247,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
             html: &entry.html,
             headings: &entry.headings,
             site: &index,
+            feeds: &feeds,
         };
 
         // The error page is served in place of any path, so it is checked as
@@ -221,7 +271,6 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
     // What the site asked for, and what the design system actually has.  A
     // mismatch is worth saying and not worth stopping for: the page still
     // works, it just has less in it than the configuration implies.
-    let mut warnings = Vec::new();
     let router = declined(config.router, theme.router_js(), "router", &mut warnings);
     let search = declined(config.search, theme.search_js(), "search", &mut warnings);
 
@@ -238,6 +287,14 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
         assets.insert("search.json".to_string());
         assets.insert("search.js".to_string());
     }
+    for declared in &config.feeds {
+        if !feeds.is_empty() {
+            let (rss, atom) = declared.paths();
+            assets.insert(rss);
+            assets.insert(atom);
+        }
+    }
+
     assets.extend(tree(&site_dir.join("static"))?);
 
     // Route to heading ids, so a fragment link can be checked against the page
@@ -309,6 +366,59 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
     if let Some(url) = &config.url {
         write(&out_dir.join("sitemap.xml"), &sitemap(url, &config, &live))?;
         write(&out_dir.join("robots.txt"), &robots(url, &config))?;
+
+        for declared in &config.feeds {
+            let (rss_path, atom_path) = declared.paths();
+            let title = declared
+                .title
+                .clone()
+                .unwrap_or_else(|| config.title.clone());
+            let home = origin(url).to_string() + &relative(&config, "");
+
+            let mut items: Vec<(&Datetime, Item<'_>)> = live
+                .iter()
+                .filter(|entry| declared.covers(&entry.route))
+                .filter_map(|entry| {
+                    entry.meta.date.as_ref().map(|date| {
+                        (
+                            date,
+                            Item {
+                                title: &entry.meta.title,
+                                url: origin(url).to_string() + &relative(&config, &entry.route),
+                                date,
+                                html: &entry.html,
+                            },
+                        )
+                    })
+                })
+                .collect();
+
+            // Newest first, and by route where two pages share a date, so a
+            // rebuild produces the same file.
+            items.sort_by(|(a, left), (b, right)| {
+                b.to_string()
+                    .cmp(&a.to_string())
+                    .then_with(|| left.url.cmp(&right.url))
+            });
+
+            let items: Vec<Item<'_>> = items
+                .into_iter()
+                .map(|(_, item)| item)
+                .take(declared.limit)
+                .collect();
+
+            let self_rss = origin(url).to_string() + &relative_asset(&config, &rss_path);
+            let self_atom = origin(url).to_string() + &relative_asset(&config, &atom_path);
+
+            write(
+                &out_dir.join(&rss_path),
+                &feed::rss(&title, &config.description, &home, &self_rss, &items),
+            )?;
+            write(
+                &out_dir.join(&atom_path),
+                &feed::atom(&title, &home, &self_atom, &items),
+            )?;
+        }
     }
 
     // GitHub Pages otherwise runs the output through Jekyll, which drops any
@@ -370,6 +480,16 @@ fn declined(
 /// not be added a second time.
 fn origin(url: &str) -> &str {
     url.trim_end_matches('/')
+}
+
+/// A site-relative asset path, with the base stripped off.
+fn relative_asset(config: &Config, path: &str) -> String {
+    let url = Url::asset(config, path);
+    let base = config.base.trim_end_matches('/');
+    url.as_str()
+        .strip_prefix(base)
+        .unwrap_or(url.as_str())
+        .to_string()
 }
 
 /// A site-relative path, with the base stripped off.
@@ -499,6 +619,7 @@ mod tests {
             url: Some("https://example.com/".into()),
             base: base.into(),
             search: false,
+            feeds: Vec::new(),
             router: false,
         }
     }

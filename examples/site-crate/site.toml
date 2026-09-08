@@ -1,3 +1,12 @@
 title = "Typed routes"
 description = "A crabbucket site built as a crate, with routes it cannot get wrong."
+url = "https://example.com/"
 base = "/"
+
+# A dated collection, and the feeds that carry it.  Configuring one is how a
+# site says its pages are dated: an undated page under `notes/` now fails the
+# build naming itself.
+[[feed]]
+collection = "notes"
+title = "Typed routes — notes"
+limit = 10
