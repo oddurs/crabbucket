@@ -2,7 +2,7 @@
 id: 19
 title: Previous and next links within a section
 type: feature
-status: backlog
+status: done
 milestone: v0.2
 created: 2026-09-08
 updated: 2026-09-08
@@ -31,7 +31,15 @@ Omit the link at each end rather than rendering a disabled one.
 
 ## Acceptance criteria
 
-- [ ] Neighbours rendered at the foot of `Docs` pages
-- [ ] Labelled with page titles
-- [ ] Ends omit the missing side
-- [ ] Ordering shared with the sidebar, not duplicated
+- [x] Neighbours rendered at the foot of `Docs` pages
+- [x] Labelled with page titles
+- [x] Ends omit the missing side
+- [x] Ordering shared with the sidebar, not duplicated
+
+## 2026-09-08
+
+Done, and it turned up a design gap worth more than the feature.
+
+The item said ordering follows "nav_order where present and route order otherwise". That rule was wrong: `nav_order` decides whether a page is in the masthead at all, so using it for reading order would have put every documentation page in the masthead. Sections now have their own `order` field, and `SiteIndex::under` sorts by it and falls back to route order. Previous and next are derived from exactly that list rather than reimplementing the rule, because two orderings that can disagree eventually will.
+
+Before this the docs read alphabetically: Components, Content, Deploying, Design, Design systems... Now they read in the order somebody would actually want.

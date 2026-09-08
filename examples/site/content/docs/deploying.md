@@ -1,6 +1,7 @@
 +++
 title = "Deploying"
 layout = "docs"
+order = 8
 +++
 
 # Deploying

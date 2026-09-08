@@ -122,6 +122,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
                 route: entry.route.clone(),
                 label: entry.meta.label().to_string(),
                 nav_order: entry.meta.nav_order,
+                order: entry.meta.order,
             })
             .collect(),
     );
@@ -137,6 +138,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
             meta: &entry.meta,
             route: &entry.route,
             html: &entry.html,
+            headings: &entry.headings,
             site: &index,
         };
 

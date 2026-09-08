@@ -1,0 +1,31 @@
+/* The pages either side of this one, at the foot of a section.
+ *
+ * Labelled with page titles rather than with "Previous" and "Next" alone: the
+ * title is the useful half, and the direction is already obvious from which
+ * side of the page it is on. */
+
+.& {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: space-between;
+  margin-top: var(--space-xxl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.&__link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  max-width: 48%;
+}
+
+.&__link:hover, .&__link:focus-visible { border-color: var(--color-accent); }
+.&__link--next { margin-left: auto; text-align: right; }
+
+.&__direction { color: var(--color-text-muted); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.&__title { color: var(--color-text); }

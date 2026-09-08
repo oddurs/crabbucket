@@ -2,7 +2,7 @@
 id: 18
 title: A light theme, driven by the token file
 type: feature
-status: backlog
+status: done
 milestone: v0.2
 labels:
 - design
@@ -45,8 +45,18 @@ in a test rather than sampled by hand.
 
 ## Acceptance criteria
 
-- [ ] A light palette lives in the token file, not in hand-written CSS
-- [ ] Both `prefers-color-scheme` and `data-theme` are honoured
-- [ ] No component changes
-- [ ] Body and muted text meet WCAG AA in both schemes, asserted by a test
-- [ ] `color-scheme` is declared so form controls and scrollbars follow
+- [x] A light palette lives in the token file, not in hand-written CSS
+- [x] Both `prefers-color-scheme` and `data-theme` are honoured
+- [x] No component changes
+- [x] Body and muted text meet WCAG AA in both schemes, asserted by a test
+- [x] `color-scheme` is declared so form controls and scrollbars follow
+
+## 2026-09-08
+
+Done, and it worked exactly as the design promised: a second palette cost zero component changes, because the Rust constants are var() references and only the custom properties move.
+
+A `light` sub-table under any token group overrides that group. build.rs asserts every light key has a base key to override, so a token that exists in only one scheme fails the build rather than falling back to nothing. color-scheme moved out of hand-written CSS into the generated block, so it flips with the palette.
+
+The media query is guarded as :root:not([data-theme="dark"]) and the attribute selector comes last, so an explicit choice beats the system preference in both directions.
+
+Contrast is a test rather than a judgement: crabbucket-ui/tests/contrast.rs computes WCAG ratios over the generated token tables and holds text, muted text, links and accents to AA on both surfaces in both schemes, syntax colours to AA-large, and borders to a band. The hand-picked palette passed on the first run. The only failure was my own sanity check, which claimed #777777 clears AA on white; it does not, at 4.48:1, and the test now asserts that boundary in both directions.

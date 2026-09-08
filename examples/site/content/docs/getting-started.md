@@ -1,6 +1,7 @@
 +++
 title = "Getting started"
 layout = "docs"
+order = 1
 +++
 
 # Getting started

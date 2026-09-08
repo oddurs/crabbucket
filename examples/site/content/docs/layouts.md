@@ -1,6 +1,7 @@
 +++
 title = "Layouts"
 layout = "docs"
+order = 4
 +++
 
 # Layouts
@@ -84,6 +85,25 @@ fn render(&self, page: &Page<'_, Layout>) -> String {
 ```
 
 Add a layout to the enum and the compiler tells you where to handle it.
+
+## What a layout is given
+
+```rust
+pub struct Page<'a, L> {
+    pub config: &'a Config,
+    pub meta: &'a PageMeta<L>,
+    pub route: &'a str,
+    pub html: &'a str,
+    pub headings: &'a [Heading],
+    pub site: &'a SiteIndex,
+}
+```
+
+`headings` is the same list the link checker validates fragments against, so
+a table of contents built from it cannot point at a heading that is not there.
+The `docs` layout renders one when a page has three or more `h2`/`h3`
+headings, and skips it otherwise — a contents list with two entries takes a
+column of the page to tell the reader what the page already told them.
 
 ## Navigation
 

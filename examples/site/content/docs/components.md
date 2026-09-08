@@ -1,6 +1,7 @@
 +++
 title = "Components"
 layout = "docs"
+order = 5
 +++
 
 # Components

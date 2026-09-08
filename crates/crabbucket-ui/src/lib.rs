@@ -34,7 +34,7 @@
 use crabbucket::directive::Directives;
 use crabbucket::style::{Style, StyleSheet};
 use crabbucket::theme::{NavItem, Page, Theme};
-use crabbucket::{Config, PageMeta, Url};
+use crabbucket::{Config, Heading, PageMeta, Url};
 use maud::{DOCTYPE, Markup, PreEscaped, html};
 use serde::Deserialize;
 
@@ -99,7 +99,16 @@ impl Theme for Standard {
             Layout::Page | Layout::Landing => prose(page.html),
             Layout::Docs => {
                 let section = page.route.split('/').next().unwrap_or("");
-                docs(&page.section(section), prose(page.html))
+                let (previous, next) = page.neighbours(section);
+
+                docs(
+                    &page.section(section),
+                    contents(page.headings),
+                    html! {
+                        (prose(page.html))
+                        (neighbours(previous.as_ref(), next.as_ref()))
+                    },
+                )
             }
         };
 
@@ -108,7 +117,7 @@ impl Theme for Standard {
 
     fn stylesheet(&self) -> String {
         let mut sheet = StyleSheet::new();
-        sheet.extend([SITE, MASTHEAD, PROSE, DOCS, COLOPHON]);
+        sheet.extend([SITE, MASTHEAD, PROSE, DOCS, TOC, NEIGHBOURS, COPY, COLOPHON]);
         sheet.extend(components::STYLES.iter().copied());
         format!("{}\n{}", tok::CSS, sheet.render())
     }
@@ -131,14 +140,149 @@ pub fn nav_list(items: &[NavItem]) -> Markup {
     }
 }
 
-/// Prose with a section sidebar beside it.
-pub fn docs(section: &[NavItem], content: Markup) -> Markup {
+/// Prose with a section sidebar beside it, and a table of contents if the
+/// page is long enough to want one.
+pub fn docs(section: &[NavItem], contents: Option<Contents>, content: Markup) -> Markup {
     html! {
         div class=(DOCS.class()) {
             nav class=(DOCS.element("side")) { (nav_list(section)) }
-            div class=(DOCS.element("main")) { (content) }
+            div class=(DOCS.element("main")) {
+                @if let Some(contents) = &contents { (contents.folded) }
+                (content)
+            }
+            @if let Some(contents) = &contents {
+                div class=(DOCS.element("aside")) { (contents.beside) }
+            }
         }
     }
+}
+
+/// Links to the pages either side of this one.
+///
+/// Each is labelled with the page's title rather than with "Previous" and
+/// "Next" alone, because the title is the useful half and the direction is
+/// already obvious from which side of the page it is on.  An end of the
+/// section omits its side rather than rendering a disabled link.
+pub fn neighbours(previous: Option<&NavItem>, next: Option<&NavItem>) -> Markup {
+    if previous.is_none() && next.is_none() {
+        return html! {};
+    }
+
+    html! {
+        nav class=(NEIGHBOURS.class()) aria-label="Section" {
+            @if let Some(item) = previous {
+                a class=(NEIGHBOURS.element("link")) href=(item.href) rel="prev" {
+                    span class=(NEIGHBOURS.element("direction")) { "Previous" }
+                    span class=(NEIGHBOURS.element("title")) { (item.label) }
+                }
+            }
+            @if let Some(item) = next {
+                a class=(format!("{0} {0}--next", NEIGHBOURS.element("link")))
+                  href=(item.href) rel="next" {
+                    span class=(NEIGHBOURS.element("direction")) { "Next" }
+                    span class=(NEIGHBOURS.element("title")) { (item.label) }
+                }
+            }
+        }
+    }
+}
+
+/// A table of contents, in both of its renderings.
+///
+/// The same list appears twice in the document, and CSS decides which is
+/// shown: beside the prose where there is a column for it, folded into a
+/// disclosure above the prose where there is not.  Rendering it twice costs a
+/// few hundred bytes and buys a layout that needs neither script nor knowledge
+/// of the viewport at build time.
+pub struct Contents {
+    /// The sidebar rendering.
+    pub beside: Markup,
+    /// The disclosure rendering.
+    pub folded: Markup,
+}
+
+/// The minimum number of headings before a table of contents earns its place.
+///
+/// A contents list with two entries is noise: it takes a column of the page to
+/// tell the reader something the page already told them.
+const CONTENTS_MINIMUM: usize = 3;
+
+/// A table of contents, or nothing.
+///
+/// Only `h2` and `h3` appear.  `h1` is the page title, which the reader is
+/// looking at, and anything below `h3` is detail a contents list should not be
+/// competing with.
+pub fn contents(headings: &[Heading]) -> Option<Contents> {
+    let listed: Vec<&Heading> = headings
+        .iter()
+        .filter(|heading| matches!(heading.level, 2 | 3))
+        .collect();
+
+    if listed.len() < CONTENTS_MINIMUM {
+        return None;
+    }
+
+    Some(Contents {
+        beside: html! {
+            nav class=(TOC.class()) aria-label="On this page" {
+                span class=(TOC.element("label")) { "On this page" }
+                (contents_list(&listed))
+            }
+        },
+        folded: html! {
+            details class=(TOC.with("folded")) {
+                summary { "On this page" }
+                (contents_list(&listed))
+            }
+        },
+    })
+}
+
+/// The nested list itself, shared by both renderings.
+///
+/// The loop is plain Rust rather than a template construct: nesting `h3`s
+/// under their `h2` needs to skip forward by however many children it just
+/// consumed, and expressing that inside a markup macro reads far worse than
+/// building the items first.
+fn contents_list(listed: &[&Heading]) -> Markup {
+    let mut items: Vec<Markup> = Vec::new();
+    let mut index = 0;
+
+    while index < listed.len() {
+        let heading = listed[index];
+        let children: &[&Heading] = if heading.level == 2 {
+            children_of(listed, index)
+        } else {
+            &[]
+        };
+
+        items.push(html! {
+            li {
+                a class=(TOC.element("link")) href=(format!("#{}", heading.id)) {
+                    (heading.text)
+                }
+                @if !children.is_empty() { (contents_list(children)) }
+            }
+        });
+
+        index += 1 + children.len();
+    }
+
+    html! {
+        ul class=(TOC.element("list")) {
+            @for item in &items { (item) }
+        }
+    }
+}
+
+/// The `h3`s that follow an `h2`, up to the next `h2`.
+fn children_of<'a>(listed: &'a [&'a Heading], at: usize) -> &'a [&'a Heading] {
+    let rest = &listed[at + 1..];
+    let end = rest
+        .iter()
+        .position(|heading| heading.level == 2)
+        .unwrap_or(rest.len());
+    &rest[..end]
 }
 
 /// Renders a body of Markdown-derived HTML inside the prose wrapper.
@@ -206,7 +350,10 @@ pub fn stylesheet() -> String {
 /// browser has one.  With JavaScript off, or on a browser that fails any of
 /// its guards, navigation is what it always was.
 pub fn router_js() -> String {
-    ROUTER.replace("@NAV@", &format!(".{}", MASTHEAD.element("nav")))
+    ROUTER
+        .replace("@NAV@", &format!(".{}", MASTHEAD.element("nav")))
+        .replace("@TOC@", &format!(".{}", TOC.element("link")))
+        .replace("@COPY@", &COPY.class())
 }
 
 /// The page shell: reset, typography defaults, and the main column.
@@ -221,6 +368,15 @@ pub const PROSE: Style = Style::new(NS, "prose", include_str!("styles/prose.css"
 
 /// The documentation layout: a sidebar beside the content.
 pub const DOCS: Style = Style::new(NS, "docs", include_str!("styles/docs.css"));
+
+/// The table of contents.
+pub const TOC: Style = Style::new(NS, "toc", include_str!("styles/toc.css"));
+
+/// The copy button the router adds to code blocks.
+pub const COPY: Style = Style::new(NS, "copy", include_str!("styles/copy.css"));
+
+/// The links either side of a page within its section.
+pub const NEIGHBOURS: Style = Style::new(NS, "neighbours", include_str!("styles/neighbours.css"));
 
 /// The footer.
 pub const COLOPHON: Style = Style::new(NS, "colophon", include_str!("styles/colophon.css"));

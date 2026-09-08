@@ -32,6 +32,7 @@ use serde::de::DeserializeOwned;
 
 use crate::config::Config;
 use crate::directive::Directives;
+use crate::markdown::Heading;
 use crate::url::Url;
 
 /// The frontmatter every page has, whatever else it has.
@@ -56,6 +57,17 @@ pub struct PageMeta<L> {
     /// reachable but not listed.
     #[serde(default)]
     pub nav_order: Option<u32>,
+
+    /// Where the page sits within its own section: the sidebar, and the
+    /// previous and next links.
+    ///
+    /// Separate from `nav_order` because they answer different questions.
+    /// `nav_order` decides whether a page is in the masthead at all; `order`
+    /// decides reading order among siblings, which every documentation page
+    /// has and almost none of which belong in the masthead.  Pages without it
+    /// fall to the end, in route order.
+    #[serde(default)]
+    pub order: Option<u32>,
 
     /// The label to use in navigation, if it should differ from the title.
     #[serde(default)]
@@ -104,6 +116,8 @@ pub struct PageRef {
     pub label: String,
     /// Its position in the primary navigation, if it asked for one.
     pub nav_order: Option<u32>,
+    /// Its position within its own section, if it asked for one.
+    pub order: Option<u32>,
 }
 
 impl SiteIndex {
@@ -143,15 +157,32 @@ impl SiteIndex {
             .collect()
     }
 
-    /// Every page below `prefix`, in route order -- a docs sidebar.
+    /// Every page below `prefix`, in reading order -- a docs sidebar.
+    ///
+    /// Reading order is `order` where a page states one and route order
+    /// otherwise, which is the same rule the previous and next links use.  Two
+    /// orderings that can disagree eventually will, so there is only one.
     ///
     /// The section's own index page is excluded, since it is usually the thing
     /// the sidebar hangs off rather than an entry in it.
     pub fn under(&self, config: &Config, prefix: &str, current: &str) -> Vec<NavItem> {
         let prefix = prefix.trim_matches('/');
-        self.pages
+
+        let mut section: Vec<&PageRef> = self
+            .pages
             .iter()
             .filter(|page| page.route != prefix && page.route.starts_with(prefix))
+            .collect();
+
+        section.sort_by(|a, b| {
+            a.order
+                .unwrap_or(u32::MAX)
+                .cmp(&b.order.unwrap_or(u32::MAX))
+                .then_with(|| a.route.cmp(&b.route))
+        });
+
+        section
+            .into_iter()
             .map(|page| self.item(config, page, current))
             .collect()
     }
@@ -175,6 +206,11 @@ pub struct Page<'a, L> {
     pub route: &'a str,
     /// The page body, already rendered from Markdown to HTML.
     pub html: &'a str,
+    /// The page's headings, in document order, for a table of contents.
+    ///
+    /// These are the same ids the link checker validates fragments against,
+    /// so a table of contents cannot point at a heading that is not there.
+    pub headings: &'a [Heading],
     /// Every page in the site, for building navigation.
     pub site: &'a SiteIndex,
 }
@@ -188,6 +224,22 @@ impl<L> Page<'_, L> {
     /// The pages below `prefix`, with this page marked as current.
     pub fn section(&self, prefix: &str) -> Vec<NavItem> {
         self.site.under(self.config, prefix, self.route)
+    }
+
+    /// The pages either side of this one within `prefix`.
+    ///
+    /// The ordering is [`Page::section`]'s, and deliberately so: a reader who
+    /// follows "next" through a section should visit it in the order the
+    /// sidebar showed them, and two orderings that can disagree eventually
+    /// will.
+    pub fn neighbours(&self, prefix: &str) -> (Option<NavItem>, Option<NavItem>) {
+        let section = self.section(prefix);
+        let Some(at) = section.iter().position(|item| item.current) else {
+            return (None, None);
+        };
+
+        let previous = at.checked_sub(1).and_then(|at| section.get(at)).cloned();
+        (previous, section.get(at + 1).cloned())
     }
 }
 
@@ -219,4 +271,129 @@ pub trait Theme {
     /// A `String` rather than a `&str` because a theme's own class names go
     /// into it, and those are not known until the theme is written.
     fn router_js(&self) -> String;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{NavItem, Page, PageMeta, PageRef, SiteIndex};
+    use crate::config::Config;
+
+    fn config() -> Config {
+        Config {
+            title: "t".into(),
+            description: String::new(),
+            url: None,
+            base: "/repo/".into(),
+            router: false,
+        }
+    }
+
+    fn page(route: &str, nav_order: Option<u32>, order: Option<u32>) -> PageRef {
+        PageRef {
+            route: route.into(),
+            label: route.to_uppercase(),
+            nav_order,
+            order,
+        }
+    }
+
+    fn index() -> SiteIndex {
+        SiteIndex::new(vec![
+            page("", Some(1), None),
+            page("docs", Some(2), None),
+            page("docs/zebra", None, Some(1)),
+            page("docs/apple", None, Some(2)),
+            page("docs/mango", None, None),
+            page("about", None, None),
+        ])
+    }
+
+    fn labels(items: &[NavItem]) -> Vec<&str> {
+        items.iter().map(|item| item.label.as_str()).collect()
+    }
+
+    #[test]
+    fn the_primary_navigation_is_only_pages_that_asked_for_it() {
+        let items = index().nav(&config(), "");
+        assert_eq!(labels(&items), ["", "DOCS"]);
+        assert!(items[0].current, "the page being rendered is marked");
+        assert!(!items[1].current);
+    }
+
+    #[test]
+    fn a_section_reads_in_order_and_then_alphabetically() {
+        // `order` first, then route order for whatever did not state one.
+        let items = index().under(&config(), "docs", "docs/apple");
+        assert_eq!(labels(&items), ["DOCS/ZEBRA", "DOCS/APPLE", "DOCS/MANGO"]);
+    }
+
+    #[test]
+    fn a_section_excludes_its_own_index_page() {
+        let items = index().under(&config(), "docs", "docs");
+        assert!(
+            !labels(&items).contains(&"DOCS"),
+            "the index is the thing the sidebar hangs off"
+        );
+    }
+
+    #[test]
+    fn hrefs_carry_the_base_path() {
+        let items = index().under(&config(), "docs", "docs/apple");
+        assert_eq!(items[0].href.as_str(), "/repo/docs/zebra/");
+    }
+
+    fn meta() -> PageMeta<()> {
+        PageMeta {
+            title: "T".into(),
+            description: None,
+            layout: (),
+            nav_order: None,
+            order: None,
+            nav_label: None,
+            draft: false,
+        }
+    }
+
+    fn at(route: &str, site: &SiteIndex, config: &Config) -> (Option<NavItem>, Option<NavItem>) {
+        let meta = meta();
+        let page = Page {
+            config,
+            meta: &meta,
+            route,
+            html: "",
+            headings: &[],
+            site,
+        };
+        page.neighbours("docs")
+    }
+
+    #[test]
+    fn neighbours_follow_the_order_the_sidebar_showed() {
+        let (site, config) = (index(), config());
+
+        let (previous, next) = at("docs/apple", &site, &config);
+        assert_eq!(previous.map(|item| item.label), Some("DOCS/ZEBRA".into()));
+        assert_eq!(next.map(|item| item.label), Some("DOCS/MANGO".into()));
+    }
+
+    #[test]
+    fn each_end_of_a_section_omits_its_missing_side() {
+        let (site, config) = (index(), config());
+
+        let (previous, next) = at("docs/zebra", &site, &config);
+        assert!(previous.is_none(), "the first page has nothing before it");
+        assert!(next.is_some());
+
+        let (previous, next) = at("docs/mango", &site, &config);
+        assert!(previous.is_some());
+        assert!(next.is_none(), "the last page has nothing after it");
+    }
+
+    #[test]
+    fn a_page_outside_the_section_has_no_neighbours_in_it() {
+        let (site, config) = (index(), config());
+        let (previous, next) = at("about", &site, &config);
+
+        assert!(previous.is_none() && next.is_none());
+    }
 }

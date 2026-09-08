@@ -8,6 +8,10 @@
 # Copyright (C) 2026 Oddur Sigurdsson
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# The base palette is dark.  A `light` sub-table under any group overrides
+# those tokens under `prefers-color-scheme: light` and under an explicit
+# `data-theme="light"`, and every key in it must exist in the group above --
+# a token that exists only in one scheme has no Rust constant to be.
 [color]
 surface        = "#0b0d10"
 surface-raised = "#11151b"
@@ -17,6 +21,16 @@ text-muted     = "#98a2b3"
 accent         = "#e8623c"
 accent-quiet   = "#f0a58c"
 link           = "#7db3ff"
+
+[color.light]
+surface        = "#ffffff"
+surface-raised = "#f6f7f9"
+border         = "#dfe3e8"
+text           = "#1a1f26"
+text-muted     = "#5b6572"
+accent         = "#c2451f"
+accent-quiet   = "#a33a1a"
+link           = "#1b58c4"
 
 # Syntax highlighting.  The build emits scope classes; these are the only
 # place the colours behind them are written down.
@@ -30,6 +44,17 @@ support     = "#74c7c7"
 variable    = "#e7eaf0"
 punctuation = "#98a2b3"
 invalid     = "#ff6b6b"
+
+[syntax.light]
+comment     = "#66707d"
+keyword     = "#b4501c"
+string      = "#2c7a45"
+constant    = "#8a5a00"
+entity      = "#1b58c4"
+support     = "#0f6e6e"
+variable    = "#1a1f26"
+punctuation = "#5b6572"
+invalid     = "#c0392b"
 
 [space]
 xs = "4px"

@@ -151,11 +151,22 @@ fn every_registered_directive_is_documented_by_being_usable() {
 
 #[test]
 fn the_router_stays_small() {
-    // 3.7KB raw is about 1.6KB over the wire once a server has gzipped it.
-    // The budget is on the raw file because that is the number that grows
-    // without anyone noticing.
+    // Around 5.7KB raw, which is about 2.2KB over the wire once a server has
+    // gzipped it.  The budget is on the raw file because that is the number
+    // that grows without anyone noticing, and it is deliberately close to the
+    // current size: this file is meant to stay small enough to read.
     let size = Standard.router_js().len();
-    assert!(size < 4096, "the router has grown to {size} bytes");
+    assert!(size < 6500, "the router has grown to {size} bytes");
+}
+
+#[test]
+fn the_router_carries_no_unresolved_placeholders() {
+    let js = Standard.router_js();
+    assert!(!js.contains('@'), "a placeholder reached the router: {js}");
+    assert!(
+        js.contains("cb-toc__link"),
+        "the router does not know the contents class"
+    );
 }
 
 #[test]
@@ -171,6 +182,123 @@ fn the_router_moves_focus_and_announces_itself() {
         assert!(
             js.contains(behaviour),
             "the router no longer does `{behaviour}`"
+        );
+    }
+}
+
+// ------------------------------------------------------------------ contents
+
+use crabbucket::Heading;
+use crabbucket_ui::contents;
+
+fn heading(level: u8, id: &str) -> Heading {
+    Heading {
+        id: id.to_string(),
+        level,
+        text: id.to_uppercase(),
+    }
+}
+
+#[test]
+fn a_short_page_gets_no_table_of_contents() {
+    // Two entries take a column of the page to tell the reader something the
+    // page already told them.
+    let short = [heading(2, "one"), heading(2, "two")];
+    assert!(contents(&short).is_none());
+
+    let long = [heading(2, "one"), heading(2, "two"), heading(2, "three")];
+    assert!(contents(&long).is_some());
+}
+
+#[test]
+fn only_h2_and_h3_are_listed() {
+    let headings = [
+        heading(1, "title"),
+        heading(2, "one"),
+        heading(3, "one-a"),
+        heading(4, "detail"),
+        heading(2, "two"),
+    ];
+
+    let html = contents(&headings)
+        .expect("three qualifying headings")
+        .beside
+        .into_string();
+
+    assert!(html.contains("#one") && html.contains("#one-a") && html.contains("#two"));
+    assert!(
+        !html.contains("#title"),
+        "the page title is not a contents entry: {html}"
+    );
+    assert!(
+        !html.contains("#detail"),
+        "h4 is detail, not contents: {html}"
+    );
+}
+
+#[test]
+fn h3s_nest_under_the_h2_they_follow() {
+    let headings = [
+        heading(2, "one"),
+        heading(3, "one-a"),
+        heading(3, "one-b"),
+        heading(2, "two"),
+    ];
+
+    let html = contents(&headings)
+        .expect("four headings")
+        .beside
+        .into_string();
+
+    // The nested list opens after `one` and closes before `two`.
+    let one = html.find("#one\"").expect("no #one");
+    let nested = html.find("<ul").expect("no list at all");
+    let inner = html[one..]
+        .find("<ul")
+        .map(|at| at + one)
+        .expect("no nested list");
+    let two = html.find("#two\"").expect("no #two");
+
+    assert!(nested < one, "the outer list should come first");
+    assert!(inner < two, "the h3s did not nest: {html}");
+    assert_eq!(
+        html.matches("<ul").count(),
+        2,
+        "expected exactly one nested list: {html}"
+    );
+}
+
+#[test]
+fn the_contents_is_rendered_twice_and_css_chooses() {
+    let headings = [heading(2, "one"), heading(2, "two"), heading(2, "three")];
+    let both = contents(&headings).expect("three headings");
+
+    assert!(
+        both.beside
+            .into_string()
+            .contains("aria-label=\"On this page\"")
+    );
+
+    let folded = both.folded.into_string();
+    assert!(folded.starts_with("<details"), "got {folded}");
+    assert!(folded.contains("cb-toc cb-toc--folded"), "got {folded}");
+}
+
+#[test]
+fn every_contents_link_is_a_fragment_the_page_actually_has() {
+    // The ids come from the same list the link checker validates fragments
+    // against, so a contents entry cannot point at a heading that is not there.
+    let headings = [heading(2, "one"), heading(2, "two"), heading(3, "two-a")];
+    let html = contents(&headings)
+        .expect("three headings")
+        .beside
+        .into_string();
+
+    for heading in &headings {
+        assert!(
+            html.contains(&format!("href=\"#{}\"", heading.id)),
+            "missing {}",
+            heading.id
         );
     }
 }

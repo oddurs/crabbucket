@@ -2,6 +2,14 @@
 
 .& { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: var(--space-xl); align-items: start; }
 
+/* Wide enough for a table of contents to be worth a column of its own. */
+@media (min-width: 76rem) {
+  .& { grid-template-columns: 13rem minmax(0, 1fr) 12rem; }
+}
+
+.&__aside { display: none; }
+@media (min-width: 76rem) { .&__aside { display: block; } }
+
 .&__side {
   display: flex;
   flex-direction: column;

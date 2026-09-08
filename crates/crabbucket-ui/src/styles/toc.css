@@ -1,0 +1,48 @@
+/* A table of contents beside the prose, or above it on a narrow screen.
+ *
+ * It is a list of ordinary anchors, so it works with scripting disabled.
+ * Highlighting the section in view is added by the router when a site has
+ * opted into one, and its absence costs nothing. */
+
+.& {
+  position: sticky;
+  top: var(--space-lg);
+  font-size: var(--size-step--1);
+  line-height: 1.4;
+  border-left: 1px solid var(--color-border);
+  padding-left: var(--space-md);
+}
+
+.&__label {
+  display: block;
+  margin: 0 0 var(--space-sm);
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.&__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-xs); }
+.&__list .&__list { margin-top: var(--space-xs); padding-left: var(--space-md); }
+
+.&__link { color: var(--color-text-muted); text-decoration: none; display: block; }
+.&__link:hover { color: var(--color-text); }
+.&__link[aria-current="true"] { color: var(--color-accent); }
+
+/* The sidebar rendering is hidden until there is a column for it; see
+ * docs.css. The folded one takes over below that width. */
+.&--folded {
+  position: static;
+  border-left: 0;
+  padding: var(--space-sm) 0;
+  margin: 0 0 var(--space-lg);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.&--folded summary { cursor: pointer; color: var(--color-text-muted); }
+.&--folded summary:hover { color: var(--color-text); }
+.&--folded .&__list { margin-top: var(--space-sm); }
+.&--folded .&__label { display: none; }
+
+@media (min-width: 76rem) { .&--folded { display: none; } }

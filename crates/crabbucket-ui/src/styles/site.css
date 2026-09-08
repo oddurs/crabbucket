@@ -1,7 +1,6 @@
 /* The page shell: reset, document defaults, and the main column. */
 
 *, *::before, *::after { box-sizing: border-box; }
-html { color-scheme: dark; }
 
 .& {
   margin: 0;

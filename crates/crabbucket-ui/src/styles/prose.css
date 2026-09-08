@@ -26,6 +26,7 @@
 @media (hover: none) { .heading-anchor { opacity: 0.4; } }
 
 .code { position: relative; }
+
 .code[data-language]::after { content: attr(data-language); position: absolute; top: var(--space-xs); right: var(--space-sm); font-size: 0.7rem; color: var(--color-text-muted); letter-spacing: 0.04em; text-transform: uppercase; pointer-events: none; }
 
 .tok-comment { color: var(--syntax-comment); font-style: italic; }

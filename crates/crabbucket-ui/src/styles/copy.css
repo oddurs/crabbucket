@@ -1,0 +1,29 @@
+/* The copy button on a code block.
+ *
+ * Created by the router, so it exists only where scripting does: a button
+ * that cannot copy is worse than no button. */
+
+.& {
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  padding: 0.15rem 0.5rem;
+  font: inherit;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+pre:hover > .&, .&:focus-visible { opacity: 1; }
+.&:hover { color: var(--color-text); border-color: var(--color-accent); }
+@media (hover: none) { .& { opacity: 1; } }
+
+/* The language badge and the button share a corner; move the badge aside.
+ * Naming `code` from here is the same within-one-design-system exception
+ * site.css takes, and for the same reason. */
+.code[data-language]:has(> .&)::after { right: 4.2rem; }

@@ -24,6 +24,7 @@
 
 use std::collections::BTreeSet;
 
+use crabbucket::markdown::Heading;
 use crabbucket::theme::{Page, PageMeta, PageRef, SiteIndex, Theme};
 use crabbucket::{Config, style};
 use crabbucket_ui::{Layout, NS, Standard};
@@ -48,6 +49,7 @@ fn meta(layout: Layout) -> PageMeta<Layout> {
         description: None,
         layout,
         nav_order: Some(1),
+        order: None,
         nav_label: None,
         draft: false,
     }
@@ -59,16 +61,19 @@ fn index() -> SiteIndex {
             route: String::new(),
             label: "Home".into(),
             nav_order: Some(1),
+            order: None,
         },
         PageRef {
             route: "docs".into(),
             label: "Docs".into(),
             nav_order: Some(2),
+            order: None,
         },
         PageRef {
             route: "docs/one".into(),
             label: "One".into(),
             nav_order: None,
+            order: None,
         },
     ])
 }
@@ -79,6 +84,18 @@ fn classes_in_markup() -> BTreeSet<String> {
     let site = index();
     let body = "<h2 id=\"a\">A</h2><pre class=\"code\"><code>x</code></pre>";
 
+    // Enough headings that the table of contents renders; below the minimum
+    // it is skipped, and its classes would go untested.
+    let headings: Vec<Heading> = ["a", "b", "c"]
+        .iter()
+        .enumerate()
+        .map(|(index, id)| Heading {
+            id: (*id).to_string(),
+            level: if index == 2 { 3 } else { 2 },
+            text: id.to_uppercase(),
+        })
+        .collect();
+
     let mut found = BTreeSet::new();
 
     for layout in [Layout::Page, Layout::Docs, Layout::Landing] {
@@ -88,6 +105,7 @@ fn classes_in_markup() -> BTreeSet<String> {
             meta: &meta,
             route: "docs/one",
             html: body,
+            headings: &headings,
             site: &site,
         };
 

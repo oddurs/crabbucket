@@ -41,6 +41,7 @@ pub use config::Config;
 pub use content::{Collection, Entry};
 pub use directive::Directives;
 pub use error::{Error, Result};
+pub use markdown::Heading;
 pub use site::{Report, build};
 pub use style::{Style, StyleSheet};
 pub use theme::{NavItem, Page, PageMeta, PageRef, SiteIndex, Theme};

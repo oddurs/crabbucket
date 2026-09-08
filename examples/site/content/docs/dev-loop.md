@@ -1,6 +1,7 @@
 +++
 title = "The dev loop"
 layout = "docs"
+order = 7
 +++
 
 # The dev loop

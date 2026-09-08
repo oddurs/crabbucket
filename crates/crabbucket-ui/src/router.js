@@ -6,6 +6,8 @@
 (() => {
   const main = () => document.querySelector('main');
   const NAV = '@NAV@ a';
+  const TOC = '@TOC@';
+  const COPY = '@COPY@';
   const TAB = 'cb-tab:';
 
   // sessionStorage throws outright in some privacy modes.
@@ -47,6 +49,8 @@
       else a.removeAttribute('aria-current');
     });
     tabs();
+    spy();
+    copy();
     crier.textContent = doc.title;
     land(hash);
   };
@@ -83,7 +87,63 @@
     else run();
   };
 
-  addEventListener('DOMContentLoaded', () => { document.body.append(crier); tabs(); });
+  // Marks the contents entry for the section in view. The contents list is
+  // plain anchors and works without this; it only ever adds emphasis.
+  let watching;
+  const spy = () => {
+    watching?.disconnect();
+    const links = [...document.querySelectorAll(TOC)];
+    if (!links.length) return;
+
+    const seen = new Set();
+    watching = new IntersectionObserver((entries) => {
+      entries.forEach((e) => (e.isIntersecting ? seen.add(e.target.id) : seen.delete(e.target.id)));
+      links.forEach((a) => {
+        if (seen.has(decodeURIComponent(a.hash.slice(1)))) a.setAttribute('aria-current', 'true');
+        else a.removeAttribute('aria-current');
+      });
+    }, { rootMargin: '0px 0px -70% 0px' });
+
+    links.forEach((a) => {
+      const at = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+      if (at) watching.observe(at);
+    });
+  };
+
+  // Copy buttons are added here rather than emitted by the build, so a reader
+  // with scripting off gets no button rather than a button that does nothing.
+  const copy = () => {
+    document.querySelectorAll('pre:not([data-copy])').forEach((pre) => {
+      pre.dataset.copy = '';
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = COPY;
+      button.setAttribute('aria-label', 'Copy code');
+      button.textContent = 'Copy';
+
+      button.addEventListener('click', async () => {
+        // Copying the shell prompt is the small annoyance this removes.
+        const text = pre.innerText.replace(/^\$ /gm, '');
+        try {
+          await navigator.clipboard.writeText(text);
+          button.textContent = 'Copied';
+          crier.textContent = 'Copied to clipboard';
+        } catch {
+          button.textContent = 'Press Ctrl-C';
+        }
+        setTimeout(() => { button.textContent = 'Copy'; }, 2000);
+      });
+
+      pre.append(button);
+    });
+  };
+
+  addEventListener('DOMContentLoaded', () => {
+    document.body.append(crier);
+    tabs();
+    spy();
+    copy();
+  });
 
   addEventListener('change', (e) => {
     const input = e.target.matches?.('input[data-tab-label]') ? e.target : null;

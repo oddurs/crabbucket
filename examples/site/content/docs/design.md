@@ -1,6 +1,7 @@
 +++
 title = "Design"
 layout = "docs"
+order = 9
 +++
 
 # Design
@@ -74,8 +75,8 @@ decision.
 - **Markdown directives** — `:::callout{kind="warn"}` resolving to a typed
   component function, with attributes deserialized into its props. MDX's
   expressiveness without MDX's compiler.
-- **A table of contents**, now that heading ids exist to build one from.
-- **Search**, and a light palette driven by the same token file.
+- **Search**: a static index and a small client.
+- **A light palette**, driven by the same token file.
 
 The tracked, ordered version of this list is
 [ROADMAP.md](https://github.com/oddurs/crabbucket/blob/main/ROADMAP.md).
