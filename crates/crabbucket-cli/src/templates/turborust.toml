@@ -10,6 +10,10 @@ emoji = "🦀"
 theme = "auto"
 errors = "overlay"
 
+# This site is content only, so `crab build' is the whole build and the
+# inputs are the content.  If it grows a design system of its own it becomes
+# a crate, and both of those change -- `crab new --theme NAME' scaffolds that
+# shape instead.
 [tasks.site]
 cmd = "crab build"
 inputs = ["site.toml", "content/**", "static/**"]

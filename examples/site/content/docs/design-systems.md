@@ -85,20 +85,46 @@ and adding a variant to `Kind` tells you every place that needs updating.
 ## A theme is a crate
 
 `crabbucket-ui` is the default one. The interesting case is a private crate
-that every site in a fleet depends on:
+that every site in a fleet depends on. Restyling every site you own is then a
+version bump, which is the actual reason to want first-class design systems on
+a collection of small sites rather than on one big one.
 
-```toml
-[dependencies]
-my-house-style = { git = "https://github.com/me/house-style" }
+A site that uses one is **a crate rather than a content directory**, because
+it has to call the build itself and say which design system to use:
+
+```sh
+crab new my-project --theme https://github.com/me/house-style
+```
+
+```
+my-project/
+  Cargo.toml       crabbucket, and the theme
+  src/main.rs      calls crabbucket::build with the theme
+  site.toml
+  content/
 ```
 
 ```rust
-crabbucket::build(Path::new("."), &my_house_style::Theme)?;
+use house_style::Standard as Design;
+
+fn main() -> ExitCode {
+    match crabbucket::build(Path::new("."), &Design) {
+        Ok(report) => { println!("{report}"); ExitCode::SUCCESS }
+        Err(err) => { eprintln!("{err}"); ExitCode::FAILURE }
+    }
+}
 ```
 
-Restyling every site you own is then a version bump, which is the actual
-reason to want first-class design systems on a collection of small sites
-rather than on one big one.
+That is the whole program. `Report` implements `Display` and says everything
+it has to say — the page and link counts, any skipped drafts, and any warnings
+— so the obvious `println!` is also the complete one.
+
+:::callout{kind = "warn", title = "The two shapes need different dev configs"}
+A content directory is built by `crab build` and watches `content/`. A crate
+is built by `cargo run` and has to watch `src/` too, or editing the stylesheet
+rebuilds nothing. `crab new --theme` writes the right one; the difference is
+not cosmetic and it is silent when it is wrong.
+:::
 
 ## Styles live beside components
 

@@ -3,7 +3,7 @@ id: 48
 title: Validate the scaffolded turborust.toml against turborust schema
 type: chore
 status: backlog
-milestone: v0.3
+milestone: v1.0
 created: 2026-09-08
 updated: 2026-09-08
 priority: p2

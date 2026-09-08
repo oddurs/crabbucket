@@ -29,6 +29,11 @@ pages, a `turborust.toml` for the dev loop, and a GitHub Pages workflow. It
 refuses to write into a directory that already has anything in it, unless you
 pass `--force`.
 
+Add `--theme NAME` — a crate name or a git URL — and you get a site *crate*
+instead, wired to that [design system](../design-systems/). The two shapes
+need different build commands and different watch inputs, so it is worth
+saying up front rather than converting later.
+
 The rest of this page is what it wrote, and why.
 
 ## A site is a directory

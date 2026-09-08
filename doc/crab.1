@@ -36,7 +36,11 @@ Scaffold a new site in
 a configuration file, three pages, a
 .B turborust.toml
 for the dev loop, and a GitHub Pages workflow.  The result builds with no
-edits.
+edits.  With
+.BR \-\-theme ,
+the site is scaffolded as a crate instead; see
+.B OPTIONS
+below.
 .TP
 .BR dev ", " serve
 Print where the dev server went, and exit 2.  There is no built-in dev server;
@@ -66,6 +70,21 @@ all mean the same thing.
 The path the scaffolded site will be served from.  Defaults to
 .IR /NAME/ ,
 because a GitHub Pages project site is the common case.
+.TP
+.BI \-\-theme " NAME"
+Depend on a design system, given as a crate name or a git URL.  The scaffolded
+site is then a crate rather than a content directory: a design system is a
+crate you depend on, so a site that uses one is a program that calls the build.
+It gets a
+.BR Cargo.toml ,
+a
+.BR src/main.rs ,
+a
+.B turborust.toml
+that watches the Rust as well as the content, and a workflow that runs
+.B cargo run
+rather than installing
+.BR crab .
 .TP
 .B \-\-router
 Ship the client-side router.
@@ -150,6 +169,12 @@ Scaffold a site for a GitHub Pages project site, with the client router:
 .PP
 .RS
 .B crab new my\-project \-\-router
+.RE
+.PP
+Scaffold a site that uses a shared house style, which makes it a crate:
+.PP
+.RS
+.B crab new my\-project \-\-theme https://github.com/me/house\-style
 .RE
 .PP
 Build a preview served from a different path, without editing the

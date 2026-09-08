@@ -134,11 +134,170 @@ fn scaffolding_over_an_existing_directory_is_refused() {
     assert!(forced.status.success(), "--force should allow it");
 }
 
+// ------------------------------------------------------------ with a theme
+
+#[test]
+fn a_theme_makes_the_site_a_crate_instead_of_a_content_directory() {
+    // A design system is a crate you depend on, so a site that depends on one
+    // is a program that calls the build.  The two shapes need different build
+    // commands, and shipping the content-shaped config into a crate-shaped
+    // site rebuilds nothing when the Rust changes.
+    let dir = scaffold(&["--theme", "my-house-style"]);
+
+    assert!(dir.join("Cargo.toml").is_file(), "no manifest");
+    assert!(dir.join("src/main.rs").is_file(), "nothing to run");
+
+    let manifest = fs::read_to_string(dir.join("Cargo.toml")).expect("no manifest");
+    assert!(
+        manifest.contains("my-house-style = \"*\""),
+        "got {manifest}"
+    );
+    assert!(
+        manifest.contains("crabbucket ="),
+        "the framework is not a dependency"
+    );
+
+    let main = fs::read_to_string(dir.join("src/main.rs")).expect("no main");
+    assert!(
+        main.contains("use my_house_style::Standard as Design"),
+        "got {main}"
+    );
+    assert!(
+        main.contains("crabbucket::build"),
+        "the site does not build itself: {main}"
+    );
+
+    let ignored = fs::read_to_string(dir.join(".gitignore")).expect("no gitignore");
+    assert!(
+        ignored.contains("/target"),
+        "a crate ignores its target directory"
+    );
+}
+
+#[test]
+fn a_git_url_becomes_a_git_dependency() {
+    let dir = scaffold(&["--theme", "https://github.com/me/house-style.git"]);
+    let manifest = fs::read_to_string(dir.join("Cargo.toml")).expect("no manifest");
+
+    assert!(
+        manifest.contains("git = \"https://github.com/me/house-style.git\""),
+        "{manifest}"
+    );
+    assert!(
+        !manifest.contains("\"*\""),
+        "a git dependency needs no version: {manifest}"
+    );
+}
+
+#[test]
+fn a_crate_shaped_site_watches_its_rust_and_runs_itself() {
+    // This is the finding that prompted the option: a content-shaped config
+    // in a crate-shaped site rebuilt nothing when the stylesheet changed.
+    let dir = scaffold(&["--theme", "my-house-style"]);
+    let text = fs::read_to_string(dir.join("turborust.toml")).expect("no turborust.toml");
+    let config: toml::Table = text.parse().expect("not valid TOML");
+
+    let task = config["tasks"]["site"]
+        .as_table()
+        .expect("[tasks.site] is missing");
+    assert_eq!(
+        task["cmd"].as_str(),
+        Some("cargo run -q"),
+        "a crate does not run `crab build`"
+    );
+
+    let inputs: Vec<&str> = task["inputs"]
+        .as_array()
+        .expect("no inputs")
+        .iter()
+        .filter_map(|v| v.as_str())
+        .collect();
+
+    for glob in ["src/**", "Cargo.toml", "content/**"] {
+        assert!(inputs.contains(&glob), "{glob} is not an input: {inputs:?}");
+    }
+
+    let watch: Vec<&str> = config["services"]["web"]["watch"]
+        .as_array()
+        .expect("no watch")
+        .iter()
+        .filter_map(|v| v.as_str())
+        .collect();
+
+    assert!(
+        watch.contains(&"src/**"),
+        "the Rust is not watched: {watch:?}"
+    );
+}
+
+#[test]
+fn a_crate_shaped_site_deploys_by_running_itself() {
+    let dir = scaffold(&["--theme", "my-house-style"]);
+    let workflow =
+        fs::read_to_string(dir.join(".github/workflows/pages.yml")).expect("no workflow");
+
+    assert!(workflow.contains("cargo run --release"), "got {workflow}");
+    assert!(
+        !workflow.contains("cargo install"),
+        "a crate does not install crab: {workflow}"
+    );
+}
+
+#[test]
+fn the_generated_crate_compiles_and_builds_its_site() {
+    // Slow: it compiles crabbucket and its dependencies into a scratch
+    // directory.  Off by default; CI can afford the time.
+    if std::env::var_os("CRABBUCKET_SLOW_TESTS").is_none() {
+        eprintln!("skipping: set CRABBUCKET_SLOW_TESTS=1 to compile the scaffold");
+        return;
+    }
+
+    let dir = scaffold(&["--theme", "crabbucket-ui"]);
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+
+    // A real site would depend on published crates.  This one points at the
+    // working copy, so the test checks today's API rather than a release's.
+    let manifest = fs::read_to_string(dir.join("Cargo.toml")).expect("no manifest");
+    let manifest = manifest
+        .replace(
+            "crabbucket = \"0.1\"",
+            &format!(
+                "crabbucket = {{ path = {:?} }}",
+                root.join("crates/crabbucket")
+            ),
+        )
+        .replace(
+            "crabbucket-ui = \"*\"",
+            &format!(
+                "crabbucket-ui = {{ path = {:?} }}",
+                root.join("crates/crabbucket-ui")
+            ),
+        );
+
+    fs::write(dir.join("Cargo.toml"), format!("{manifest}\n[workspace]\n")).expect("write");
+
+    let out = Command::new(env!("CARGO"))
+        .arg("run")
+        .arg("-q")
+        .current_dir(&dir)
+        .env("CARGO_TARGET_DIR", root.join("target/scaffold"))
+        .output()
+        .expect("cargo failed to run");
+
+    assert!(
+        out.status.success(),
+        "the scaffolded crate does not build:\n{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+
+    assert!(dir.join("dist/index.html").is_file(), "it built nothing");
+}
+
 // ------------------------------------------------------------- turborust
 
 /// The scaffolded turborust config, as TOML.
-fn turborust_config() -> toml::Table {
-    let dir = scaffold(&[]);
+fn turborust_config(args: &[&str]) -> toml::Table {
+    let dir = scaffold(args);
     let text = fs::read_to_string(dir.join("turborust.toml")).expect("no turborust.toml");
     text.parse()
         .expect("the scaffolded turborust.toml is not valid TOML")
@@ -146,7 +305,7 @@ fn turborust_config() -> toml::Table {
 
 #[test]
 fn the_scaffolded_turborust_config_has_the_shape_turborust_documents() {
-    let config = turborust_config();
+    let config = turborust_config(&[]);
 
     let task = config["tasks"]["site"]
         .as_table()
@@ -193,17 +352,20 @@ fn turborust_itself_accepts_the_config_we_ship_it() {
         return;
     }
 
-    let dir = scaffold(&[]);
-    let planned = Command::new("turborust")
-        .arg("-C")
-        .arg(&dir)
-        .arg("plan")
-        .output()
-        .expect("turborust failed to run");
+    // Both shapes, because they are two different configs.
+    for args in [&[][..], &["--theme", "my-house-style"][..]] {
+        let dir = scaffold(args);
+        let planned = Command::new("turborust")
+            .arg("-C")
+            .arg(&dir)
+            .arg("plan")
+            .output()
+            .expect("turborust failed to run");
 
-    assert!(
-        planned.status.success(),
-        "turborust rejects the config crab new writes:\n{}",
-        String::from_utf8_lossy(&planned.stderr)
-    );
+        assert!(
+            planned.status.success(),
+            "turborust rejects the config `crab new {args:?}` writes:\n{}",
+            String::from_utf8_lossy(&planned.stderr)
+        );
+    }
 }

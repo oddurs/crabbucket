@@ -7,7 +7,7 @@ status: done
 created: 2026-09-08
 updated: 2026-09-08
 priority: p2
-due: 2026-09-08
+due: 2026-09-07
 ---
 
 Done: content in, a deployed site out, with the three gates that make the central claim mean something.

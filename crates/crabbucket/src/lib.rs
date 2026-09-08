@@ -43,7 +43,7 @@ pub use content::{Collection, Entry};
 pub use directive::Directives;
 pub use error::{Error, Result};
 pub use markdown::Heading;
-pub use site::{Report, build};
+pub use site::{Options, Report, build, build_with};
 pub use style::{Style, StyleSheet};
 pub use theme::{NavItem, Page, PageMeta, PageRef, SiteIndex, Theme};
 pub use url::Url;

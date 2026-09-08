@@ -2,6 +2,31 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
 
 * Noteworthy changes in release 0.2.0 (unreleased) [alpha]
 
+** API
+
+  `build_with' and `Options' are re-exported at the crate root beside
+  `build'.  They were reachable only as `crabbucket::site::*', so the
+  symmetric name did not compile.
+
+  `Report' implements Display, and says everything it carries: the page
+  and link counts, any skipped drafts, and any warnings.  It also has
+  `headline' and `drafts_line' for a caller that wants the warnings on a
+  different stream.  Previously a build with something to say would have
+  said it to nobody.
+
+** New features
+
+  `crab new --theme NAME' scaffolds a site that depends on a design
+  system.  Such a site is a crate rather than a content directory, so it
+  gets a Cargo.toml, a src/main.rs that calls `crabbucket::build', a
+  turborust.toml that watches the Rust as well as the content, and a
+  workflow that runs `cargo run --release'.
+
+  The two shapes need different build commands and different watch
+  inputs, and the content-shaped config in a crate-shaped site rebuilds
+  nothing when the Rust changes.
+
+
 ** New features
 
   Markdown reaches typed components through directives:
