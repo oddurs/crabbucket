@@ -1,5 +1,17 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Document writing a design system, and check the documentation.
+
+	* examples/site/content/docs/your-own-design-system.md: New page.
+	The whole walkthrough, written against crabbucket-theme-plain.
+	* crates/crabbucket-theme-plain/tests/guide.rs: New file.  Assert
+	that every name the guide shows still exists, that the dependencies
+	it lists are the ones the crate has, that the page is linked from
+	the one it expands on, and that it still covers the awkward parts.
+	* examples/site/content/docs/design-systems.md: Link to it.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Draw a social card for every page.
 
 	* crates/crabbucket-og: New crate.  Composes an SVG from a palette,

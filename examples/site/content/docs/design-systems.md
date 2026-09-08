@@ -166,6 +166,13 @@ that same event, which is deliberate: if the door rots, the default design
 system breaks first. Forking the router to add one function call would
 silently cost you prefetching, scroll-spy, tab persistence and copy buttons.
 
+## Writing one
+
+[Your own design system](../your-own-design-system/) is the walkthrough: a
+whole design system from an empty directory to twelve sites sharing it,
+including the parts that are annoying — what a version bump breaks, and what
+it does not.
+
 ## Styles live beside components
 
 Each component declares its own styles, with `&` standing in for its class
