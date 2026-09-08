@@ -59,13 +59,9 @@ The first milestone makes crabbucket correct; this one makes it pleasant.
 
 ## v0.3 — A fleet, not a site
 
-`#########·` 88% · 7 of 8 done
+`##########` 100% · 8 of 8 done · due 2026-09-08
 
 Prove the theme seam by implementing it twice, and give components the guarantee content already has.
-
-### backlog
-
-- [ ] [`0030`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0030-move-one-real-repository-site-onto-crabbucket.md) Move one real repository site onto crabbucket <sup>chore · p1</sup>
 
 ### done
 
@@ -75,11 +71,12 @@ Prove the theme seam by implementing it twice, and give components the guarantee
 - [x] [`0027`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0027-crab-new-theme.md) `crab new --theme` <sup>feature · p2</sup>
 - [x] [`0028`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0028-generated-opengraph-images.md) Generated OpenGraph images <sup>feature · p2</sup>
 - [x] [`0029`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0029-rss-and-atom-for-dated-collections.md) RSS and Atom for dated collections <sup>feature · p2</sup>
+- [x] [`0030`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0030-move-one-real-repository-site-onto-crabbucket.md) Move one real repository site onto crabbucket <sup>chore · p1</sup>
 - [x] [`0050`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0050-content-cannot-write-a-site-absolute-link-that-survives-the-base.md) Content cannot write a site-absolute link that survives the base <sup>bug · p2</sup>
 
 ## v1.0 — Stable enough to depend on
 
-`··········` 0% · 0 of 7 done
+`··········` 0% · 0 of 10 done
 
 The point at which a breaking change starts costing someone other than the author something real.
 
@@ -92,6 +89,9 @@ The point at which a breaking change starts costing someone other than the autho
 - [ ] [`0036`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0036-measure-the-build-on-a-site-large-enough-to-matter.md) Measure the build on a site large enough to matter <sup>chore · p2</sup>
 - [ ] [`0048`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0048-validate-the-scaffolded-turborust-toml-against-turborust-schema.md) Validate the scaffolded turborust.toml against turborust schema <sup>chore · p2</sup>
 - [ ] [`0049`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0049-report-is-the-model-for-what-a-library-api-should-hand-back.md) Report is the model for what a library API should hand back <sup>chore · p3 · api</sup>
+- [ ] [`0051`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0051-frontmatter-a-site-adds-is-silently-dropped.md) Frontmatter a site adds is silently dropped <sup>bug · p1 · migration</sup>
+- [ ] [`0052`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0052-a-site-cannot-add-a-page-that-is-not-a-markdown-file.md) A site cannot add a page that is not a Markdown file <sup>feature · p1 · migration</sup>
+- [ ] [`0053`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0053-a-directive-cannot-read-anything-but-its-own-attributes.md) A directive cannot read anything but its own attributes <sup>feature · p2 · migration</sup>
 
 ## Unscheduled
 

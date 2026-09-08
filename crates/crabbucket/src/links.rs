@@ -172,17 +172,26 @@ pub fn check(
                 continue;
             }
 
-            let reason = match link.path.strip_suffix('/') {
-                Some(route) => {
-                    let route = route.trim_matches('/');
-                    match routes.get(route) {
-                        None => Some(Reason::NoSuchRoute),
-                        Some(anchors) => match &link.fragment {
-                            Some(anchor) if !anchors.contains(anchor) => Some(Reason::NoSuchAnchor),
-                            _ => None,
-                        },
-                    }
-                }
+            // A link ending in a slash is a route; one that does not is an
+            // asset -- unless it names a route, which Astro and Next both
+            // write and which every static host serves with a redirect.
+            // Calling that "not a file this build writes" was both wrong and
+            // a tax on every internal link in a migrated site.
+            let bare = link.path.trim_matches('/');
+            let route = match link.path.strip_suffix('/') {
+                Some(_) => Some(bare),
+                None if routes.contains_key(bare) => Some(bare),
+                None => None,
+            };
+
+            let reason = match route {
+                Some(route) => match routes.get(route) {
+                    None => Some(Reason::NoSuchRoute),
+                    Some(anchors) => match &link.fragment {
+                        Some(anchor) if !anchors.contains(anchor) => Some(Reason::NoSuchAnchor),
+                        _ => None,
+                    },
+                },
                 None => (!assets.contains(link.path.trim_start_matches('/')))
                     .then_some(Reason::NoSuchAsset),
             };
@@ -590,6 +599,75 @@ mod tests {
         assert_eq!(result.dead[0].target, "/gone/");
         assert_eq!(result.dead[0].reason, Reason::NoSuchRoute);
         assert_eq!(result.dead[0].source, Path::new("content/index.md"));
+    }
+
+    #[test]
+    fn a_route_link_without_a_trailing_slash_is_still_a_route() {
+        // Astro and Next both write `/docs/agents`, and every static host
+        // serves it with a redirect.  Reporting it as a missing file was a
+        // tax on every internal link in a site migrated from either.
+        let config = config("/");
+        let pages = [Rendered {
+            source: Path::new("content/index.md"),
+            url: "/",
+            anchors: &BTreeSet::new(),
+            error_page: false,
+            html: r#"<a href="/docs">d</a><a href="/docs/agents">a</a>"#,
+        }];
+
+        let result = check(
+            &config,
+            &pages,
+            &routes(&[("", &[]), ("docs", &[]), ("docs/agents", &[])]),
+            &assets(&[]),
+        );
+
+        assert!(result.dead.is_empty(), "got {:?}", result.dead);
+        assert_eq!(result.examined, 2);
+    }
+
+    #[test]
+    fn a_slashless_link_that_names_no_route_is_still_a_missing_asset() {
+        let config = config("/");
+        let pages = [Rendered {
+            source: Path::new("content/index.md"),
+            url: "/",
+            anchors: &BTreeSet::new(),
+            error_page: false,
+            html: r#"<img src="/logo.png"><a href="/nowhere">n</a>"#,
+        }];
+
+        let result = check(&config, &pages, &routes(&[("", &[])]), &assets(&[]));
+
+        assert_eq!(result.dead.len(), 2);
+        assert!(
+            result
+                .dead
+                .iter()
+                .all(|dead| dead.reason == Reason::NoSuchAsset)
+        );
+    }
+
+    #[test]
+    fn a_fragment_works_without_the_trailing_slash_too() {
+        let config = config("/");
+        let pages = [Rendered {
+            source: Path::new("content/index.md"),
+            url: "/",
+            anchors: &BTreeSet::new(),
+            error_page: false,
+            html: r##"<a href="/docs#install">a</a><a href="/docs#gone">b</a>"##,
+        }];
+
+        let result = check(
+            &config,
+            &pages,
+            &routes(&[("", &[]), ("docs", &["install"])]),
+            &assets(&[]),
+        );
+
+        assert_eq!(result.dead.len(), 1);
+        assert_eq!(result.dead[0].reason, Reason::NoSuchAnchor);
     }
 
     #[test]

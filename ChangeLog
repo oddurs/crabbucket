@@ -1,5 +1,16 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Migrate a real site, and fix what that found.
+
+	* crates/crabbucket/src/links.rs (check): A slashless link that
+	names a route is the route it names, not a missing file.  Found by
+	migrating cairn's site, where it was three of the internal links in
+	six pages and would have been all of them in a larger one.
+	* examples/site/content/docs/migrating.md: New page; the record of
+	the migration, including the three gaps still open.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Document writing a design system, and check the documentation.
 
 	* examples/site/content/docs/your-own-design-system.md: New page.

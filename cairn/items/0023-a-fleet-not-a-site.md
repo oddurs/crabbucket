@@ -3,10 +3,11 @@ id: 23
 key: v0.3
 title: A fleet, not a site
 type: milestone
-status: backlog
+status: done
 created: 2026-09-08
 updated: 2026-09-08
 priority: p2
+due: 2026-09-08
 ---
 
 Prove the theme seam by implementing it twice, and give components the guarantee content already has.
