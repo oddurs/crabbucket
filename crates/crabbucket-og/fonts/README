@@ -1,0 +1,11 @@
+Public Sans, from <https://github.com/uswds/public-sans>, under the SIL Open
+Font License 1.1 -- see OFL.txt beside it.
+
+Two static instances, Regular and Bold, rather than the variable family.
+resvg does not apply a variable font's weight axis, so the variable file
+rendered every title at Thin regardless of `font-weight`.  Two files at 85KB
+each is a better answer than a card whose type is wrong.
+
+Bundled rather than resolved from the system for one reason: an image
+generated during a build has to look the same on every machine that runs the
+build, and a font the build merely hopes to find does not give that.

@@ -1,5 +1,21 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Draw a social card for every page.
+
+	* crates/crabbucket-og: New crate.  Composes an SVG from a palette,
+	rasterises it with resvg, and caches the result.  Bundles Public
+	Sans under the OFL: two static instances, because resvg does not
+	apply a variable font's weight axis.
+	* crates/crabbucket/src/theme.rs (Theme::og_image): New, defaulting
+	to none.  (Page::cache, Page::card): New.
+	* crates/crabbucket/src/site.rs (CACHE, card_path): New.  Write the
+	cards and register them as assets.
+	* crates/crabbucket-ui/src/lib.rs: Draw them, and emit the og: and
+	twitter: tags.
+	* examples/site/content/docs/social-cards.md: New page.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Generate RSS and Atom for a dated collection.
 
 	* crates/crabbucket/src/feed.rs: New file.  Both formats, and the

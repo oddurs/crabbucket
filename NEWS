@@ -28,6 +28,16 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
   undated page in one fails the build naming itself.  A feed needs
   absolute URLs, so a site with no `url' gets none and is told why.
 
+  Social cards.  The default design system draws one per page from its
+  own tokens, so a shared link is a title on the site's colours rather
+  than a grey rectangle.  Nothing is configured; a site with a `url' gets
+  them.
+
+  crabbucket-og is a separate crate because it costs 76 transitive crates
+  and a font, and a site with no interest in social previews should pay
+  neither.  Cards are cached in `.crabbucket/', which takes a fourteen-
+  page build from 0.37s back to 0.12s.
+
 ** Bug fixes
 
   `~/' in a link means the site root, whatever the base path is.  Content

@@ -1,5 +1,7 @@
 /target
 /examples/site/dist
+/examples/site/.crabbucket
+/examples/site-crate/.crabbucket
 /examples/site-crate/dist
 **/*.rs.bk
 *.pdb

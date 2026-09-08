@@ -25,5 +25,6 @@ behaviour that exists today, and says so plainly where it does not.
 - [Search](search/) — a static index and a small client
 - [The dev loop](dev-loop/) — why there is no `crab dev`
 - [Feeds](feeds/) — RSS and Atom for a dated collection
+- [Social cards](social-cards/) — generated OpenGraph images
 - [Deploying](deploying/) — GitHub Pages, and what makes it work
 - [Design](design/) — the reasoning behind all of the above

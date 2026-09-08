@@ -38,6 +38,22 @@ use crate::search;
 use crate::theme::{FeedLink, Page, PageMeta, PageRef, SiteIndex, Theme};
 use crate::url::Url;
 
+/// Where a design system may keep expensive things between builds.
+///
+/// Beside the site rather than inside `dist/`, which is deleted every build.
+pub const CACHE: &str = ".crabbucket";
+
+/// Where a page's social card is written.
+///
+/// Derived rather than passed around, so the build and the design system's
+/// `<meta>` tag cannot disagree about it.
+pub fn card_path(route: &str) -> String {
+    match route.trim_matches('/') {
+        "" => "og/index.png".to_string(),
+        route => format!("og/{route}.png"),
+    }
+}
+
 /// The route reserved for the error page.
 ///
 /// GitHub Pages, and most static hosts, serve `404.html` from the site root in
@@ -237,9 +253,18 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
         }
     }
 
+    let cache = site_dir.join(CACHE);
+    let mut cards: Vec<(String, Vec<u8>)> = Vec::new();
     let mut rendered: Vec<Rendering<'_, T::Layout>> =
         Vec::with_capacity(live.len() + error_page.len());
     for entry in live.iter().chain(error_page.iter()) {
+        // A card is only ever referenced from an absolute URL, so a site
+        // without one is not asked for any.
+        let card_url = config
+            .url
+            .as_ref()
+            .map(|_| Url::asset(&config, &card_path(&entry.route)));
+
         let page = Page {
             config: &config,
             meta: &entry.meta,
@@ -248,7 +273,15 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
             headings: &entry.headings,
             site: &index,
             feeds: &feeds,
+            cache: &cache,
+            card: card_url.as_ref(),
         };
+
+        if card_url.is_some()
+            && let Some(png) = theme.og_image(&page)
+        {
+            cards.push((card_path(&entry.route), png));
+        }
 
         // The error page is served in place of any path, so it is checked as
         // though it sat at the site root.
@@ -295,6 +328,10 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
         }
     }
 
+    for (path, _) in &cards {
+        assets.insert(path.clone());
+    }
+
     assets.extend(tree(&site_dir.join("static"))?);
 
     // Route to heading ids, so a fragment link can be checked against the page
@@ -336,6 +373,10 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
 
     for (entry, _, html) in &rendered {
         write(&page_path(&out_dir, &entry.route), html)?;
+    }
+
+    for (path, png) in &cards {
+        write_bytes(&out_dir.join(path), png)?;
     }
 
     write(&out_dir.join("site.css"), &theme.stylesheet())?;
@@ -554,6 +595,14 @@ fn write(path: &Path, contents: &str) -> Result<()> {
     fs::write(path, contents).map_err(|source| Error::io(path, source))
 }
 
+/// Writes bytes, creating parent directories.
+fn write_bytes(path: &Path, contents: &[u8]) -> Result<()> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|source| Error::io(parent, source))?;
+    }
+    fs::write(path, contents).map_err(|source| Error::io(path, source))
+}
+
 /// Every file below `dir`, as site-relative paths.  An absent directory is not
 /// an error: a site is allowed to have no static assets.
 fn tree(dir: &Path) -> Result<Vec<String>> {
@@ -609,7 +658,7 @@ fn copy_tree(from: &Path, into: &Path) -> Result<()> {
 mod tests {
     use std::path::Path;
 
-    use super::{page_path, relative, robots};
+    use super::{card_path, page_path, relative, robots};
     use crate::config::Config;
 
     fn config(base: &str) -> Config {
@@ -622,6 +671,12 @@ mod tests {
             feeds: Vec::new(),
             router: false,
         }
+    }
+
+    #[test]
+    fn a_card_sits_where_both_halves_can_find_it() {
+        assert_eq!(card_path(""), "og/index.png");
+        assert_eq!(card_path("docs/routing"), "og/docs/routing.png");
     }
 
     #[test]

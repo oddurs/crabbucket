@@ -145,6 +145,47 @@ impl Theme for Forgetful {
     }
 }
 
+/// A design system that draws social cards.
+///
+/// The bytes are not a real image; this is about the plumbing -- where the
+/// file lands, whether it is registered as an asset, and whether a site with
+/// no absolute URL is asked for one at all.
+struct Illustrated;
+
+impl Theme for Illustrated {
+    type Layout = Layout;
+
+    fn render(&self, page: &Page<'_, Layout>) -> String {
+        let card = page
+            .card
+            .map(|url| format!("<meta property=\"og:image\" content=\"{url}\">"))
+            .unwrap_or_default();
+
+        format!(
+            "<!doctype html><html><head><title>{}</title>{card}\
+             <link rel=\"stylesheet\" href=\"{}\"></head><body><main>{}</main></body></html>",
+            page.meta.title,
+            crabbucket::Url::asset(page.config, "site.css"),
+            page.html
+        )
+    }
+
+    fn stylesheet(&self) -> String {
+        String::new()
+    }
+
+    fn og_image(&self, page: &Page<'_, Layout>) -> Option<Vec<u8>> {
+        // Proof that the design system is given somewhere to keep things.
+        assert!(
+            page.cache.ends_with(".crabbucket"),
+            "no cache directory: {:?}",
+            page.cache
+        );
+
+        Some(format!("not-a-png:{}", page.route).into_bytes())
+    }
+}
+
 /// A design system with no router and no search, for the fixtures that ask
 /// for one anyway.
 struct Bare;
@@ -173,6 +214,31 @@ impl Theme for Bare {
 /// the repository.
 fn build(fixture: &str) -> (Result<Report, Error>, PathBuf) {
     build_with(fixture, None)
+}
+
+/// Builds a fixture with a design system other than the usual one.
+fn build_theme<T: Theme>(fixture: &str, theme: &T) -> (Report, PathBuf) {
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+
+    let site = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/sites")
+        .join(fixture);
+    let out = std::env::temp_dir().join(format!(
+        "crabbucket-theme-{}-{}-{fixture}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+
+    let _ = fs::remove_dir_all(&out);
+    let options = Options {
+        out_dir: Some(out.clone()),
+        base: None,
+    };
+
+    let report = crabbucket::build_with(&site, theme, &options)
+        .unwrap_or_else(|err| panic!("`{fixture}` should build, but: {err}"));
+
+    (report, out)
 }
 
 /// Builds a fixture, optionally overriding the base path.
@@ -587,6 +653,51 @@ fn a_site_that_did_not_ask_for_search_gets_none() {
     let (_, out) = ok("ok");
     assert!(!out.join("search.json").exists());
     assert!(!out.join("search.js").exists());
+}
+
+// ------------------------------------------------------------------- cards
+
+#[test]
+fn a_design_system_that_draws_cards_gets_them_written() {
+    let (_, out) = build_theme("feed", &Illustrated);
+
+    assert!(out.join("og/index.png").is_file(), "no card for the root");
+    assert!(
+        out.join("og/notes/note-1.png").is_file(),
+        "no card for a nested page"
+    );
+
+    let html = read(&out, "index.html");
+    assert!(
+        html.contains("content=\"/repo/og/index.png\""),
+        "got {html}"
+    );
+}
+
+#[test]
+fn a_card_is_registered_so_a_link_to_it_is_not_dead() {
+    // The build writes it and the design system points at it; if the two
+    // disagreed about the path, link checking would say so.
+    let (report, _) = build_theme("feed", &Illustrated);
+    assert!(report.warnings.is_empty(), "got {:?}", report.warnings);
+}
+
+#[test]
+fn a_site_with_no_absolute_url_is_not_asked_for_cards() {
+    // A card is only ever fetched from an absolute URL, so drawing one for a
+    // site that has none would be work nobody will ever see.
+    // `drafts` is the fixture with no `url`.
+    let (_, out) = build_theme("drafts", &Illustrated);
+    assert!(
+        !out.join("og").exists(),
+        "a card was drawn for a site with no url"
+    );
+
+    let html = read(&out, "index.html");
+    assert!(
+        !html.contains("og:image"),
+        "a tag pointing at nothing: {html}"
+    );
 }
 
 // ------------------------------------------------------------------- feeds

@@ -112,7 +112,7 @@ impl Theme for Standard {
             }
         };
 
-        document(page.config, page.meta, &nav, page.feeds, content).into_string()
+        document(page.config, page.meta, &nav, page.feeds, page.card, content).into_string()
     }
 
     fn stylesheet(&self) -> String {
@@ -126,6 +126,23 @@ impl Theme for Standard {
 
     fn directives(&self) -> Directives {
         components::directives()
+    }
+
+    fn og_image(&self, page: &Page<'_, Layout>) -> Option<Vec<u8>> {
+        // The card is drawn from this design system's own tokens, so it looks
+        // like the site it belongs to without anybody restating the palette.
+        let card = crabbucket_og::Card {
+            title: &page.meta.title,
+            site: &page.config.title,
+            palette: crabbucket_og::Palette {
+                background: hex(tok::color::SURFACE),
+                foreground: hex(tok::color::TEXT),
+                muted: hex(tok::color::TEXT_MUTED),
+                accent: hex(tok::color::ACCENT),
+            },
+        };
+
+        crabbucket_og::cached(&page.cache.join("og"), &card).ok()
     }
 
     fn search_js(&self) -> Option<String> {
@@ -305,6 +322,7 @@ pub fn document(
     meta: &PageMeta<Layout>,
     nav: &[NavItem],
     feeds: &[FeedLink],
+    card: Option<&Url>,
     content: Markup,
 ) -> Markup {
     let description = meta.description.as_deref().unwrap_or(&config.description);
@@ -320,6 +338,14 @@ pub fn document(
                     meta name="description" content=(description);
                 }
                 link rel="stylesheet" href=(Url::asset(config, "site.css"));
+                @if let Some(card) = card {
+                    meta property="og:image" content=(card);
+                    meta property="og:image:width" content=(crabbucket_og::WIDTH);
+                    meta property="og:image:height" content=(crabbucket_og::HEIGHT);
+                    meta name="twitter:card" content="summary_large_image";
+                }
+                meta property="og:title" content=(meta.title);
+                meta property="og:type" content="website";
                 @for feed in feeds {
                     link rel="alternate"
                          type="application/atom+xml"
@@ -356,6 +382,18 @@ pub fn document(
             }
         }
     }
+}
+
+/// The literal value out of a `var(--name, #value)` token.
+///
+/// A token is a CSS reference so that a runtime theme override reaches it.  An
+/// image is drawn before any browser exists, so it needs the value the
+/// reference falls back to.
+fn hex(token: &str) -> &str {
+    token
+        .rsplit_once(", ")
+        .and_then(|(_, fallback)| fallback.strip_suffix(')'))
+        .unwrap_or(token)
 }
 
 /// The search box.
