@@ -55,12 +55,19 @@ slash and no static host needs rewrite rules.
 There are two halves to making links trustworthy, and they are not the
 same problem.
 
-**Components have a compiler.**  A build step can walk the content tree
-and generate a `Route' enum, so that
+**Components have a compiler.**  A site that is a crate generates a
+`Route' enum from its content tree in `build.rs', so that
 
-  a href=(url(Route::Docs("routing"))) { "Routing" }
+  a href=(Url::new(config, Route::DocsRouting.path())) { "Routing" }
 
-does not compile if the page is renamed.  This is not built yet.
+does not compile if the page is renamed.  Two routes that would share a
+variant name fail the build naming both, because picking one silently
+would mean a link that compiles and goes to the wrong page.
+
+The generator is `crabbucket-routes', which has no dependencies and is
+also where `crabbucket' itself gets its answer to "what route is this
+file?".  One implementation, used at build time and at run time, because
+two of them would eventually disagree.
 
 **Content does not.**  There is no compiler inside a `.md' file, so a
 Markdown link cannot be typed at all.  The next best thing -- and the

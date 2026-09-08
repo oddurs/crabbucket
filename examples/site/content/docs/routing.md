@@ -108,9 +108,55 @@ crab: 1 dead internal link:
     from every path; write it as a site-absolute link
 ```
 
-## What is not built yet
+## The other half: routes as a type
 
-The other half of the story — a generated `Route` enum, so that a link written
-in a Rust component fails to *compile* rather than failing to build — is
-described in [Design](../design/). Link checking covers content today;
-the enum will cover components.
+Content has no compiler, so link checking is the best it can have. A Rust
+component *does* have one, and should not settle for less.
+
+A site that is a crate generates a `Route` enum from `content/` in its
+`build.rs`:
+
+```rust
+// build.rs
+let found = crabbucket_routes::scan(&content)?;
+print!("{}", crabbucket_routes::watch(&content, &found));
+
+let routes = found.into_iter().map(|(route, _)| route).collect::<Vec<_>>();
+fs::write(out.join("routes.rs"), crabbucket_routes::generate(&routes)?)?;
+```
+
+```rust
+pub mod routes {
+    include!(concat!(env!("OUT_DIR"), "/routes.rs"));
+}
+
+html! { a href=(Url::new(config, Route::DocsRouting.path())) { "The route table" } }
+```
+
+Rename `content/docs/routing.md` and the variant stops existing:
+
+```
+error[E0599]: no variant, associated function, or constant named
+`DocsRouting` found for enum `Route` in the current scope
+```
+
+Three things worth knowing:
+
+**Two routes that would share a variant name fail the build**, naming both.
+`docs/getting-started` and `docs/getting/started` both camel-case to
+`DocsGettingStarted`, and picking one silently would mean a link that compiles
+and goes to the wrong page.
+
+**The content directory is watched as well as the files in it.** Cargo only
+notices a *new* file through the directory, and a build script watching the
+files alone misses the page you just added — the classic build-script bug.
+
+**`crabbucket-routes` has no dependencies**, and compiles in about a quarter of
+a second. That matters because a build dependency is compiled before anything
+else; using `crabbucket` itself would have dragged a Markdown parser and a
+syntax highlighter into that phase to walk a directory.
+
+The two mechanisms stay separate and neither replaces the other. Link checking
+covers content, which cannot be typed; the enum covers components, which can.
+
+See `examples/site-crate` for a working one.

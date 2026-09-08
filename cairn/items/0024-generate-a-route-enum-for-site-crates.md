@@ -2,7 +2,7 @@
 id: 24
 title: Generate a Route enum for site crates
 type: feature
-status: backlog
+status: done
 milestone: v0.3
 labels:
 - design
@@ -54,9 +54,40 @@ mechanisms stay, each covering the half it can.
 
 ## Acceptance criteria
 
-- [ ] A site crate's `build.rs` generates the enum from `content/`
-- [ ] A renamed page fails compilation at every use site
-- [ ] Adding a file causes a rebuild
-- [ ] Route name collisions fail the build with both paths named
-- [ ] `examples/site` gains a Rust half that uses it
-- [ ] Build-dependency compile cost measured and recorded on this item
+- [x] A site crate's `build.rs` generates the enum from `content/`
+- [x] A renamed page fails compilation at every use site
+- [x] Adding a file causes a rebuild
+- [x] Route name collisions fail the build with both paths named
+- [x] `examples/site` gains a Rust half that uses it
+- [x] Build-dependency compile cost measured and recorded on this item
+
+## 2026-09-08
+
+Done, and the three open questions the item listed are all answered.
+
+**Crate weight.** `crabbucket-routes` has no dependencies and compiles in
+0.28s. Using `crabbucket` as a build dependency would have pulled eight
+direct dependencies, a Markdown parser and a syntax highlighter into the
+build phase to walk a directory. The split was not a nicety.
+
+It also took route derivation *away* from `crabbucket`, which now calls
+into it. That was not in the plan and is the better half of the change:
+the rule the whole routing model rests on now has one implementation
+rather than two that could drift.
+
+**Staleness.** `watch()` emits a rerun line for the content directory as
+well as every file in it, because cargo only notices a *new* file through
+the directory. There is a test for the directory line specifically, since
+that is the half a build script usually forgets.
+
+**Naming.** Collisions fail the build naming both routes. `ALL` and the
+enum are declared in route order rather than variant-name order, so a
+sitemap built from `ALL` reads the way a sitemap should and the site root
+comes first.
+
+Verified by hand as well as by test: renaming `content/docs/routing.md`
+gives `no variant, associated function, or constant named DocsRouting
+found for enum Route`, and restoring it builds again.
+
+`examples/site-crate` is the working one, and it uses
+crabbucket-theme-plain, so the two v0.3 items exercise each other.

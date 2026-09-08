@@ -1,0 +1,28 @@
+# A site that has its own design system, and so is a crate.
+#
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+name = "crabbucket-example-site"
+description = "A crabbucket site built as a crate, with typed routes."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+publish = false
+
+[[bin]]
+name = "crabbucket-example-site"
+path = "src/main.rs"
+
+[dependencies]
+crabbucket.workspace = true
+crabbucket-theme-plain.workspace = true
+maud = "0.27"
+
+[build-dependencies]
+crabbucket-routes.workspace = true

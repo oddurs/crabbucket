@@ -15,6 +15,7 @@ keywords = ["static-site", "ssg", "website", "documentation"]
 categories = ["web-programming", "template-engine"]
 
 [dependencies]
+crabbucket-routes.workspace = true
 maud = "0.27"
 pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
 serde = { version = "1", features = ["derive"] }

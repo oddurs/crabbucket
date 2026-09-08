@@ -70,24 +70,28 @@ decision.
 
 ## What is decided but not built
 
-- **A generated `Route` enum**, so a link written in a Rust component fails to
-  compile. [Link checking](../routing/) covers content today.
-- **Markdown directives** — `:::callout{kind="warn"}` resolving to a typed
-  component function, with attributes deserialized into its props. MDX's
-  expressiveness without MDX's compiler.
-- **Search**: a static index and a small client.
-- **A light palette**, driven by the same token file.
+- **Generated OpenGraph images**, so a shared link is not a grey rectangle.
+- **RSS and Atom** for a dated collection.
 
-The tracked, ordered version of this list is
+Everything else this section has listed since the first draft is now built:
+[typed routes](../routing/), [directives](../components/),
+[search](../search/), a table of contents, and a light palette. This list is
+kept honest by being short.
+
+The tracked, ordered version of it is
 [ROADMAP.md](https://github.com/oddurs/crabbucket/blob/main/ROADMAP.md).
 
 ## What has changed since the first draft
 
-Three sections of `doc/DESIGN` have been overruled by building the thing.
+Five sections of `doc/DESIGN` have been overruled by building the thing.
 
 Section 3 originally described only the `Route` enum; content has no compiler,
 so link checking became a build gate in its own right rather than a lesser
-version of the same idea.
+version of the same idea. Both halves now exist, and neither replaces the
+other.
+
+Section 7 claimed the router was "about a kilobyte" for three revisions
+without anybody measuring it. It is three.
 
 Section 6 promised that unused component CSS would never be emitted. That
 promise was withdrawn: at this size it optimises the wrong number, and the

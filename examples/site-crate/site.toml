@@ -1,0 +1,3 @@
+title = "Typed routes"
+description = "A crabbucket site built as a crate, with routes it cannot get wrong."
+base = "/"
