@@ -1,0 +1,44 @@
+# Ferrite's tokens: the file chapter 5 of the book starts from.
+#
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[color]
+paper  = "#fbf9f6"
+ink    = "#22201d"
+faded  = "#6b665e"
+rule   = "#e0dbd2"
+accent = "#a8431f"
+
+[color.dark]
+paper  = "#1a1815"
+ink    = "#ece8e1"
+faded  = "#9c968c"
+rule   = "#332f2a"
+accent = "#e0895f"
+
+[space]
+line = "1.5rem"
+half = "0.75rem"
+
+[font]
+body = "Charter, 'Bitstream Charter', Georgia, serif"
+mono = "ui-monospace, SFMono-Regular, Menlo, monospace"
+
+[size]
+body  = "1.0625rem"
+title = "2.25rem"
+
+[measure]
+column = "36rem"
+
+[syntax]
+comment     = "#8a857c"
+keyword     = "#a8431f"
+string      = "#2f5d3f"
+constant    = "#6a4a12"
+entity      = "#28457a"
+support     = "#1f5a5a"
+variable    = "#22201d"
+punctuation = "#6b665e"
+invalid     = "#a12020"

@@ -1,0 +1,11 @@
+.& {
+  border-left: 2px solid var(--color-accent);
+  color: var(--color-faded);
+  padding-left: var(--space-half);
+}
+
+.&__title {
+  color: var(--color-ink);
+  display: block;
+  font-weight: 600;
+}

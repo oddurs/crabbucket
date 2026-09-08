@@ -159,6 +159,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "crabbucket-book-samples"
+version = "0.1.0"
+dependencies = [
+ "crabbucket",
+ "crabbucket-tokens",
+ "maud",
+ "serde",
+]
+
+[[package]]
 name = "crabbucket-cli"
 version = "0.1.0"
 dependencies = [

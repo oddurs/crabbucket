@@ -1,0 +1,28 @@
+# The Rust in the book, as code the compiler sees.
+#
+# The book's chapters 4 to 6 build a design system called Ferrite and use it
+# from a site.  It is a real crate rather than a listing, so a snippet that
+# stops compiling stops CI -- which is the only way a book stays true.
+#
+# Copyright (C) 2026 Oddur Sigurdsson
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+name = "crabbucket-book-samples"
+description = "The code the book shows, compiled."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+publish = false
+
+[dependencies]
+crabbucket.workspace = true
+maud = "0.27"
+serde = { version = "1", features = ["derive"] }
+
+[build-dependencies]
+crabbucket-tokens.workspace = true

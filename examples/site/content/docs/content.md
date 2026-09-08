@@ -151,8 +151,10 @@ let mut entries: Vec<_> = docs.entries().iter().collect();
 entries.sort_by_key(|entry| entry.meta.order);
 ```
 
-## What is not built yet
+## Components in prose
 
-Directives — `:::callout{kind="warn"}` in Markdown resolving to a typed
-component function — are described in [Design](../design/) and are not
-implemented. Until they are, Markdown is Markdown.
+`:::callout{kind = "warn"}` in Markdown resolves to a typed component
+function. The attributes are a TOML inline table deserialized into the
+component's props, so a misspelled one fails the build with the page and the
+line, as does a directive nothing is registered under. See
+[Components](../components/).

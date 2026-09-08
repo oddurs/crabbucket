@@ -11,6 +11,7 @@ members = [
     "crates/crabbucket-theme-plain",
     "crates/crabbucket-tokens",
     "crates/crabbucket-ui",
+    "examples/book-samples",
     "examples/site-crate",
     "bench",
 ]

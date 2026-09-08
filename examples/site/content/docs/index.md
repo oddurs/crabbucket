@@ -32,3 +32,6 @@ behaviour that exists today, and says so plainly where it does not.
 - [Migrating from Astro](migrating/) — a real site moved, and what broke
 - [Speed](speed/) — what the build costs, measured against Hugo and Zola
 - [Design](design/) — the reasoning behind all of the above
+
+If you would rather read one path through all of it in order than look things
+up, [the book](~/book/) is that.

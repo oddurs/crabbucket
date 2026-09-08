@@ -40,6 +40,29 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
 
 ** Documentation
 
+  The book: nine chapters and a contents page, from an empty directory to
+  twelve repositories sharing one house style.  It follows one project the
+  whole way rather than documenting the parts, because reference
+  documentation answers questions you already know to ask and is the wrong
+  shape for somebody who has not started.
+
+  Chapter 6, on a fleet of sites, was written first, on the theory that the
+  place a design is weakest is the place its largest promise is made.  Two
+  of the things it says are annoying, and they are said.
+
+  Every Rust block in it is `examples/book-samples' -- a design system
+  called Ferrite that the workspace compiles and that has its own tests
+  proving it renders a site.  The copying goes one way and a test enforces
+  it, so `does the book still compile?' is answered by `cargo build'.  A
+  book with a snippet that no longer compiles is worse than no book,
+  because it is confidently wrong.
+
+  Ferrite is also the third design system, and the first that needed no
+  changes to the framework to write.
+
+  The Content page no longer says directives are unimplemented.  They have
+  been implemented since 0.3.
+
   What the build costs, measured rather than asserted.  `bench/' generates
   the same site three ways and times crabbucket, Hugo and Zola on it.  On
   521 pages: Hugo 145ms, crabbucket 250ms, Zola 314ms.  Hugo is about
