@@ -2,7 +2,7 @@
 id: 48
 title: Validate the scaffolded turborust.toml against turborust schema
 type: chore
-status: backlog
+status: done
 milestone: v1.0
 created: 2026-09-08
 updated: 2026-09-08
@@ -32,7 +32,37 @@ Replaces the hand-written assertions in
 
 ## Acceptance criteria
 
-- [ ] The schema is vendored or regenerated, with its provenance recorded
-- [ ] The scaffolded config validates against it
-- [ ] The hand-written structural assertions are removed
-- [ ] A schema change fails crabbucket's build rather than a user's
+- [x] The schema is vendored or regenerated, with its provenance recorded
+- [x] The scaffolded config validates against it
+- [x] The hand-written structural assertions are removed
+- [x] A schema change fails crabbucket's build rather than a user's
+
+## 2026-09-08
+
+Done with the thorough version, because the cheap one turned out not to be
+cheaper. The item offered a `turborust plan` subprocess first and the
+vendored schema only if that proved insufficient -- but `turborust plan`
+needs turborust installed, which CI does not have, so it skipped every
+time and checked nothing.
+
+The vendored schema needs nothing installed and is turborust's own
+definition rather than a restatement of it. That distinction is the whole
+value: the assertions it replaces encoded turborust's schema in a second
+place, which is the shape of problem this project exists to remove.
+
+The question that decided it was whether the schema has
+`additionalProperties: false`. Without it, a renamed key would pass
+validation as an extra and the check would be theatre. It is false
+throughout, so a rename fails. Checked before writing anything.
+
+Three things are validated: both scaffold shapes, and this repository's
+own turborust.toml, which is not scaffolded and is the one a contributor
+actually runs. A fourth test compares the vendored copy against what
+turborust emits today, where it is installed, so drift is a signal rather
+than a surprise.
+
+Proved it works by renaming `inputs` to `input` in the template and
+watching it fail with `/tasks/site: Additional properties are not allowed
+('input' was unexpected)`.
+
+Two dev-dependencies, jsonschema and serde_json, in the CLI crate only.

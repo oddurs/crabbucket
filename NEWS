@@ -99,6 +99,10 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
   1.85 and was never checked; the code has used let-chains since v0.1,
   which are 1.88.
 
+  The turborust.toml `crab new' writes is validated against turborust's
+  own JSON Schema, vendored, rather than against assertions restating it.
+  Both scaffold shapes and this repository's own config are checked.
+
 ** Bug fixes
 
   What the build writes has line feeds on every platform.  A design

@@ -1,0 +1,16 @@
+turborust.json is turborust's own JSON Schema for turborust.toml, emitted by:
+
+    turborust schema > crates/crabbucket-cli/schema/turborust.json
+
+Vendored, not fetched, so the check runs offline and on a machine that has no
+turborust.  It is turborust's definition rather than a restatement of it,
+which is the point: crabbucket ships a turborust.toml in every scaffolded
+site, and a schema change there should fail crabbucket's build rather than a
+user's.
+
+Regenerate it when turborust changes.  A diff in this file is the signal that
+the scaffold may need to change too.
+
+  turborust version  0.1.0
+  turborust commit   2e5e9d2
+  taken              2026-09-08
