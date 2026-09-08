@@ -7,6 +7,10 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    # Mondays, so a compiler regression is a Monday problem rather than a
+    # release-day one.
+    - cron: "0 7 * * 1"
 
 env:
   CARGO_TERM_COLOR: always
@@ -14,19 +18,59 @@ env:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    name: ${{ matrix.rust }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Stable everywhere.  Windows is the one that finds bugs: every
+          # route is built from forward slashes and every path from the
+          # platform's separator, and nothing on a Mac notices the difference.
+          - { os: ubuntu-latest, rust: stable }
+          - { os: macos-latest, rust: stable }
+          - { os: windows-latest, rust: stable }
+          # The declared minimum, on one platform.  Checking it three times
+          # would buy nothing and cost three times as much.
+          - { os: ubuntu-latest, rust: "1.88" }
+
     steps:
       - uses: actions/checkout@v5
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ matrix.rust }}
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo fmt --all --check
-      - run: cargo clippy --workspace --all-targets --all-features
+        with:
+          key: ${{ matrix.rust }}
+
+      # Formatting and lints are the same on every platform, so they run once.
+      - name: cargo fmt
+        if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
+        run: cargo fmt --all --check
+      - name: cargo clippy
+        if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
+        run: cargo clippy --workspace --all-targets --all-features
+
       - run: cargo test --workspace --all-targets
         env:
           # Compiles the scaffolded crate against the working copy, which is
           # the only check that `crab new --theme` emits code that builds.
           CRABBUCKET_SLOW_TESTS: "1"
+
       - name: the example site builds
         run: cargo run -q -p crabbucket-cli -- build examples/site
+
+      - name: the example site crate builds itself
+        run: cargo run -q -p crabbucket-example-site
+
+  # A regression in a future compiler should arrive as a notification rather
+  # than as a surprise during a release.
+  beta:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@beta
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --workspace --all-targets

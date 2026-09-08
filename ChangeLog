@@ -1,5 +1,24 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Test the minimum Rust version, and three platforms.
+
+	* Cargo.toml (rust-version): 1.88, which is what the code has
+	needed since v0.1.  1.85 was declared and never checked.
+	* .github/workflows/ci.yml: A matrix -- stable on Linux, macOS and
+	Windows, and the declared minimum on Linux.  Formatting and lints
+	run once rather than four times.  A scheduled beta run, so a
+	compiler regression is a Monday problem rather than a release-day
+	one.
+	* crates/crabbucket/tests/build.rs (names): Compare a rendered path
+	against a literal using the platform's separator; five assertions
+	would have failed on Windows.
+	* crates/crabbucket-routes/tests/scanning.rs: The same, for the
+	rerun lines.
+	* crates/crabbucket/tests/sites/nested: Four levels deep, with links
+	out of the bottom one.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Write down what 1.0 will promise.
 
 	* doc/STABILITY: New file.

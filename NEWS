@@ -95,6 +95,10 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
   crate root, which an audit found untrue of eight types.  `DeadLink'
   gained a Display.
 
+  The declared minimum Rust version is 1.88, and CI tests it.  It said
+  1.85 and was never checked; the code has used let-chains since v0.1,
+  which are 1.88.
+
 ** Bug fixes
 
   A link to a route without a trailing slash -- `/docs/agents' rather than

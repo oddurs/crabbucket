@@ -8,7 +8,7 @@ order = 1
 
 ## Install
 
-crabbucket needs Rust 1.85 or newer.
+crabbucket needs Rust 1.88 or newer.
 
 ```sh
 cargo install --git https://github.com/oddurs/crabbucket crabbucket-cli

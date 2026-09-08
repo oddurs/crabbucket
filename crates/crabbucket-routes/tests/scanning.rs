@@ -135,5 +135,7 @@ fn every_file_found_is_watched() {
         3,
         "the directory and both files: {lines}"
     );
-    assert!(lines.contains("docs/routing.md"), "got {lines}");
+    // The rerun lines carry real paths, which use the platform's separator.
+    let native = Path::new("docs").join("routing.md");
+    assert!(lines.contains(&native.display().to_string()), "got {lines}");
 }

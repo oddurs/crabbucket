@@ -10,7 +10,7 @@ A Markdown page reaches a typed component through a **directive**:
 
 ```markdown
 :::callout{kind = "warn", title = "Careful"}
-crabbucket needs Rust 1.85 or newer.
+crabbucket needs Rust 1.88 or newer.
 :::
 ```
 

@@ -373,9 +373,30 @@ fn a_url_gets_a_sitemap_and_robots_and_nothing_else_does() {
 
 #[test]
 fn nested_content_keeps_its_shape_on_any_platform() {
+    // Routes are built from forward slashes and paths from the platform's
+    // separator.  Nothing on a Unix machine notices the difference, which is
+    // why the matrix runs this on Windows.
     let (report, out) = ok("nested");
-    assert_eq!(report.routes, ["", "a/b/c"]);
+
+    assert_eq!(report.routes, ["", "a/b/c", "a/b/c/d/deeper"]);
     assert!(out.join("a/b/c/index.html").is_file());
+    assert!(
+        out.join("a")
+            .join("b")
+            .join("c")
+            .join("d")
+            .join("deeper")
+            .join("index.html")
+            .is_file()
+    );
+
+    // And the links out of the deep page resolved, or the build would have
+    // failed before here.
+    let html = read(&out, "a/b/c/d/deeper/index.html");
+    assert!(
+        html.contains("href=\"/\""),
+        "the site-root link did not resolve: {html}"
+    );
 }
 
 #[test]
@@ -737,7 +758,10 @@ fn a_site_directive_that_cannot_find_its_data_fails_at_the_line() {
     let (result, _) = build_owning("site-data", directives);
     let message = result.expect_err("should fail").render(false);
 
-    assert!(message.contains("content/index.md:7:1"), "got {message}");
+    assert!(
+        names(&message, "content/index.md") && message.contains(":7:1"),
+        "got {message}"
+    );
     assert!(message.contains("no `data/absent.toml`"), "got {message}");
 }
 
@@ -758,6 +782,20 @@ fn a_site_may_not_quietly_replace_a_component() {
 }
 
 // ---------------------------------------------- pages the site renders itself
+
+/// Whether a rendered message names a path.
+///
+/// A path renders with the platform's separator, so comparing one against a
+/// literal with forward slashes passes everywhere except Windows -- which is
+/// exactly the kind of thing a single-platform test suite never notices.
+fn names(message: &str, path: &str) -> bool {
+    let native = path
+        .split('/')
+        .collect::<Vec<_>>()
+        .join(std::path::MAIN_SEPARATOR_STR);
+
+    message.contains(&native)
+}
 
 /// Builds a fixture with directives the site brought.
 fn build_owning(fixture: &str, directives: Directives) -> (Result<Report, Error>, PathBuf) {
@@ -939,7 +977,7 @@ fn a_page_missing_a_field_the_design_system_requires_fails() {
 
     let message = err.render(false);
     assert!(
-        message.contains("missing-extra/content/index.md"),
+        names(&message, "missing-extra/content/index.md"),
         "got {message}"
     );
     assert!(message.contains("missing field `summary`"), "got {message}");
@@ -1225,7 +1263,7 @@ fn a_page_with_no_title_fails_and_names_the_file() {
 
     let message = err.render(false);
     assert!(
-        message.contains("missing-title/content/index.md"),
+        names(&message, "missing-title/content/index.md"),
         "got {message}"
     );
     assert!(message.contains("missing field `title`"), "got {message}");
@@ -1259,17 +1297,14 @@ fn a_schema_error_shows_the_offending_line_with_a_caret() {
 fn a_file_with_no_frontmatter_fails() {
     let err = fails("no-frontmatter");
     assert!(matches!(err, Error::MissingFrontmatter { .. }));
-    assert!(
-        err.render(false)
-            .contains("no-frontmatter/content/index.md")
-    );
+    assert!(names(&err.render(false), "no-frontmatter/content/index.md"));
 }
 
 #[test]
 fn an_unterminated_frontmatter_block_fails() {
     let err = fails("unterminated");
     assert!(matches!(err, Error::UnterminatedFrontmatter { .. }));
-    assert!(err.render(false).contains("unterminated/content/index.md"));
+    assert!(names(&err.render(false), "unterminated/content/index.md"));
 }
 
 #[test]
