@@ -23,6 +23,7 @@
 //! links somewhere that does not exist.
 
 use std::collections::BTreeSet;
+use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -60,6 +61,60 @@ pub struct Report {
     pub links: usize,
     /// Anything the build wants the reader to know but not to stop for.
     pub warnings: Vec<String>,
+}
+
+impl Report {
+    /// The one line worth printing when everything went well.
+    ///
+    /// Pluralisation lives here rather than in whatever printed it, because
+    /// otherwise every caller reimplements it and one of them gets it wrong.
+    pub fn headline(&self) -> String {
+        format!(
+            "{} {}, {} {} checked -> {}",
+            self.routes.len(),
+            plural(self.routes.len(), "page", "pages"),
+            self.links,
+            plural(self.links, "link", "links"),
+            self.out_dir.display()
+        )
+    }
+
+    /// The `drafts` line, if there were any.
+    pub fn drafts_line(&self) -> Option<String> {
+        (self.drafts > 0).then(|| {
+            format!(
+                "{} {} skipped",
+                self.drafts,
+                plural(self.drafts, "draft", "drafts")
+            )
+        })
+    }
+}
+
+/// Everything the build has to say, in the order it should be said.
+///
+/// `Display` is complete on purpose.  A report carries warnings and a draft
+/// count, and both are easy to have and easy to forget to print -- so
+/// `println!("{report}")`, which is what anybody writes first, says all of it.
+/// A caller that wants the warnings on stderr can still walk the fields.
+impl fmt::Display for Report {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.headline())?;
+
+        if let Some(line) = self.drafts_line() {
+            write!(f, "\n{line}")?;
+        }
+
+        for warning in &self.warnings {
+            write!(f, "\nwarning: {warning}")?;
+        }
+
+        Ok(())
+    }
+}
+
+fn plural<'a>(count: usize, one: &'a str, many: &'a str) -> &'a str {
+    if count == 1 { one } else { many }
 }
 
 /// Overrides for one invocation, which the configuration file does not know

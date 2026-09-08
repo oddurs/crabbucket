@@ -33,8 +33,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use crabbucket::directive::Directives;
 use crabbucket::error::Error;
 use crabbucket::links::Reason;
-use crabbucket::site::{Options, Report};
 use crabbucket::theme::{Page, Theme};
+use crabbucket::{Options, Report};
 use serde::Deserialize;
 
 /// The layouts the test theme offers, so `unknown-layout` has something to be
@@ -126,7 +126,7 @@ fn build_with(fixture: &str, base: Option<&str>) -> (Result<Report, Error>, Path
         base: base.map(|base| base.to_string()),
     };
 
-    (crabbucket::site::build_with(&site, &Plain, &options), out)
+    (crabbucket::build_with(&site, &Plain, &options), out)
 }
 
 /// Builds a fixture that is expected to succeed.
@@ -301,6 +301,64 @@ fn an_unterminated_directive_fails_at_the_line_it_opened_on() {
         "got {message}"
     );
     assert!(message.contains(":7:1:"), "got {message}");
+}
+
+// ------------------------------------------------------------------ report
+
+#[test]
+fn the_whole_api_a_caller_needs_is_at_the_crate_root() {
+    // `build` was re-exported and `build_with` was not, so the obvious
+    // symmetric name did not compile and the workaround was to move `dist/`
+    // by hand.  This test is here so that cannot happen again.
+    let _: fn(&Path, &Plain) -> Result<Report, Error> = crabbucket::build;
+    let _: fn(&Path, &Plain, &Options) -> Result<Report, Error> = crabbucket::build_with;
+    let _ = crabbucket::Options::default();
+}
+
+#[test]
+fn printing_a_report_says_everything_it_has_to_say() {
+    let (report, _) = ok("drafts");
+
+    // Whatever anybody writes first has to be the correct thing, because a
+    // warning printed to nobody is a warning that was not printed.
+    let printed = report.to_string();
+
+    assert!(printed.contains("1 page, "), "got {printed}");
+    assert!(printed.contains("links checked -> "), "got {printed}");
+    assert!(
+        printed.contains("1 draft skipped"),
+        "the draft went unmentioned: {printed}"
+    );
+}
+
+#[test]
+fn a_report_pluralises_so_that_nobody_downstream_has_to() {
+    let (one, _) = ok("drafts");
+    assert!(
+        one.headline().starts_with("1 page,"),
+        "got {}",
+        one.headline()
+    );
+    assert_eq!(one.drafts_line().as_deref(), Some("1 draft skipped"));
+
+    let (many, _) = ok("ok");
+    assert!(
+        many.headline().starts_with("2 pages,"),
+        "got {}",
+        many.headline()
+    );
+    assert_eq!(many.drafts_line(), None, "no drafts, so no line about them");
+}
+
+#[test]
+fn a_warning_reaches_the_printed_report() {
+    let mut report = ok("ok").0;
+    report.warnings.push("the sky is falling".to_string());
+
+    assert!(
+        report.to_string().contains("warning: the sky is falling"),
+        "got {report}"
+    );
 }
 
 // ------------------------------------------------------------------ search
