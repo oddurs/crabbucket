@@ -589,6 +589,100 @@ fn a_site_that_did_not_ask_for_search_gets_none() {
     assert!(!out.join("search.js").exists());
 }
 
+// ------------------------------------------------------------------- feeds
+
+#[test]
+fn a_dated_collection_gets_both_feeds() {
+    let (_, out) = ok("feed");
+
+    let atom = read(&out, "notes/atom.xml");
+    let rss = read(&out, "notes/feed.xml");
+
+    assert!(atom.starts_with("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
+    assert!(rss.starts_with("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
+
+    // Absolute URLs, base included, because a feed is read somewhere else.
+    assert!(
+        atom.contains("https://example.com/repo/notes/note-3/"),
+        "got {atom}"
+    );
+    assert!(
+        rss.contains("<link>https://example.com/repo/notes/note-3/</link>"),
+        "got {rss}"
+    );
+}
+
+#[test]
+fn a_feed_is_newest_first_and_honours_its_limit() {
+    let (_, out) = ok("feed");
+    let atom = read(&out, "notes/atom.xml");
+
+    let third = atom.find("Note 3").expect("no note 3");
+    let second = atom.find("Note 2").expect("no note 2");
+
+    assert!(third < second, "not newest first: {atom}");
+    assert!(
+        !atom.contains("Note 1"),
+        "the limit of 2 was not applied: {atom}"
+    );
+}
+
+#[test]
+fn a_feed_escapes_what_a_title_can_contain() {
+    let (_, out) = ok("feed");
+    let atom = read(&out, "notes/atom.xml");
+
+    assert!(atom.contains("Note 3 &amp; friends"), "got {atom}");
+    assert!(
+        !atom.contains("& friends"),
+        "a raw ampersand reached the feed: {atom}"
+    );
+}
+
+#[test]
+fn the_collections_own_index_is_not_in_its_feed() {
+    // It is the thing the feed is for, not an entry in it -- and it has no
+    // date, which is the other reason it must not be.
+    let (_, out) = ok("feed");
+    assert!(!read(&out, "notes/atom.xml").contains("<title>Notes</title>\n  <entry>"));
+}
+
+#[test]
+fn a_page_in_a_dated_collection_without_a_date_fails() {
+    // Configuring a feed is how a site says a collection is dated.  This is
+    // the build holding it to that.
+    let err = fails("undated");
+    assert!(matches!(err, Error::Undated { .. }));
+
+    let message = err.render(false);
+    assert!(message.contains("undated.md"), "got {message}");
+    assert!(message.contains("needs a `date`"), "got {message}");
+}
+
+#[test]
+fn a_feed_without_an_absolute_url_is_skipped_and_said_so() {
+    // A feed is read somewhere else, so it needs absolute URLs.  Without a
+    // `url` the honest thing is to write nothing and say why -- and, since no
+    // feed is written, not to demand dates either.
+    let (report, out) = ok("feed-no-url");
+
+    assert!(!out.join("notes/feed.xml").exists());
+    assert!(!out.join("notes/atom.xml").exists());
+
+    assert_eq!(report.warnings.len(), 1, "got {:?}", report.warnings);
+    assert!(
+        report.warnings[0].contains("no url"),
+        "got {:?}",
+        report.warnings
+    );
+
+    let html = read(&out, "index.html");
+    assert!(
+        !html.contains("rel=\"alternate\""),
+        "a link to a feed nobody wrote: {html}"
+    );
+}
+
 // ----------------------------------------------------------- the site root
 
 #[test]
@@ -822,6 +916,7 @@ fn every_failure_names_a_file() {
         "bad-attribute",
         "unterminated-directive",
         "dead-site-root",
+        "undated",
     ] {
         let err = build(fixture).0.expect_err("should fail");
         assert!(

@@ -136,6 +136,17 @@ pub enum Error {
         snippet: Option<Snippet>,
     },
 
+    /// A page in a collection a feed carries has no date.
+    ///
+    /// Configuring a feed is how a site says its pages are dated; this is the
+    /// build holding it to that.
+    Undated {
+        /// The page with no date.
+        path: PathBuf,
+        /// The collection whose feed needs one.
+        collection: String,
+    },
+
     /// One or more pages link somewhere that does not exist.
     ///
     /// Every dead link is reported at once, because fixing them one build at a
@@ -188,7 +199,8 @@ impl Error {
             Error::Io { path, .. }
             | Error::MissingFrontmatter { path }
             | Error::UnterminatedFrontmatter { path }
-            | Error::Schema { path, .. } => Some(path),
+            | Error::Schema { path, .. }
+            | Error::Undated { path, .. } => Some(path),
             Error::DeadLinks(links) => links.first().map(|link| link.source.as_path()),
         }
     }
@@ -231,6 +243,11 @@ impl Error {
 
                 out
             }
+
+            Error::Undated { path, collection } => format!(
+                "{}: a feed is configured for `{collection}`, so this page needs a `date`",
+                path.display()
+            ),
 
             Error::DeadLinks(links) => {
                 let mut out = format!(

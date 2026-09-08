@@ -33,7 +33,7 @@
 
 use crabbucket::directive::Directives;
 use crabbucket::style::{Style, StyleSheet};
-use crabbucket::theme::{NavItem, Page, Theme};
+use crabbucket::theme::{FeedLink, NavItem, Page, Theme};
 use crabbucket::{Config, Heading, PageMeta, Url};
 use maud::{DOCTYPE, Markup, PreEscaped, html};
 use serde::Deserialize;
@@ -112,7 +112,7 @@ impl Theme for Standard {
             }
         };
 
-        document(page.config, page.meta, &nav, content).into_string()
+        document(page.config, page.meta, &nav, page.feeds, content).into_string()
     }
 
     fn stylesheet(&self) -> String {
@@ -304,6 +304,7 @@ pub fn document(
     config: &Config,
     meta: &PageMeta<Layout>,
     nav: &[NavItem],
+    feeds: &[FeedLink],
     content: Markup,
 ) -> Markup {
     let description = meta.description.as_deref().unwrap_or(&config.description);
@@ -319,6 +320,16 @@ pub fn document(
                     meta name="description" content=(description);
                 }
                 link rel="stylesheet" href=(Url::asset(config, "site.css"));
+                @for feed in feeds {
+                    link rel="alternate"
+                         type="application/atom+xml"
+                         title=(feed.title)
+                         href=(feed.atom);
+                    link rel="alternate"
+                         type="application/rss+xml"
+                         title=(feed.title)
+                         href=(feed.rss);
+                }
                 @if config.router {
                     script defer src=(Url::asset(config, "router.js")) {}
                 }

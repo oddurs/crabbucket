@@ -71,6 +71,7 @@ mod tests {
             url: None,
             base: "/repo/".into(),
             search: false,
+            feeds: Vec::new(),
             router: false,
         }
     }
@@ -80,7 +81,17 @@ mod tests {
         // If a page is added or renamed, this list changes, and so does every
         // link written by name.
         let paths: Vec<&str> = Route::ALL.iter().map(|route| route.path()).collect();
-        assert_eq!(paths, ["", "docs", "docs/routing"]);
+        assert_eq!(
+            paths,
+            [
+                "",
+                "docs",
+                "docs/routing",
+                "notes",
+                "notes/one-implementation",
+                "notes/typed-routes"
+            ]
+        );
     }
 
     #[test]

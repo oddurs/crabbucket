@@ -1,0 +1,6 @@
+title = "Fixture"
+base = "/"
+
+# A feed, and no url for it to build absolute links from.
+[[feed]]
+collection = "notes"

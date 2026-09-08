@@ -16,6 +16,18 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
 
   examples/site-crate: a working one.
 
+  RSS and Atom for a dated collection:
+
+    [[feed]]
+    collection = "notes"
+    title = "Notes"
+    limit = 20
+
+  Pages gained an optional `date', which TOML parses as a real date.
+  Configuring a feed is how a site says a collection is dated, so an
+  undated page in one fails the build naming itself.  A feed needs
+  absolute URLs, so a site with no `url' gets none and is told why.
+
 ** Bug fixes
 
   `~/' in a link means the site root, whatever the base path is.  Content

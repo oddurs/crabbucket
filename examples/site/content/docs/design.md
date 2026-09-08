@@ -71,7 +71,6 @@ decision.
 ## What is decided but not built
 
 - **Generated OpenGraph images**, so a shared link is not a grey rectangle.
-- **RSS and Atom** for a dated collection.
 
 Everything else this section has listed since the first draft is now built:
 [typed routes](../routing/), [directives](../components/),
