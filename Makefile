@@ -20,6 +20,8 @@ exec_prefix = $(prefix)
 bindir = $(exec_prefix)/bin
 datarootdir = $(prefix)/share
 docdir = $(datarootdir)/doc/$(PACKAGE)
+mandir = $(datarootdir)/man
+man1dir = $(mandir)/man1
 
 DESTDIR =
 
@@ -57,9 +59,12 @@ install: all
 	$(INSTALL_PROGRAM) $(TARGETDIR)/$(PROGRAM) $(DESTDIR)$(bindir)/$(PROGRAM)
 	$(INSTALL) -d $(DESTDIR)$(docdir)
 	$(INSTALL_DATA) $(DOCS) $(DESTDIR)$(docdir)
+	$(INSTALL) -d $(DESTDIR)$(man1dir)
+	$(INSTALL_DATA) doc/$(PROGRAM).1 $(DESTDIR)$(man1dir)/$(PROGRAM).1
 
 uninstall:
 	rm -f $(DESTDIR)$(bindir)/$(PROGRAM)
+	rm -f $(DESTDIR)$(man1dir)/$(PROGRAM).1
 	rm -rf $(DESTDIR)$(docdir)
 
 clean:

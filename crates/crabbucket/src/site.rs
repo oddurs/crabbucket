@@ -39,6 +39,13 @@ use crate::url::Url;
 /// place of anything they cannot find.
 const ERROR_ROUTE: &str = "404";
 
+/// The pages of a site, borrowed from the collection that owns them.
+type Pages<'a, T> = Vec<&'a Entry<PageMeta<T>>>;
+
+/// A page that has been rendered but not yet written: the entry it came from,
+/// the URL it will be served at, and its HTML.
+type Rendering<'a, T> = (&'a Entry<PageMeta<T>>, Url, String);
+
 /// What a build produced, for the benefit of whoever asked for it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Report {
@@ -94,7 +101,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
         fs::remove_dir_all(&out_dir).map_err(|source| Error::io(&out_dir, source))?;
     }
 
-    let published: Vec<&Entry<PageMeta<T::Layout>>> = content
+    let published: Pages<'_, T::Layout> = content
         .entries()
         .iter()
         .filter(|entry| !entry.meta.draft)
@@ -104,10 +111,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
     // The error page is a page, but it is not a route: nothing may link to it,
     // it is not in the navigation, and it is written as a file rather than as
     // a directory, because that is what a static host looks for.
-    let (error_page, live): (
-        Vec<&Entry<PageMeta<T::Layout>>>,
-        Vec<&Entry<PageMeta<T::Layout>>>,
-    ) = published
+    let (error_page, live): (Pages<'_, T::Layout>, Pages<'_, T::Layout>) = published
         .into_iter()
         .partition(|entry| entry.route == ERROR_ROUTE);
 
@@ -124,7 +128,8 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
     // Rendering and checking are separate passes: a link is only dead relative
     // to the finished set of routes, so nothing can be judged until every page
     // is known.
-    let mut rendered = Vec::with_capacity(live.len() + error_page.len());
+    let mut rendered: Vec<Rendering<'_, T::Layout>> =
+        Vec::with_capacity(live.len() + error_page.len());
     for entry in live.iter().chain(error_page.iter()) {
         let page = Page {
             config: &config,
@@ -191,7 +196,7 @@ pub fn build_with<T: Theme>(site_dir: &Path, theme: &T, options: &Options) -> Re
 
     write(&out_dir.join("site.css"), &theme.stylesheet())?;
     if config.router {
-        write(&out_dir.join("router.js"), theme.router_js())?;
+        write(&out_dir.join("router.js"), &theme.router_js())?;
     }
 
     if let Some(url) = &config.url {

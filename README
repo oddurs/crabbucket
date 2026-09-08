@@ -38,14 +38,17 @@ At a glance
 -----------
 
   Content     Markdown with `+++' TOML frontmatter, deserialized into
-              your own structs.  Writing a page needs no Rust.
-  Links       Every internal link is resolved after rendering.  A dead
-              one fails the build; there is no flag to turn it off.
+              your own structs.  Writing a page needs no Rust.  Headings
+              are linkable and code is highlighted at build time.
+  Links       Every internal link -- route, asset and heading fragment
+              alike -- is resolved after rendering.  A dead one fails the
+              build; there is no flag to turn it off.
   Components  maud functions.  Typed props, compile-checked HTML, no
               template language and no runtime.
   Design      One tokens file generates both Rust constants and CSS
-              custom properties, so the two cannot drift apart.  A
-              design system is a crate you depend on.
+              custom properties, so the two cannot drift apart.  Styles
+              live beside their components and are namespaced.  A design
+              system is a crate you depend on.
   Layouts     An associated type on the theme, so a layout that does
               not exist fails the build listing the ones that do.
   Client      Zero JavaScript by default; opt in to a ~1KB router that
@@ -63,6 +66,17 @@ Layout
   design/tokens.toml     the token source of truth
   doc/DESIGN             the concept
   cairn/items            the roadmap and the issues, one file each
+
+
+Starting a site
+---------------
+
+  crab new my-project --router
+  cd my-project
+  crab build
+
+That scaffolds a site that builds with no edits, including a
+turborust.toml and a GitHub Pages workflow.
 
 
 Building
@@ -107,3 +121,4 @@ Files
   ROADMAP.md   what is planned, generated from cairn/items
   THANKS       people who have helped
   doc/DESIGN   the design, and the reasoning behind it
+  doc/crab.1   the man page

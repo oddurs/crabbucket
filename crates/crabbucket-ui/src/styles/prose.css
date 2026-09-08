@@ -1,0 +1,39 @@
+/* Everything Markdown produces.
+ *
+ * `heading-anchor`, `code` and the `tok-` scope classes are emitted by the
+ * framework rather than by this design system, so they are not namespaced.
+ * See crabbucket::style::FRAMEWORK_CLASSES.
+ */
+
+.& { max-width: var(--measure-prose); }
+
+.& h1 { font-size: var(--size-step-4); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 var(--space-md); }
+.& h2 { font-size: var(--size-step-2); line-height: 1.2; margin: var(--space-xl) 0 var(--space-sm); }
+.& h3 { font-size: var(--size-step-1); margin: var(--space-lg) 0 var(--space-xs); }
+.& p, .& ul, .& ol { margin: 0 0 var(--space-md); }
+.& :is(h1, h2, h3, h4) { scroll-margin-top: var(--space-lg); }
+
+.& code { font-family: var(--font-mono); font-size: var(--size-step--1); background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0.1em 0.35em; }
+.& pre { background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-md); overflow-x: auto; }
+.& pre code { background: none; border: 0; padding: 0; }
+
+.& table { border-collapse: collapse; }
+.& th, .& td { text-align: left; padding: var(--space-sm) var(--space-md) var(--space-sm) 0; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+.& th { color: var(--color-text-muted); font-weight: 600; font-size: var(--size-step--1); }
+
+.heading-anchor { margin-left: var(--space-sm); color: var(--color-text-muted); text-decoration: none; opacity: 0; transition: opacity 120ms ease; font-weight: 400; }
+.& :is(h1, h2, h3, h4):hover .heading-anchor, .heading-anchor:focus-visible { opacity: 1; }
+@media (hover: none) { .heading-anchor { opacity: 0.4; } }
+
+.code { position: relative; }
+.code[data-language]::after { content: attr(data-language); position: absolute; top: var(--space-xs); right: var(--space-sm); font-size: 0.7rem; color: var(--color-text-muted); letter-spacing: 0.04em; text-transform: uppercase; pointer-events: none; }
+
+.tok-comment { color: var(--syntax-comment); font-style: italic; }
+.tok-keyword, .tok-storage { color: var(--syntax-keyword); }
+.tok-string { color: var(--syntax-string); }
+.tok-constant { color: var(--syntax-constant); }
+.tok-entity { color: var(--syntax-entity); }
+.tok-support { color: var(--syntax-support); }
+.tok-variable { color: var(--syntax-variable); }
+.tok-punctuation { color: var(--syntax-punctuation); }
+.tok-invalid { color: var(--syntax-invalid); }

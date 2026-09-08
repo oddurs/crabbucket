@@ -99,10 +99,36 @@ Restyling every site you own is then a version bump, which is the actual
 reason to want first-class design systems on a collection of small sites
 rather than on one big one.
 
-## What is not built yet
+## Styles live beside components
 
-Per-component scoped CSS. Today a theme returns one stylesheet and the whole
-thing ships. For sites of this size that is a few kilobytes and the right
-trade; the thing worth building is not tree-shaking but **collision
-avoidance**, so that components from two different crates cannot fight over a
-class name. See [Design](../design/).
+Each component declares its own styles, with `&` standing in for its class
+root:
+
+```rust
+pub const CALLOUT: Style = Style::new(NS, "callout", "
+    .& { border-left: 3px solid var(--color-accent); }
+    .&--warn { border-left-color: var(--color-accent); }
+    .&__body > :last-child { margin-bottom: 0; }
+");
+```
+
+```rust
+CALLOUT.class()           // cb-callout
+CALLOUT.with("warn")      // cb-callout cb-callout--warn
+CALLOUT.element("body")   // cb-callout__body
+```
+
+That is BEM with the block name factored out, and the block name namespaced in
+exactly one place. The theme composes a `StyleSheet` from the components it
+declares, deduplicating by namespace *and* name together — so two design
+systems may both have a `card` and neither one wins.
+
+A small fixed set of class names belongs to the framework rather than to any
+theme: `heading-anchor`, `code`, and the `tok-` classes the highlighter emits.
+They are listed in `crabbucket::style::FRAMEWORK_CLASSES`, so "what a theme
+does not own" is checkable rather than remembered.
+
+This is deliberately *not* tree-shaking. At the size these sites run at, a few
+kilobytes of unused CSS is optimising the wrong number. The problem worth
+solving was collision, and collision is a naming mechanism rather than a build
+pipeline.

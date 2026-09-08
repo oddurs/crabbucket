@@ -14,7 +14,6 @@
 //
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 //! The default design system and component kit for crabbucket.
 //!
 //! Components are ordinary functions returning [`maud::Markup`], so their
@@ -23,15 +22,23 @@
 //! length they use comes from [`tok`], which is generated from
 //! `design/tokens.toml` by this crate's build script.
 //!
+//! Every component's styles are declared beside it as a [`Style`], namespaced
+//! `cb`, and the theme composes the stylesheet from them.  A component in
+//! another design system may be called `card` too without either one winning.
+//!
 //! Swapping this crate for another one is how a site changes design system.
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+use crabbucket::style::{Style, StyleSheet};
 use crabbucket::theme::{NavItem, Page, Theme};
-use crabbucket::{Config, Url};
+use crabbucket::{Config, PageMeta, Url};
 use maud::{DOCTYPE, Markup, PreEscaped, html};
 use serde::Deserialize;
+
+/// The namespace every class in this design system carries.
+pub const NS: &str = "cb";
 
 /// Design tokens, generated from `design/tokens.toml`.
 ///
@@ -55,8 +62,19 @@ pub enum Layout {
     Page,
     /// Prose with a sidebar listing the rest of the section.
     Docs,
-    /// Wider measure and no masthead border, for a front page.
+    /// Wider measure and a larger opening, for a front page.
     Landing,
+}
+
+impl Layout {
+    /// The modifier suffix this layout puts on the page shell.
+    pub fn slug(self) -> &'static str {
+        match self {
+            Layout::Page => "page",
+            Layout::Docs => "docs",
+            Layout::Landing => "landing",
+        }
+    }
 }
 
 /// The default design system.
@@ -84,10 +102,12 @@ impl Theme for Standard {
     }
 
     fn stylesheet(&self) -> String {
-        stylesheet()
+        let mut sheet = StyleSheet::new();
+        sheet.extend([SITE, MASTHEAD, PROSE, DOCS, CALLOUT, COLOPHON]);
+        format!("{}\n{}", tok::CSS, sheet.render())
     }
 
-    fn router_js(&self) -> &str {
+    fn router_js(&self) -> String {
         router_js()
     }
 }
@@ -115,8 +135,8 @@ impl Kind {
 /// An aside that stands apart from the prose around it.
 pub fn callout(kind: Kind, body: Markup) -> Markup {
     html! {
-        aside class={ "callout callout--" (kind.slug()) } {
-            div."callout__body" { (body) }
+        aside class=(CALLOUT.with(kind.slug())) {
+            div class=(CALLOUT.element("body")) { (body) }
         }
     }
 }
@@ -133,9 +153,9 @@ pub fn nav_list(items: &[NavItem]) -> Markup {
 /// Prose with a section sidebar beside it.
 pub fn docs(section: &[NavItem], content: Markup) -> Markup {
     html! {
-        div."docs" {
-            nav."docs__side" { (nav_list(section)) }
-            div."docs__main" { (content) }
+        div class=(DOCS.class()) {
+            nav class=(DOCS.element("side")) { (nav_list(section)) }
+            div class=(DOCS.element("main")) { (content) }
         }
     }
 }
@@ -145,13 +165,13 @@ pub fn docs(section: &[NavItem], content: Markup) -> Markup {
 /// The HTML comes from the site's own content, which is trusted, so it is
 /// emitted unescaped.
 pub fn prose(html_fragment: &str) -> Markup {
-    html! { div."prose" { (PreEscaped(html_fragment)) } }
+    html! { div class=(PROSE.class()) { (PreEscaped(html_fragment)) } }
 }
 
 /// The whole document: head, navigation, content, footer.
 pub fn document(
     config: &Config,
-    meta: &crabbucket::PageMeta<Layout>,
+    meta: &PageMeta<Layout>,
     nav: &[NavItem],
     content: Markup,
 ) -> Markup {
@@ -172,13 +192,15 @@ pub fn document(
                     script defer src=(Url::asset(config, "router.js")) {}
                 }
             }
-            body class=(format!("layout-{}", layout_slug(meta.layout))) {
-                header."masthead" {
-                    a."masthead__home" href=(Url::new(config, "")) { (config.title) }
-                    nav."masthead__nav" { (nav_list(nav)) }
+            body class=(SITE.with(meta.layout.slug())) {
+                header class=(MASTHEAD.class()) {
+                    a class=(MASTHEAD.element("home")) href=(Url::new(config, "")) {
+                        (config.title)
+                    }
+                    nav class=(MASTHEAD.element("nav")) { (nav_list(nav)) }
                 }
-                main."page" { (content) }
-                footer."colophon" {
+                main class=(SITE.element("main")) { (content) }
+                footer class=(COLOPHON.class()) {
                     p {
                         "Built with "
                         a href="https://github.com/oddurs/crabbucket" { "crabbucket" }
@@ -190,18 +212,10 @@ pub fn document(
     }
 }
 
-fn layout_slug(layout: Layout) -> &'static str {
-    match layout {
-        Layout::Page => "page",
-        Layout::Docs => "docs",
-        Layout::Landing => "landing",
-    }
-}
-
-/// The site's complete stylesheet: the generated token block, then the base
-/// styles that consume it.
+/// The site's complete stylesheet: the generated token block, then every
+/// component's styles.
 pub fn stylesheet() -> String {
-    format!("{}\n{}", tok::CSS, BASE)
+    Standard.stylesheet()
 }
 
 /// The client-side router, as described in section 7 of `doc/DESIGN`.
@@ -210,98 +224,70 @@ pub fn stylesheet() -> String {
 /// swaps `<main>` and the title, and drives the View Transitions API when the
 /// browser has one.  With JavaScript off, or on a browser that fails any of
 /// its guards, navigation is what it always was.
-pub fn router_js() -> &'static str {
-    ROUTER
+pub fn router_js() -> String {
+    ROUTER.replace("@NAV@", &format!(".{}", MASTHEAD.element("nav")))
 }
 
-const BASE: &str = r#"
-*, *::before, *::after { box-sizing: border-box; }
-html { color-scheme: dark; }
-body {
-  margin: 0;
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-family: var(--font-sans);
-  font-size: var(--size-step-0);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
-a { color: var(--color-link); text-underline-offset: 0.2em; }
-main.page { max-width: var(--measure-page); margin: 0 auto; padding: var(--space-xl) var(--space-lg); }
-.prose { max-width: var(--measure-prose); }
-.prose h1 { font-size: var(--size-step-4); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 var(--space-md); }
-.prose h2 { font-size: var(--size-step-2); line-height: 1.2; margin: var(--space-xl) 0 var(--space-sm); }
-.prose h3 { font-size: var(--size-step-1); margin: var(--space-lg) 0 var(--space-xs); }
-.prose p, .prose ul, .prose ol { margin: 0 0 var(--space-md); }
-.prose code { font-family: var(--font-mono); font-size: var(--size-step--1); background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0.1em 0.35em; }
-.prose pre { background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-md); overflow-x: auto; }
-.prose pre code { background: none; border: 0; padding: 0; }
-.masthead { display: flex; gap: var(--space-lg); align-items: baseline; justify-content: space-between; flex-wrap: wrap; max-width: var(--measure-page); margin: 0 auto; padding: var(--space-lg); border-bottom: 1px solid var(--color-border); }
-.masthead__home { font-weight: 600; color: var(--color-text); text-decoration: none; }
-.masthead__nav { display: flex; gap: var(--space-md); }
-.masthead__nav a { color: var(--color-text-muted); text-decoration: none; }
-.masthead__nav a[aria-current="page"] { color: var(--color-accent); }
-.callout { border-left: 3px solid var(--color-accent); background: var(--color-surface-raised); border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: var(--space-md); margin: 0 0 var(--space-md); }
-.callout--note { border-left-color: var(--color-link); }
-.callout--warn { border-left-color: var(--color-accent); }
-.callout__body > :last-child { margin-bottom: 0; }
-.docs { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: var(--space-xl); align-items: start; }
-.docs__side { display: flex; flex-direction: column; gap: var(--space-xs); position: sticky; top: var(--space-lg); font-size: var(--size-step--1); }
-.docs__side a { color: var(--color-text-muted); text-decoration: none; padding: var(--space-xs) var(--space-sm); border-left: 2px solid var(--color-border); }
-.docs__side a:hover { color: var(--color-text); }
-.docs__side a[aria-current="page"] { color: var(--color-accent); border-left-color: var(--color-accent); }
-@media (max-width: 46rem) { .docs { grid-template-columns: 1fr; } .docs__side { position: static; flex-direction: row; flex-wrap: wrap; } }
-.layout-landing .prose { max-width: none; }
-.layout-landing .prose h1 { font-size: clamp(var(--size-step-3), 7vw, var(--size-step-4)); max-width: 18ch; }
-.layout-landing .prose > p:first-of-type { font-size: var(--size-step-1); color: var(--color-text-muted); max-width: 52ch; }
-.layout-landing table { border-collapse: collapse; width: 100%; max-width: var(--measure-prose); }
-.prose table { border-collapse: collapse; }
-.prose th, .prose td { text-align: left; padding: var(--space-sm) var(--space-md) var(--space-sm) 0; border-bottom: 1px solid var(--color-border); vertical-align: top; }
-.prose th { color: var(--color-text-muted); font-weight: 600; font-size: var(--size-step--1); }
-.prose h2, .prose h3, .prose h4 { scroll-margin-top: var(--space-lg); }
-.heading-anchor { margin-left: var(--space-sm); color: var(--color-text-muted); text-decoration: none; opacity: 0; transition: opacity 120ms ease; font-weight: 400; }
-.prose :is(h1, h2, h3, h4):hover .heading-anchor, .heading-anchor:focus-visible { opacity: 1; }
-@media (hover: none) { .heading-anchor { opacity: 0.4; } }
-pre.code { position: relative; }
-pre.code[data-language]::after { content: attr(data-language); position: absolute; top: var(--space-xs); right: var(--space-sm); font-size: 0.7rem; color: var(--color-text-muted); letter-spacing: 0.04em; text-transform: uppercase; pointer-events: none; }
-.tok-comment { color: var(--syntax-comment); font-style: italic; }
-.tok-keyword, .tok-storage { color: var(--syntax-keyword); }
-.tok-string { color: var(--syntax-string); }
-.tok-constant { color: var(--syntax-constant); }
-.tok-entity { color: var(--syntax-entity); }
-.tok-support { color: var(--syntax-support); }
-.tok-variable { color: var(--syntax-variable); }
-.tok-punctuation { color: var(--syntax-punctuation); }
-.tok-invalid { color: var(--syntax-invalid); }
-.colophon { max-width: var(--measure-page); margin: 0 auto; padding: var(--space-lg); border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-size: var(--size-step--1); }
-@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
-"#;
+/// The page shell: reset, typography defaults, and the main column.
+pub const SITE: Style = Style::new(NS, "site", include_str!("styles/site.css"));
 
-const ROUTER: &str = r#"// crabbucket client router. GPL-3.0-or-later.
-(() => {
-  const swap = (doc) => {
-    document.querySelector('main').replaceWith(doc.querySelector('main'));
-    document.title = doc.title;
-    document.querySelectorAll('.masthead__nav a').forEach((a) => {
-      a.toggleAttribute('aria-current', a.pathname === location.pathname);
-    });
-  };
-  const go = async (url, push) => {
-    const res = await fetch(url, { headers: { 'x-crabbucket': '1' } });
-    if (!res.ok) { location.assign(url); return; }
-    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-    if (push) history.pushState(null, '', url);
-    document.startViewTransition ? document.startViewTransition(() => swap(doc)) : swap(doc);
-    scrollTo(0, 0);
-  };
-  addEventListener('click', (e) => {
-    if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    const a = e.target.closest('a');
-    if (!a || a.target || a.hasAttribute('download') || a.origin !== location.origin) return;
-    if (a.pathname === location.pathname) return;
-    e.preventDefault();
-    go(a.href, true).catch(() => location.assign(a.href));
-  });
-  addEventListener('popstate', () => go(location.href, false).catch(() => location.reload()));
-})();
-"#;
+/// The masthead across the top of every page.
+pub const MASTHEAD: Style = Style::new(NS, "masthead", include_str!("styles/masthead.css"));
+
+/// Prose: everything Markdown produces, including the framework's own
+/// `heading-anchor`, `code` and `tok-` classes.
+pub const PROSE: Style = Style::new(NS, "prose", include_str!("styles/prose.css"));
+
+/// The documentation layout: a sidebar beside the content.
+pub const DOCS: Style = Style::new(NS, "docs", include_str!("styles/docs.css"));
+
+/// The callout component.
+pub const CALLOUT: Style = Style::new(NS, "callout", include_str!("styles/callout.css"));
+
+/// The footer.
+pub const COLOPHON: Style = Style::new(NS, "colophon", include_str!("styles/colophon.css"));
+
+const ROUTER: &str = include_str!("router.js");
+
+#[cfg(test)]
+mod tests {
+    use crabbucket::style::StyleSheet;
+
+    use super::{CALLOUT, DOCS, Kind, MASTHEAD, NS, PROSE, SITE, callout};
+
+    #[test]
+    fn every_class_in_the_stylesheet_carries_the_namespace() {
+        let mut sheet = StyleSheet::new();
+        sheet.extend([SITE, MASTHEAD, PROSE, DOCS, CALLOUT]);
+        let css = sheet.render();
+
+        assert!(!css.contains('&'), "an unresolved ampersand escaped");
+
+        for line in css.lines() {
+            let Some(class) = line.trim().strip_prefix('.') else {
+                continue;
+            };
+            let class = class
+                .split([' ', ',', ':', '{', '>', '[', '.'])
+                .next()
+                .unwrap_or("");
+            let framework =
+                class.starts_with("tok-") || crabbucket::style::FRAMEWORK_CLASSES.contains(&class);
+            assert!(
+                framework || class.starts_with(&format!("{NS}-")),
+                "`.{class}` is neither namespaced nor a framework class"
+            );
+        }
+    }
+
+    #[test]
+    fn markup_and_styles_agree_on_the_class_names() {
+        let markup = callout(Kind::Warn, maud::html! { p { "hi" } }).into_string();
+        assert!(markup.contains("cb-callout cb-callout--warn"));
+        assert!(markup.contains("cb-callout__body"));
+
+        let css = CALLOUT.render();
+        assert!(css.contains(".cb-callout--warn"));
+        assert!(css.contains(".cb-callout__body"));
+    }
+}

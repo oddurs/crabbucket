@@ -8,6 +8,25 @@ layout = "docs"
 `dist/` is a directory of static files with no server requirements. Any host
 will serve it. GitHub Pages is the one crabbucket is shaped around.
 
+## What the build writes
+
+```
+dist/
+  index.html
+  docs/index.html      every route is a directory
+  404.html             a file, because that is what hosts look for
+  site.css
+  router.js            only if the site asked for it
+  sitemap.xml          only if site.toml has a url
+  robots.txt           only if site.toml has a url
+  .nojekyll
+```
+
+The sitemap and `robots.txt` need absolute URLs, so they are skipped entirely
+when `url` is unset rather than emitted with guessed ones. The sitemap carries
+no `lastmod`: there is no honest source for one, and a fabricated timestamp is
+worse than an absent field.
+
 ## The two things that make it work
 
 **`base`.** A project site is served from `https://you.github.io/repo/`, so

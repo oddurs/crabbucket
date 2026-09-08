@@ -1,0 +1,25 @@
+/* The documentation layout: a sticky sidebar beside the content. */
+
+.& { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: var(--space-xl); align-items: start; }
+
+.&__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  position: sticky;
+  top: var(--space-lg);
+  font-size: var(--size-step--1);
+}
+
+/* A grid child will not shrink below its content unless told to, which is
+ * how a wide code block pushes a docs page sideways. */
+.&__main { min-width: 0; }
+
+.&__side a { color: var(--color-text-muted); text-decoration: none; padding: var(--space-xs) var(--space-sm); border-left: 2px solid var(--color-border); }
+.&__side a:hover { color: var(--color-text); }
+.&__side a[aria-current="page"] { color: var(--color-accent); border-left-color: var(--color-accent); }
+
+@media (max-width: 46rem) {
+  .& { grid-template-columns: 1fr; }
+  .&__side { position: static; flex-direction: row; flex-wrap: wrap; }
+}

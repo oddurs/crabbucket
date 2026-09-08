@@ -1,0 +1,18 @@
+/* The masthead across the top of every page. */
+
+.& {
+  display: flex;
+  gap: var(--space-lg);
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  max-width: var(--measure-page);
+  margin: 0 auto;
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.&__home { font-weight: 600; color: var(--color-text); text-decoration: none; }
+.&__nav { display: flex; gap: var(--space-md); }
+.&__nav a { color: var(--color-text-muted); text-decoration: none; }
+.&__nav a[aria-current="page"] { color: var(--color-accent); }

@@ -1,0 +1,9 @@
++++
+title = "Home"
++++
+
+# Home
+
+## Installing
+
+A link to [a heading that moved](#uninstalling).

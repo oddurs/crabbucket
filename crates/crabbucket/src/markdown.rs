@@ -99,6 +99,10 @@ fn options() -> Options {
 ///
 /// An explicit `{#id}` written in the source wins over the derived slug, since
 /// someone who wrote one down is holding a link to it.
+#[allow(
+    clippy::needless_range_loop,
+    reason = "the loop rewrites events by index"
+)]
 fn anchor_headings(events: &mut Vec<Event<'_>>) -> Vec<Heading> {
     let mut headings = Vec::new();
     let mut seen: BTreeMap<String, usize> = BTreeMap::new();
@@ -222,6 +226,10 @@ fn syntaxes() -> &'static SyntaxSet {
 /// A fence with no language, or with one nothing is known about, is left
 /// exactly as it was: unhighlighted code is a fine outcome, and a build that
 /// fails over a language tag would be an absurd one.
+#[allow(
+    clippy::needless_range_loop,
+    reason = "the loop rewrites events by index"
+)]
 fn highlight_code(events: &mut Vec<Event<'_>>) {
     let mut replacements: Vec<(usize, usize, String)> = Vec::new();
     let mut open: Option<(usize, String)> = None;

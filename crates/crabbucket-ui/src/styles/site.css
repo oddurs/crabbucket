@@ -1,0 +1,39 @@
+/* The page shell: reset, document defaults, and the main column. */
+
+*, *::before, *::after { box-sizing: border-box; }
+html { color-scheme: dark; }
+
+.& {
+  margin: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--size-step-0);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.& a { color: var(--color-link); text-underline-offset: 0.2em; }
+
+.&__main {
+  max-width: var(--measure-page);
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-lg);
+}
+
+/* The landing layout widens the measure and enlarges the opening.  These
+ * rules name `cb-prose` literally: it belongs to the same design system and
+ * ships in the same crate, so there is no other component it could collide
+ * with, and the alternative -- a component that cannot style what it
+ * contains -- would be worse. */
+
+.&--landing .cb-prose { max-width: none; }
+.&--landing .cb-prose h1 { font-size: clamp(var(--size-step-3), 7vw, var(--size-step-4)); max-width: 18ch; }
+.&--landing .cb-prose > p:first-of-type { font-size: var(--size-step-1); color: var(--color-text-muted); max-width: 52ch; }
+.&--landing .cb-prose table { width: 100%; max-width: var(--measure-prose); }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

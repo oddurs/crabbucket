@@ -1,0 +1,13 @@
+/* An aside that stands apart from the prose around it. */
+
+.& {
+  border-left: 3px solid var(--color-accent);
+  background: var(--color-surface-raised);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: var(--space-md);
+  margin: 0 0 var(--space-md);
+}
+
+.&--note { border-left-color: var(--color-link); }
+.&--warn { border-left-color: var(--color-accent); }
+.&__body > :last-child { margin-bottom: 0; }

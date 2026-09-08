@@ -321,7 +321,7 @@ fn split_fragment(href: &str) -> (&str, Option<String>) {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{BTreeMap, BTreeSet};
+    use std::collections::BTreeSet;
     use std::path::Path;
 
     use super::{Link, Reason, Rendered, Routes, check, hrefs, resolve};

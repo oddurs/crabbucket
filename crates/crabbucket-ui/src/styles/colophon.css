@@ -1,0 +1,10 @@
+/* The footer. */
+
+.& {
+  max-width: var(--measure-page);
+  margin: 0 auto;
+  padding: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--size-step--1);
+}

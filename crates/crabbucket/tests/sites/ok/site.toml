@@ -1,0 +1,5 @@
+title = "Fixture"
+description = "A site that builds."
+url = "https://example.com/"
+base = "/"
+router = true

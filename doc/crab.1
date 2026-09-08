@@ -1,0 +1,173 @@
+.\" Copyright (C) 2026 Oddur Sigurdsson
+.\" SPDX-License-Identifier: GPL-3.0-or-later
+.TH CRAB 1 "2026-09-08" "crabbucket 0.1.0" "User Commands"
+.SH NAME
+crab \- build a crabbucket site
+.SH SYNOPSIS
+.B crab
+.I COMMAND
+.RI [ OPTION ]...
+.RI [ DIRECTORY ]
+.SH DESCRIPTION
+.B crab
+builds a static site from Markdown content and a
+.B site.toml
+into a directory of plain HTML, CSS and, if asked for, about a kilobyte of
+JavaScript.
+.PP
+The build is a gate rather than a formatter.  It refuses to finish when a page
+has no title, when a page names a layout the design system does not have, or
+when any page links to a route, an asset or a heading that does not exist.  A
+build that succeeds has produced a site whose internal links all work.
+.SH COMMANDS
+.TP
+.BI build " [DIRECTORY]"
+Build the site in
+.I DIRECTORY
+(default: the current directory).  Output goes to
+.IR DIRECTORY /dist
+unless
+.B \-\-out
+says otherwise.
+.TP
+.BI new " DIRECTORY"
+Scaffold a new site in
+.IR DIRECTORY :
+a configuration file, three pages, a
+.B turborust.toml
+for the dev loop, and a GitHub Pages workflow.  The result builds with no
+edits.
+.TP
+.BR dev ", " serve
+Print where the dev server went, and exit 2.  There is no built-in dev server;
+see
+.B THE DEV LOOP
+below.
+.SH OPTIONS
+.SS For build
+.TP
+.BI \-\-out " PATH"
+Write the site to
+.I PATH
+instead of
+.IR dist/ .
+.TP
+.BI \-\-base " PATH"
+Serve from
+.I PATH
+instead of the base recorded in
+.BR site.toml .
+Every spelling normalises identically, so
+.IR repo ", " /repo ", " repo/ " and " /repo/
+all mean the same thing.
+.SS For new
+.TP
+.BI \-\-base " PATH"
+The path the scaffolded site will be served from.  Defaults to
+.IR /NAME/ ,
+because a GitHub Pages project site is the common case.
+.TP
+.B \-\-router
+Ship the client-side router.
+.TP
+.B \-\-force
+Scaffold into a directory that is not empty.
+.SS General
+.TP
+.B \-\-help
+Display a usage summary and exit.
+.TP
+.B \-\-version
+Output version information and exit.
+.PP
+A bare
+.B \-\-
+ends option processing, so a directory whose name begins with a dash is still
+reachable.
+.SH EXIT STATUS
+.TP
+.B 0
+The site was built.
+.TP
+.B 1
+The site is wrong: a page failed to parse, or a link goes nowhere.
+.TP
+.B 2
+The command line is wrong.
+.SH FILES
+.TP
+.B site.toml
+The site's configuration: its title, description, absolute
+.IR url ,
+the
+.I base
+path it is served from, and whether to ship the
+.IR router .
+.TP
+.B content/
+Markdown pages with
+.B +++
+TOML frontmatter.  A file's path below this directory is its route, and any
+.B index.md
+takes the route of its directory.
+.TP
+.B content/404.md
+Optional.  Written as
+.BR 404.html ,
+which is what a static host serves in place of a missing path.  Because it is
+served from every path, a relative link on it fails the build.
+.TP
+.B static/
+Copied into the output verbatim.
+.TP
+.B dist/
+The built site.  Safe to delete; never edit.
+.SH THE DEV LOOP
+There is no
+.BR "crab dev" ,
+and there will not be one.
+.B turborust
+already supervises the build, derives its watch globs from the crate
+dependency closure, serves the output with live reload, and shows build errors
+in a browser overlay.  Run:
+.PP
+.RS
+.B turborust up
+.RE
+.PP
+.B crab new
+writes a
+.B turborust.toml
+that does this.
+.SH EXAMPLES
+Build the site in the current directory:
+.PP
+.RS
+.B crab build
+.RE
+.PP
+Scaffold a site for a GitHub Pages project site, with the client router:
+.PP
+.RS
+.B crab new my\-project \-\-router
+.RE
+.PP
+Build a preview served from a different path, without editing the
+configuration:
+.PP
+.RS
+.B crab build \-\-out /tmp/preview \-\-base /preview/
+.RE
+.SH REPORTING BUGS
+Report bugs at <https://github.com/oddurs/crabbucket/issues>.
+.SH COPYRIGHT
+Copyright \(co 2026 Oddur Sigurdsson.
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.  There is NO
+WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+.BR cargo (1),
+.BR turborust (1)
+.PP
+The full documentation is at <https://oddurs.github.io/crabbucket/>.

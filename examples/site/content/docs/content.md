@@ -44,8 +44,29 @@ missing field `title`
 ## Markdown
 
 CommonMark, with tables, footnotes, strikethrough, smart punctuation and
-heading attributes enabled. Code fences keep their language tag, which is
-what syntax highlighting will hang off when it lands.
+heading attributes enabled.
+
+### Headings are linkable
+
+Every heading gets an id derived from its text — `## Getting started` becomes
+`getting-started` — and a permalink anchor that appears on hover. Write
+`{#custom-id}` after a heading to choose the id yourself; someone holding a
+link to it wins over the slug. Repeated headings on one page get `-2`, `-3`.
+
+The ids are what [fragment links are checked against](../routing/).
+
+### Code is highlighted at build time
+
+A fenced block with a language tag is highlighted while the site is built,
+into spans carrying scope classes. The colours come from
+[`design/tokens.toml`](../design-systems/) like every other colour.
+
+Nothing is shipped to the browser to make code coloured. Shipping forty
+kilobytes of JavaScript to colour text that was already static when it was
+written is exactly the trade this project exists to refuse.
+
+A fence with no language, or with one nothing is known about, renders as
+plain code. A build that failed over a language tag would be absurd.
 
 ## Typed collections
 

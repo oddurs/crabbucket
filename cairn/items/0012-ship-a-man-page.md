@@ -2,7 +2,7 @@
 id: 12
 title: Ship a man page
 type: docs
-status: backlog
+status: done
 milestone: v0.1
 created: 2026-09-08
 updated: 2026-09-08
@@ -36,8 +36,14 @@ Install to `$(mandir)/man1` from the Makefile, and add `mandir` alongside the
 
 ## Acceptance criteria
 
-- [ ] `doc/crab.1` exists and renders without warnings under `man --warnings`
-- [ ] `make install` installs it to `$(mandir)/man1`
-- [ ] `make uninstall` removes it
-- [ ] Exit statuses documented
-- [ ] Options match `crab --help` exactly
+- [x] `doc/crab.1` exists and renders without warnings under `man --warnings`
+- [x] `make install` installs it to `$(mandir)/man1`
+- [x] `make uninstall` removes it
+- [x] Exit statuses documented
+- [x] Options match `crab --help` exactly
+
+## 2026-09-08
+
+Done. doc/crab.1, written by hand in roff -- a generator would be more machinery than the thing it generates. Lints clean under mandoc -T lint. make install puts it in $(mandir)/man1 and make uninstall removes it.
+
+The last acceptance criterion, that the options match crab --help exactly, is now a test rather than a promise: it scans both texts for long options and compares the sets. Verified it fails when they disagree by renaming --force to --forcey in the roff and watching it complain.

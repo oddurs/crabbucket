@@ -3,10 +3,11 @@ id: 1
 key: v0.1
 title: A site you would actually ship
 type: milestone
-status: doing
+status: done
 created: 2026-09-08
 updated: 2026-09-08
 priority: p2
+due: 2026-09-08
 ---
 
 The smallest set of work that makes crabbucket usable for a real repository site.

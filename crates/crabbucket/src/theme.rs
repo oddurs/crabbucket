@@ -206,5 +206,8 @@ pub trait Theme {
     fn stylesheet(&self) -> String;
 
     /// The client router written to `router.js`, when the site asks for one.
-    fn router_js(&self) -> &str;
+    ///
+    /// A `String` rather than a `&str` because a theme's own class names go
+    /// into it, and those are not known until the theme is written.
+    fn router_js(&self) -> String;
 }

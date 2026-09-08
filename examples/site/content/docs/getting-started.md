@@ -15,6 +15,21 @@ cargo install --git https://github.com/oddurs/crabbucket crabbucket-cli
 
 That installs one executable, `crab`.
 
+## Start with a scaffold
+
+```sh
+crab new my-project --router
+cd my-project
+crab build
+```
+
+That writes a site that builds with no edits: a configuration file, three
+pages, a `turborust.toml` for the dev loop, and a GitHub Pages workflow. It
+refuses to write into a directory that already has anything in it, unless you
+pass `--force`.
+
+The rest of this page is what it wrote, and why.
+
 ## A site is a directory
 
 ```
@@ -22,6 +37,7 @@ my-site/
   site.toml
   content/
     index.md
+    404.md           # optional; becomes 404.html
   static/            # optional; copied verbatim
 ```
 
@@ -66,6 +82,13 @@ crab build
 crab: 4 pages, 11 links checked -> dist
 ```
 
+Two overrides exist for one invocation, so a preview never means editing a
+tracked file:
+
+```sh
+crab build --out /tmp/preview --base /preview/
+```
+
 `dist/` is a complete static site. Every route is a directory holding an
 `index.html`, so every URL ends in a slash and works on any static host with
 no rewrite rules.
@@ -76,9 +99,19 @@ The build is a gate, not a formatter. It fails when:
 
 - a page has no `title`, or its frontmatter does not fit the schema
 - a page names a `layout` the theme does not have
-- any page links to a route or an asset that does not exist
+- any page links to a route, an asset, or a heading that does not exist
+- the error page contains a relative link
 
-The last one is the interesting one. See [Routing](../routing/).
+Failures point at the line:
+
+```
+crab: content/docs/routing.md:3:10: unknown variant `dcos`, expected one of `page`, `docs`, `landing`
+  |
+3 | layout = "dcos"
+  |          ^^^^^^
+```
+
+See [Routing](../routing/) for what link checking covers.
 
 ## Develop
 

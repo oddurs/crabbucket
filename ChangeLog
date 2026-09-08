@@ -1,5 +1,43 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Finish the v0.1 milestone: all eleven items.
+
+	* crates/crabbucket/src/markdown.rs: Return Body { html, headings }.
+	Give every heading a stable id and a permalink anchor; honour an
+	explicit {#id}.  Highlight fenced code with syntect into scope
+	classes, loading the syntax set once per process.
+	* crates/crabbucket/src/links.rs (Reason): New enum, distinguishing
+	a missing route, a missing asset, a missing anchor, and a relative
+	link on the error page.  Check fragments against heading ids; check
+	a bare #fragment against the page it was written in.
+	* crates/crabbucket/src/error.rs: Drop thiserror; write Display by
+	hand so the library can offer render(color).  (Snippet): New; the
+	offending line with a caret, at a file-absolute line number.
+	(Error::Schema): Replaces Frontmatter and Config, which were the
+	same failure.
+	* crates/crabbucket/src/style.rs: New file.  Style and StyleSheet:
+	component styles beside their components, namespaced, composed by
+	the theme, deduplicated by namespace and name together.
+	* crates/crabbucket/src/site.rs (Options): New; --out and --base.
+	Write content/404.md as 404.html, outside the route set.  Write
+	sitemap.xml and robots.txt when site.toml has a url.
+	* crates/crabbucket/src/theme.rs (Theme::router_js): Return String,
+	since the theme's own class names go into it.
+	* crates/crabbucket/tests/build.rs: New file; seventeen tests over
+	twelve fixture sites, one per gate.
+	* crates/crabbucket-ui/src/styles/: New; six component stylesheets.
+	* crates/crabbucket-ui/tests/stylesheet.rs: New file; assert that
+	markup and stylesheet cannot drift apart.
+	* crates/crabbucket-cli/src/scaffold.rs: New file; `crab new'.
+	* crates/crabbucket-cli/src/main.rs: Rewritten parser, with --out,
+	--base, --router and --force, and ten tests.
+	* doc/crab.1: New file.
+	* doc/DESIGN: Revise sections 3, 6 and 10 to match what was built.
+	* Makefile (mandir, man1dir): New; install the man page.
+	* examples/site: A 404 page; documentation for all of the above.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Resolve the open design questions; document and schedule the rest.
 
 	* crates/crabbucket/src/links.rs: New file.  Resolve every internal

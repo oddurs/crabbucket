@@ -74,16 +74,31 @@ decision.
 - **Markdown directives** — `:::callout{kind="warn"}` resolving to a typed
   component function, with attributes deserialized into its props. MDX's
   expressiveness without MDX's compiler.
-- **Component style locality with collision avoidance**, so components from
-  two crates cannot fight over a class name. Explicitly *not* tree-shaking:
-  for sites this size that is optimising the wrong number.
-- **Heading ids and a table of contents**, which also lets fragment links be
-  checked.
-- **Build-time syntax highlighting**, because a docs framework whose code
-  blocks are grey is not finished.
+- **A table of contents**, now that heading ids exist to build one from.
+- **Search**, and a light palette driven by the same token file.
 
 The tracked, ordered version of this list is
 [ROADMAP.md](https://github.com/oddurs/crabbucket/blob/main/ROADMAP.md).
+
+## What has changed since the first draft
+
+Three sections of `doc/DESIGN` have been overruled by building the thing.
+
+Section 3 originally described only the `Route` enum; content has no compiler,
+so link checking became a build gate in its own right rather than a lesser
+version of the same idea.
+
+Section 6 promised that unused component CSS would never be emitted. That
+promise was withdrawn: at this size it optimises the wrong number, and the
+problem worth solving was collision, not size.
+
+Section 10 called for a `css!` macro. There is no macro — a struct and a
+string replacement did the whole job, and a proc-macro dependency would have
+bought nothing.
+
+Two of those three revisions removed work rather than adding it. A design note
+that has never been overruled by contact with the code is a design note nobody
+was reading.
 
 ## What is deliberately excluded
 

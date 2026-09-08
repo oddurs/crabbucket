@@ -329,6 +329,49 @@ mod tests {
         assert!(parse(&args(&["new", "site"])).is_ok());
     }
 
+    /// Every long option, from either the help text or the man page.
+    fn options(text: &str) -> std::collections::BTreeSet<String> {
+        let mut found = std::collections::BTreeSet::new();
+        let mut rest = text;
+
+        while let Some(at) = rest.find("--") {
+            rest = &rest[at..];
+            let end = rest
+                .find(|c: char| !c.is_ascii_alphanumeric() && c != '-')
+                .unwrap_or(rest.len());
+            let option = rest[..end].trim_end_matches(['-', '.', ',']);
+
+            // `\-\-out` in roff, and a bare `--`, are not options.
+            if option.len() > 2 && !option.contains("\\") {
+                found.insert(option.to_string());
+            }
+
+            rest = &rest[end.max(2)..];
+        }
+
+        found
+    }
+
+    #[test]
+    fn the_man_page_documents_exactly_the_options_help_does() {
+        let page = include_str!("../../../doc/crab.1").replace("\\-", "-");
+        let documented = options(&page);
+        let helped = options(&super::help());
+
+        assert!(
+            helped.len() >= 6,
+            "the option scanner found nothing: {helped:?}"
+        );
+
+        assert_eq!(
+            helped,
+            documented,
+            "--help and doc/crab.1 disagree; only in --help: {:?}; only in the man page: {:?}",
+            helped.difference(&documented).collect::<Vec<_>>(),
+            documented.difference(&helped).collect::<Vec<_>>(),
+        );
+    }
+
     #[test]
     fn help_documents_every_option_the_parser_accepts() {
         let text = super::help();

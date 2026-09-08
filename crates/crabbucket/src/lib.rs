@@ -32,6 +32,7 @@ pub mod error;
 pub mod links;
 pub mod markdown;
 pub mod site;
+pub mod style;
 pub mod theme;
 pub mod url;
 
@@ -39,6 +40,7 @@ pub use config::Config;
 pub use content::{Collection, Entry};
 pub use error::{Error, Result};
 pub use site::{Report, build};
+pub use style::{Style, StyleSheet};
 pub use theme::{NavItem, Page, PageMeta, PageRef, SiteIndex, Theme};
 pub use url::Url;
 

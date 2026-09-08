@@ -4,34 +4,65 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
 
 ** New features
 
-  Initial import.  A site is Markdown content with `+++' TOML frontmatter
-  and a `site.toml'; `crab build' renders it to a directory of static
-  pages, one directory per route.
+  `crab new' scaffolds a site that builds with no edits: a configuration
+  file, three pages, a turborust.toml for the dev loop, and a GitHub Pages
+  workflow.
 
-  Design tokens are generated from design/tokens.toml into both Rust
-  constants and CSS custom properties, so the two cannot drift apart.
+  `crab build' takes --out and --base, so a preview never means editing a
+  tracked file.
 
-  The base path is recorded once and applied in one place, so a project
-  site served from /repo/ works without any page knowing about it.
+  Content is Markdown with `+++' TOML frontmatter, deserialized into a type
+  rather than a map.  A file's path below content/ is its route.
 
-  Layouts are an associated type on the theme.  `layout = "docs"'
-  deserializes into the theme's own enum, so a layout that does not exist
-  fails the build listing the ones that do.
+  Headings get stable ids and a permalink anchor.  An explicit {#id} wins
+  over the derived slug.
 
-  Every internal link is resolved after rendering and checked against the
-  routes and assets the build produced.  A dead link fails the build,
-  with every offender listed at once, each naming the page that wrote it.
-  There is no flag to disable it.
+  Code fences are highlighted while the site is built, into classes whose
+  colours come from design/tokens.toml.  Nothing is sent to the browser to
+  make code coloured.
+
+  Design tokens are generated into both Rust constants and CSS custom
+  properties from one file, so the two cannot drift apart.
+
+  Layouts are an associated type on the theme, so a layout that does not
+  exist fails the build listing the ones that do.
+
+  Component styles are declared beside their components and namespaced, so
+  two design systems may both have a `card'.
+
+  content/404.md becomes 404.html.  Because it is served in place of every
+  missing path, a relative link on it fails the build.
+
+  sitemap.xml and robots.txt are written when site.toml has a url, and
+  skipped entirely when it does not.
 
   An optional client-side router of about a kilobyte swaps <main> and
   drives the View Transitions API, and degrades to ordinary navigation.
 
+** Build failures
+
+  Every internal link is resolved after rendering and checked against the
+  routes, the assets, and the target page's headings.  Every dead link is
+  reported at once, each naming the page that wrote it.  There is no flag
+  to disable it.
+
+  Frontmatter and configuration errors show the offending line with a
+  caret under it, and report the file-absolute line number.
+
+  Exit status is 0 on success, 1 if the site is wrong, 2 if the command
+  line is.
+
+** Documentation
+
+  A man page, doc/crab.1.  A test asserts that its options and those in
+  `crab --help' are the same set.
+
 ** Notes
 
-  The design is described in doc/DESIGN.  What is planned, and why, is in
-  ROADMAP.md and in cairn/items.
+  The design is described in doc/DESIGN, and three of its sections have
+  been revised by building the thing.  What is planned is in ROADMAP.md.
 
   Still unbuilt, and described as such: a generated Route enum, Markdown
-  directives, heading ids, syntax highlighting and search.
+  directives, a table of contents, and search.
 
   There is no dev server, and there will not be one.  Run `turborust up'.

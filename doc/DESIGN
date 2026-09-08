@@ -263,14 +263,40 @@ Replacing the withdrawn tree-shaking promise from section 6.
 
 A component's styles should live next to the component, and two crates
 should not be able to fight over a class name.  Both are achievable
-without anything that deserves the word "bundler": a component declares
-its CSS as an associated constant, the theme composes the sheet from the
-components it knows about, and class names carry a crate-derived prefix
-that a macro applies so nobody has to type it.
+without anything that deserves the word "bundler".
 
-What that deliberately does not buy: dead-CSS elimination.  If a site
-ever grows a stylesheet large enough for that to matter, the right
-response is to look at what went wrong upstream of the stylesheet.
+A `Style' carries a namespace and a name, and its CSS is written with `&'
+standing in for the component's own class root:
+
+  pub const CALLOUT: Style = Style::new(NS, "callout", "
+      .& { border-left: 3px solid var(--color-accent); }
+      .&--warn { border-left-color: var(--color-accent); }
+      .&__body > :last-child { margin-bottom: 0; }
+  ");
+
+  CALLOUT.class()           // cb-callout
+  CALLOUT.with("warn")      // cb-callout cb-callout--warn
+  CALLOUT.element("body")   // cb-callout__body
+
+which is BEM with the block name factored out, and the block name
+namespaced in exactly one place.  The theme composes a `StyleSheet' from
+the components it declares, deduplicating by namespace and name together,
+so two design systems may both have a `card'.
+
+An earlier draft of this section called for a `css!' macro.  There is no
+macro: the substitution is a string replacement, the guarantee comes from
+the namespace being impossible to omit, and a macro would have added a
+compile-time dependency to buy nothing.
+
+A small fixed set of class names belongs to the framework rather than to
+any theme -- `heading-anchor', `code', and the `tok-' scope classes the
+highlighter emits.  A theme styles them and may not rename them; they are
+listed in `crabbucket::style::FRAMEWORK_CLASSES' so the rule is checkable
+rather than remembered.
+
+What this deliberately does not buy: dead-CSS elimination.  If a site ever
+grows a stylesheet large enough for that to matter, the right response is
+to look at what went wrong upstream of the stylesheet.
 
 
 11.  Deliberately not in v0

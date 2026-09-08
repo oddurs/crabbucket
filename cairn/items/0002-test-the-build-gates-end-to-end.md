@@ -2,7 +2,7 @@
 id: 2
 title: Test the build gates end to end
 type: chore
-status: backlog
+status: done
 milestone: v0.1
 labels:
 - correctness
@@ -47,8 +47,18 @@ suite is safe to run in parallel and leaves no untracked files.
 
 ## Acceptance criteria
 
-- [ ] Every `Error` variant has a fixture that produces it
-- [ ] Each failing fixture asserts the message names the offending file
-- [ ] `base-path/` asserts no double prefix and no missing prefix
-- [ ] Fixtures live under `crates/crabbucket/tests/sites/`
-- [ ] `make check` runs them
+- [x] Every `Error` variant has a fixture that produces it
+- [x] Each failing fixture asserts the message names the offending file
+- [x] `base-path/` asserts no double prefix and no missing prefix
+- [x] Fixtures live under `crates/crabbucket/tests/sites/`
+- [x] `make check` runs them
+
+## 2026-09-08
+
+Done. Twelve fixture sites under crates/crabbucket/tests/sites, seventeen tests in tests/build.rs, plus four in crabbucket-ui/tests/stylesheet.rs.
+
+The test theme is defined in the test file rather than borrowed from crabbucket-ui: the dependency would run the wrong way, and it keeps Theme honest -- if the trait cannot be implemented from outside in thirty lines, that is worth finding out here. It took twenty.
+
+Output goes to a per-call temp directory, not per-fixture, because two tests build the same fixture and the suite runs them at once. The first version collided and failed intermittently.
+
+One assertion had to be softened after being wrong rather than the code being wrong: overriding --base does not rewrite a site-absolute link hard-coded in content, and should not, because such a link may belong to something else served from the same domain. The test now asserts that explicitly, with the reasoning, so nobody 'fixes' it later.
