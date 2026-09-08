@@ -165,7 +165,10 @@ fn the_router_stays_small() {
     // current size: this file is meant to stay small enough to read.
     // What ships, not what is on disk: a CRLF checkout carries an extra byte
     // per line, and the build normalises them away before writing.
-    let router = Standard.router_js().expect("ui has a router").replace("\r\n", "\n");
+    let router = Standard
+        .router_js()
+        .expect("ui has a router")
+        .replace("\r\n", "\n");
     let size = router.len();
 
     assert!(size < 8600, "the router has grown to {size} bytes");
