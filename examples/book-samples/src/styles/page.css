@@ -1,0 +1,23 @@
+.& {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--size-body);
+  margin: 0;
+}
+
+.&__masthead {
+  border-bottom: 1px solid var(--color-rule);
+  display: flex;
+  gap: var(--space-line);
+  padding: var(--space-line);
+}
+
+.&__masthead a { color: inherit; text-decoration: none; }
+.&__masthead a[aria-current] { color: var(--color-accent); }
+
+.&__main {
+  margin: 0 auto;
+  max-width: var(--measure-column);
+  padding: var(--space-line);
+}

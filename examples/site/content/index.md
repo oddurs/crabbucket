@@ -35,5 +35,6 @@ cargo install --git https://github.com/oddurs/crabbucket crabbucket-cli
 crab build
 ```
 
-Start at [Getting started](docs/getting-started/), or read the
-[reasoning behind the design](docs/design/).
+Start at [Getting started](docs/getting-started/), read
+[the book](book/) if you would rather have one path through the whole thing
+in order, or read the [reasoning behind the design](docs/design/).

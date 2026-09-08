@@ -26,6 +26,8 @@ Layout
   examples/site          crabbucket's own site
   examples/site-crate    a site that is a crate: typed routes, its own
                          theme and its own directive
+  examples/book-samples  the Rust the book shows, as a crate that is
+                         compiled -- a third design system, Ferrite
   bench                  a synthetic site, and the clock
 
 

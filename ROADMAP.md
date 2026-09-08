@@ -76,13 +76,9 @@ Prove the theme seam by implementing it twice, and give components the guarantee
 
 ## v1.0 — Stable enough to depend on
 
-`########··` 80% · 8 of 10 done
+`#########·` 90% · 9 of 10 done
 
 The point at which a breaking change starts costing someone other than the author something real.
-
-### backlog
-
-- [ ] [`0034`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0034-the-book.md) The book <sup>docs · p1</sup>
 
 ### in progress
 
@@ -91,6 +87,7 @@ The point at which a breaking change starts costing someone other than the autho
 ### done
 
 - [x] [`0033`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0033-write-down-what-is-stable-and-what-is-not.md) Write down what is stable and what is not <sup>docs · p0</sup>
+- [x] [`0034`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0034-the-book.md) The book <sup>docs · p1</sup>
 - [x] [`0035`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0035-msrv-and-platform-matrix-in-ci.md) MSRV and platform matrix in CI <sup>chore · p1</sup>
 - [x] [`0036`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0036-measure-the-build-on-a-site-large-enough-to-matter.md) Measure the build on a site large enough to matter <sup>chore · p2</sup>
 - [x] [`0048`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0048-validate-the-scaffolded-turborust-toml-against-turborust-schema.md) Validate the scaffolded turborust.toml against turborust schema <sup>chore · p2</sup>

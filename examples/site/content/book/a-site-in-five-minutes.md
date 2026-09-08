@@ -1,0 +1,136 @@
++++
+title = "A site in five minutes"
+description = "crab new, the four files it writes, and what each of them is for."
+layout = "docs"
+order = 1
++++
+
+# 1. A site in five minutes
+
+## Install
+
+crabbucket needs Rust 1.88 or newer.
+
+```sh
+cargo install --git https://github.com/oddurs/crabbucket crabbucket-cli
+```
+
+One executable, called `crab`.
+
+## Scaffold
+
+```sh
+crab new ferrite-docs --router
+cd ferrite-docs
+crab build
+```
+
+```
+crab: 3 pages, 7 links checked -> dist
+```
+
+That is a site. Open `dist/index.html` in a browser, or serve `dist/` with
+anything that serves a directory.
+
+`crab new` refuses to write into a directory that already has something in
+it, unless you pass `--force`. It is the kind of mistake that is annoying to
+undo, so it asks rather than assumes.
+
+## What it wrote
+
+```
+ferrite-docs/
+  site.toml
+  content/
+    index.md
+    docs.md
+    404.md
+  static/
+  turborust.toml
+  .github/workflows/pages.yml
+```
+
+Four things matter and the rest can wait.
+
+### `site.toml`
+
+```toml
+title = "ferrite-docs"
+description = "A site built with crabbucket."
+base = "/"
+
+router = true
+```
+
+The title and description are used in `<title>` and `<meta>`. `base` is where
+the site will be served from, and it is the only place that fact is recorded
+— [chapter 3](../routes-and-links/) is about why that matters more than it
+looks. `router = true` asked for the client-side router, which is 2.9KB and
+optional.
+
+### `content/`
+
+Markdown with TOML frontmatter between `+++` fences:
+
+```md
++++
+title = "Home"
+nav_order = 1
++++
+
+# Home
+
+Welcome.
+```
+
+One file becomes one page. `content/docs.md` becomes `/docs/`. That is nearly
+all of [chapter 2](../content/) and [chapter 3](../routes-and-links/).
+
+### `static/`
+
+Copied verbatim into the output. Put a favicon in it.
+
+### `turborust.toml` and the workflow
+
+The dev loop and the deploy, ready to use. Chapters
+[7](../the-dev-loop/) and [8](../deploying/).
+
+## Make it fail
+
+It is worth doing this once, now, because it is the thing crabbucket is for.
+
+Add a link to a page that does not exist:
+
+```md
+See the [changelog](/changelog/).
+```
+
+```
+crab: error: examples/site/content/index.md: /changelog/ is not a route
+```
+
+The build failed. Not a warning, not a broken link in production — a failure,
+naming the file. There is no flag to turn it off.
+
+Now misspell a layout:
+
+```md
++++
+title = "Home"
+layout = "landign"
++++
+```
+
+```
+crab: error: content/index.md:3: unknown layout `landign'
+  expected one of: page, docs, landing
+```
+
+Both of these are the same idea, and it is the only idea this framework has:
+a site is a typed value, so the failures that usually reach production become
+failures that stop the build.
+
+## Next
+
+[Chapter 2](../content/) is what you can put in a page and what the build
+does with it.

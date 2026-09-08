@@ -1,5 +1,32 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Write the book, and compile everything it shows.
+
+	* examples/site/content/book/: New; nine chapters and a contents
+	page, following one project from an empty directory to a fleet.
+	Chapter 6 first, being the one where the promise is largest.
+	* examples/book-samples/: New crate.  Ferrite, a third design
+	system, plus the site-crate code chapter 6 shows.  The book's Rust
+	is this crate's source rather than listings, so the compiler
+	checks it.
+	* examples/book-samples/tests/ferrite.rs: Ferrite renders a whole
+	site -- layouts, its directive, `~/' and the stylesheet.
+	* examples/book-samples/tests/book.rs: Every `rust' block in the
+	book appears in the crate verbatim; a ```rust sketch fence opts
+	out for code that is deliberately not real.  Also that the
+	chapters are numbered without gaps.
+	* examples/site/content/index.md,
+	examples/site/content/docs/index.md: Point at it.
+	* examples/site/content/docs/content.md: Directives are
+	implemented; that section said they were not.
+	* Cargo.toml, HACKING: The new crate.
+	* .github/workflows/release.yml: Check only the crates that are
+	published.  `cargo package --workspace' packages the
+	`publish = false' ones too, and this failed on the first one to
+	ship tests -- which is exactly what an unpublished crate should do.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Ready the seven crates for crates.io.
 
 	* crates/crabbucket-ui/design/tokens.toml: Moved here from

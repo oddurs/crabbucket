@@ -1,0 +1,9 @@
+.& > * + * { margin-top: var(--space-line); }
+.& h1 { font-size: var(--size-title); line-height: 1.1; }
+.& a { color: var(--color-accent); }
+.& code { font-family: var(--font-mono); }
+.& pre {
+  border-left: 2px solid var(--color-rule);
+  overflow-x: auto;
+  padding-left: var(--space-half);
+}
