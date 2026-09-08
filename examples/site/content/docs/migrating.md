@@ -77,16 +77,18 @@ larger site. The checker now treats a slashless link that names a route as the
 route it names. No workaround is needed and the migration needs no edits to
 its links at all.
 
-### Frontmatter the site adds is dropped — open
+### Frontmatter the site adds is dropped — fixed
 
 Every one of the six pages carried a `summary`, used by the Astro layout.
-crabbucket ignored all six silently, because `PageMeta` does not deny unknown
-fields and has no room for a site's own.
+crabbucket ignored all six silently.
 
-The workaround is to lose the field. The fix is
-[filed](https://github.com/oddurs/crabbucket/blob/main/ROADMAP.md), and it is
-the largest thing this framework still gets wrong relative to the one it
-copies: Astro lets a site declare its own schema, and crabbucket does not.
+A design system now declares what it reads, as
+[`Theme::Extra`](../content/#frontmatter-your-design-system-adds), and a page
+missing a required field fails naming itself. `crabbucket-theme-plain` reads a
+`summary`, which is exactly cairn's case.
+
+One thing still does not hold: a *misspelled* key vanishes rather than
+failing, because serde cannot combine `flatten` with `deny_unknown_fields`.
 
 ### Pages that are not Markdown — open
 
@@ -109,7 +111,8 @@ else, so there is no way to write that one at all.
 ## The count
 
 Ten pages. Six migrated mechanically. One bug found and fixed. Three gaps
-found, filed, and open — one of which blocks four of the ten pages.
+found and filed; one is now fixed, and one of the remaining two blocks four of
+the ten pages.
 
 That is the honest number, and it is the number worth publishing: a migration
 guide that claims everything is easy is a guide nobody trusts twice.

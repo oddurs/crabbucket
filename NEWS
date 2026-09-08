@@ -49,6 +49,15 @@ GNU-style NEWS file for crabbucket.  User-visible changes, newest first.
   stale silently, and one that no longer compiles teaches the wrong thing
   with confidence.
 
+  A design system declares the frontmatter it reads, as `Theme::Extra',
+  the way it already declares its layouts.  A page missing a field the
+  design system requires fails when the file is read, naming it.  Before
+  this a site could carry a field and the framework dropped it without a
+  word -- which every page of a real migrated site did.
+
+  `Page' is now generic over the theme rather than over its layout, so
+  signatures gained nothing despite the frontmatter gaining a type.
+
 ** Bug fixes
 
   A link to a route without a trailing slash -- `/docs/agents' rather than

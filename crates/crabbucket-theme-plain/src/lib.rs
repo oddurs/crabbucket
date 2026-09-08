@@ -89,14 +89,31 @@ pub enum Layout {
     Page,
 }
 
+/// The frontmatter Plain reads beyond what every page has.
+///
+/// A `summary` is a sentence that stands above the prose and says what the
+/// page is for.  Declaring it here is what makes it exist: a design system
+/// that says nothing gets nothing, and a site cannot add a field its design
+/// system does not read.
+///
+/// It is optional, so a page without one still builds.  Making it required is
+/// one word, and then a page without one fails naming itself.
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct Extra {
+    /// A sentence above the prose.
+    #[serde(default)]
+    pub summary: Option<String>,
+}
+
 /// The plain design system.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Plain;
 
 impl Theme for Plain {
     type Layout = Layout;
+    type Extra = Extra;
 
-    fn render(&self, page: &Page<'_, Layout>) -> String {
+    fn render(&self, page: &Page<'_, Self>) -> String {
         document(
             page.config,
             page.meta,
@@ -152,7 +169,7 @@ pub fn prose(html_fragment: &str) -> Markup {
 /// exist.
 pub fn document(
     config: &Config,
-    meta: &PageMeta<Layout>,
+    meta: &PageMeta<Layout, Extra>,
     nav: &[NavItem],
     feeds: &[FeedLink],
     content: Markup,

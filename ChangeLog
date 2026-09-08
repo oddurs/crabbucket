@@ -1,5 +1,19 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Let a design system declare the frontmatter it reads.
+
+	* crates/crabbucket/src/theme.rs (Theme::Extra, NoExtra): New.
+	(PageMeta): Gain a flattened `extra' of that type.
+	(Page): Generic over the theme rather than over its layout, so the
+	signatures did not grow when the frontmatter gained a type.
+	* crates/crabbucket-theme-plain/src/lib.rs (Extra): Read a summary,
+	which is what the migrated site actually needed.
+	* crates/crabbucket/tests/build.rs: A design system that requires a
+	field, a page that lacks one, and the limitation that a misspelled
+	key still vanishes.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Migrate a real site, and fix what that found.
 
 	* crates/crabbucket/src/links.rs (check): A slashless link that

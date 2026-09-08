@@ -3,6 +3,7 @@ title = "Documentation"
 layout = "docs"
 nav_order = 2
 nav_label = "Docs"
+summary = "Everything crabbucket does, and the reasoning behind each of it."
 +++
 
 # Documentation

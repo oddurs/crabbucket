@@ -25,7 +25,7 @@
 use std::collections::BTreeSet;
 
 use crabbucket::markdown::Heading;
-use crabbucket::theme::{Page, PageMeta, PageRef, SiteIndex, Theme};
+use crabbucket::theme::{NoExtra, Page, PageMeta, PageRef, SiteIndex, Theme};
 use crabbucket::{Config, style};
 use crabbucket_ui::{Layout, NS, Standard};
 
@@ -45,7 +45,7 @@ fn config() -> Config {
     }
 }
 
-fn meta(layout: Layout) -> PageMeta<Layout> {
+fn meta(layout: Layout) -> PageMeta<Layout, NoExtra> {
     PageMeta {
         title: "Page".into(),
         description: None,
@@ -55,6 +55,7 @@ fn meta(layout: Layout) -> PageMeta<Layout> {
         nav_label: None,
         date: None,
         draft: false,
+        extra: NoExtra::default(),
     }
 }
 

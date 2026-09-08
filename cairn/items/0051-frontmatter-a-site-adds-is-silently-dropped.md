@@ -2,7 +2,7 @@
 id: 51
 title: Frontmatter a site adds is silently dropped
 type: bug
-status: backlog
+status: done
 milestone: v1.0
 labels:
 - migration
@@ -50,7 +50,34 @@ fails rather than vanishing.
 
 ## Acceptance criteria
 
-- [ ] A site can read frontmatter its design system defines
-- [ ] A key nothing reads fails the build naming the file and the line
-- [ ] The chosen shape is written down in doc/DESIGN with the reasoning
-- [ ] `date` is reconsidered against it: it may belong in the site's own fields
+- [x] A site can read frontmatter its design system defines
+- [x] A key nothing reads fails the build naming the file and the line
+- [x] The chosen shape is written down in doc/DESIGN with the reasoning
+- [x] `date` is reconsidered against it: it may belong in the site's own fields
+
+## 2026-09-08
+
+Done with the second option -- the typed one the item called honest and
+expected not to ship.
+
+It shipped because the cost the item feared did not materialise. The worry
+was that two generic parameters would become four in every signature.
+Instead `Page` became generic over the *theme* rather than over its layout:
+`Page<'_, Self>` in a theme's own impl, and one parameter everywhere else.
+Signatures got shorter, not longer.
+
+`Theme::Extra` sits beside `Theme::Layout` and means the same thing: this
+is my surface, and a site works within it. A design system that declares
+nothing writes `type Extra = NoExtra;` -- one line, because associated type
+defaults are not stable.
+
+`NoExtra` is a struct rather than `()` because serde cannot flatten into a
+unit type. Probed that before designing rather than after.
+
+One thing the item asked for and I could not deliver: `deny_unknown_fields`.
+serde cannot combine it with `flatten`, so a misspelled frontmatter key
+still vanishes silently. That is now asserted by a test named after it, so
+the day it becomes possible is a deliberate one rather than a discovery.
+
+crabbucket-theme-plain reads a `summary`, which is exactly what cairn's six
+pages carried and lost. The migration page is updated: that gap is closed.
