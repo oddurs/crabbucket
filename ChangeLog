@@ -1,5 +1,27 @@
 2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
 
+	Fix three findings from an external review.
+
+	* crates/crabbucket/src/lib.rs: Re-export build_with and Options
+	beside build.  They were reachable a level down, so the symmetric
+	name did not compile.
+	* crates/crabbucket/src/site.rs (Report::headline, drafts_line):
+	New.  (impl Display for Report): New; complete on purpose, so that
+	the first thing anybody writes prints the warnings and the drafts
+	too.
+	* crates/crabbucket-cli/src/main.rs: Use them, and drop the local
+	pluralisation helper that library users could not reach.
+	* crates/crabbucket-cli/src/scaffold.rs (Theme): New.  Scaffold a
+	crate rather than a content directory when --theme names a design
+	system, since such a site calls the build itself.
+	* crates/crabbucket-cli/src/templates/crate-*: New files.
+	* crates/crabbucket-cli/tests/scaffold.rs: Cover both shapes, and
+	compile the generated crate behind CRABBUCKET_SLOW_TESTS.
+	* .github/workflows/ci.yml: Set it.
+	* doc/crab.1: Document --theme.
+
+2026-09-08  Oddur Sigurdsson  <oddurs@gmail.com>
+
 	Finish the v0.2 milestone: all ten items.
 
 	* crates/crabbucket/src/directive.rs: New file.  A line-based,

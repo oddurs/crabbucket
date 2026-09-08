@@ -59,7 +59,7 @@ The first milestone makes crabbucket correct; this one makes it pleasant.
 
 ## v0.3 — A fleet, not a site
 
-`··········` 0% · 0 of 8 done
+`##········` 14% · 1 of 7 done
 
 Prove the theme seam by implementing it twice, and give components the guarantee content already has.
 
@@ -68,15 +68,17 @@ Prove the theme seam by implementing it twice, and give components the guarantee
 - [ ] [`0024`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0024-generate-a-route-enum-for-site-crates.md) Generate a Route enum for site crates <sup>feature · p0 · design</sup>
 - [ ] [`0025`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0025-a-second-theme-to-prove-the-seam.md) A second theme, to prove the seam <sup>feature · p1</sup>
 - [ ] [`0026`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0026-document-building-a-design-system-from-scratch.md) Document building a design system from scratch <sup>docs · p1</sup>
-- [ ] [`0027`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0027-crab-new-theme.md) `crab new --theme` <sup>feature · p2</sup>
 - [ ] [`0028`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0028-generated-opengraph-images.md) Generated OpenGraph images <sup>feature · p2</sup>
 - [ ] [`0029`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0029-rss-and-atom-for-dated-collections.md) RSS and Atom for dated collections <sup>feature · p2</sup>
 - [ ] [`0030`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0030-move-one-real-repository-site-onto-crabbucket.md) Move one real repository site onto crabbucket <sup>chore · p1</sup>
-- [ ] [`0048`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0048-validate-the-scaffolded-turborust-toml-against-turborust-schema.md) Validate the scaffolded turborust.toml against turborust schema <sup>chore · p2</sup>
+
+### done
+
+- [x] [`0027`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0027-crab-new-theme.md) `crab new --theme` <sup>feature · p2</sup>
 
 ## v1.0 — Stable enough to depend on
 
-`··········` 0% · 0 of 5 done
+`··········` 0% · 0 of 6 done
 
 The point at which a breaking change starts costing someone other than the author something real.
 
@@ -87,13 +89,15 @@ The point at which a breaking change starts costing someone other than the autho
 - [ ] [`0034`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0034-the-book.md) The book <sup>docs · p1</sup>
 - [ ] [`0035`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0035-msrv-and-platform-matrix-in-ci.md) MSRV and platform matrix in CI <sup>chore · p1</sup>
 - [ ] [`0036`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0036-measure-the-build-on-a-site-large-enough-to-matter.md) Measure the build on a site large enough to matter <sup>chore · p2</sup>
+- [ ] [`0048`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0048-validate-the-scaffolded-turborust-toml-against-turborust-schema.md) Validate the scaffolded turborust.toml against turborust schema <sup>chore · p2</sup>
 
 ## Unscheduled
 
-`··········` 0% · 0 of 2 done
+`··········` 0% · 0 of 3 done
 
 ### backlog
 
 - [ ] [`0037`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0037-wasm-islands.md) Wasm islands <sup>feature · p3 · out-of-scope</sup>
 - [ ] [`0038`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0038-internationalisation.md) Internationalisation <sup>feature · p3 · out-of-scope</sup>
+- [ ] [`0049`](https://github.com/oddurs/crabbucket/blob/main/cairn/items/0049-report-is-the-model-for-what-a-library-api-should-hand-back.md) Report is the model for what a library API should hand back <sup>chore · p3 · api</sup>
 

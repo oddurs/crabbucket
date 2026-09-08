@@ -24,5 +24,9 @@ jobs:
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets --all-features
       - run: cargo test --workspace --all-targets
+        env:
+          # Compiles the scaffolded crate against the working copy, which is
+          # the only check that `crab new --theme` emits code that builds.
+          CRABBUCKET_SLOW_TESTS: "1"
       - name: the example site builds
         run: cargo run -q -p crabbucket-cli -- build examples/site

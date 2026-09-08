@@ -1,0 +1,29 @@
+# The dev loop.  Run `turborust up'.
+#
+# crabbucket ships no dev server: turborust already watches, caches, serves
+# dist/ with live reload, and puts build errors in a browser overlay.
+# See <https://github.com/oddurs/turborust>.
+
+[overlay]
+position = "bottom-right"
+emoji = "🦀"
+theme = "auto"
+errors = "overlay"
+
+[tasks.site]
+cmd = "cargo run -q"
+
+# Both the Rust and the content, because both change what the build produces.
+#
+# `cargo = "@NAME@"' would derive the Rust inputs from the crate's
+# path-dependency closure, which is the better answer when your theme is a
+# path dependency -- but turborust only derives when `inputs' is empty, so
+# taking it means listing no content here and losing content rebuilds.  Set
+# one or the other, not both.
+inputs = ["Cargo.toml", "src/**", "site.toml", "content/**", "static/**"]
+outputs = ["dist"]
+
+[services.web]
+depends_on = ["site"]
+watch = ["Cargo.toml", "src/**", "site.toml", "content/**", "static/**"]
+serve = { dir = "dist", port = 8790 }

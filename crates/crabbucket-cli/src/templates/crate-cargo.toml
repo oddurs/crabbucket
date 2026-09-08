@@ -1,0 +1,11 @@
+[package]
+name = "@NAME@"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+crabbucket = "0.1"
+
+# The design system this site uses.  @PIN@
+@THEME_DEP@

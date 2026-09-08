@@ -136,6 +136,9 @@ fn parse_new<'a>(args: impl Iterator<Item = &'a str>) -> Result<Command, String>
             "--" if !operands_only => operands_only = true,
             "--base" if !operands_only => request.base = Some(value(&mut args, "--base")?.into()),
             "--router" if !operands_only => request.router = true,
+            "--theme" if !operands_only => {
+                request.theme = Some(value(&mut args, "--theme")?.into());
+            }
             "--force" if !operands_only => request.force = true,
             other if !operands_only && other.starts_with('-') => {
                 return Err(format!("unrecognized option '{other}'"));
@@ -163,22 +166,20 @@ fn value<'a>(
 
 /// Builds a site and reports what was written.
 fn build(site_dir: &Path, options: &Options) -> ExitCode {
-    match crabbucket::site::build_with(site_dir, &Standard, options) {
+    match crabbucket::build_with(site_dir, &Standard, options) {
         Ok(report) => {
-            let pages = report.routes.len();
-            println!(
-                "{PACKAGE}: {pages} {}, {} {} checked -> {}",
-                plural(pages, "page", "pages"),
-                report.links,
-                plural(report.links, "link", "links"),
-                display(&report.out_dir)
-            );
+            // The report knows how to say all of this.  The executable only
+            // decides which stream each part belongs on.
+            println!("{PACKAGE}: {}", relative(&report.headline()));
+
+            if let Some(line) = report.drafts_line() {
+                println!("{PACKAGE}: {line}");
+            }
+
             for warning in &report.warnings {
                 eprintln!("{PACKAGE}: warning: {warning}");
             }
-            if report.drafts > 0 {
-                println!("{PACKAGE}: {} draft(s) skipped", report.drafts);
-            }
+
             ExitCode::SUCCESS
         }
         Err(err) => {
@@ -193,8 +194,17 @@ fn new(request: &scaffold::Request) -> ExitCode {
     match scaffold::write(request) {
         Ok(written) => {
             println!("{PACKAGE}: {} files -> {}", written, display(&request.dir));
+
+            // A site with a design system of its own is a crate, and builds
+            // itself; `crab build` would not know which theme to use.
+            let build = if request.theme.is_some() {
+                "cargo run"
+            } else {
+                "crab build"
+            };
+
             println!("\nNext:");
-            println!("  cd {} && crab build", request.dir.display());
+            println!("  cd {} && {build}", request.dir.display());
             println!("  turborust up");
             ExitCode::SUCCESS
         }
@@ -205,8 +215,16 @@ fn new(request: &scaffold::Request) -> ExitCode {
     }
 }
 
-fn plural<'a>(count: usize, one: &'a str, many: &'a str) -> &'a str {
-    if count == 1 { one } else { many }
+/// Shortens an absolute path in a message to a relative one.
+///
+/// Only cosmetic, and only for the terminal: a full path in a one-line
+/// summary buries the part the reader is looking for.
+fn relative(message: &str) -> String {
+    let Ok(cwd) = std::env::current_dir() else {
+        return message.to_string();
+    };
+
+    message.replace(&format!("{}/", cwd.display()), "")
 }
 
 /// Renders a path for a diagnostic, keeping it relative where that is shorter.
@@ -234,6 +252,9 @@ fn help() -> String {
          \n\
          Options for new:\n\
          \x20     --base PATH    the path the site will be served from\n\
+         \x20     --theme NAME   depend on a design system, as a crate name or\n\
+         \x20                    a git URL; the site is then a crate, not a\n\
+         \x20                    content directory\n\
          \x20     --router       ship the client-side router\n\
          \x20     --force        scaffold into a directory that is not empty\n\
          \n\

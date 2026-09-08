@@ -61,7 +61,13 @@ depends_on = ["site"]
 serve = { dir = "examples/site/dist", port = 8790 }
 ```
 
-Note what is not there: watch globs. `cargo = "crabbucket-cli"` derives them.
+Note what is not there: watch globs. `cargo = "crabbucket-cli"` derives them
+from the crate's path-dependency closure.
+
+That derivation only happens when `inputs` is empty, which matters for a
+[site crate](../design-systems/): naming `cargo` there would derive the Rust
+inputs and then *not* watch the content. `crab new --theme` therefore writes
+both lists explicitly, and says why in a comment.
 
 `crab dev` and `crab serve` both exist as commands, and both do the same
 thing — print a one-line diagnostic pointing at `turborust up` and exit 2.
